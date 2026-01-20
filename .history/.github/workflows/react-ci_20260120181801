@@ -1,0 +1,42 @@
+name: React CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t xxx0209/react-frontend:latest .
+
+      - name: Push Docker image
+        run: docker push xxx0209/react-frontend:latest
+
+      - name: Deploy to VM
+        run: |
+          scp -o StrictHostKeyChecking=no scripts/deploy_react.sh vmuser@VM1:/home/vmuser/
+          ssh -o StrictHostKeyChecking=no vmuser@VM1 'chmod +x ~/deploy_react.sh && ~/deploy_react.sh'
