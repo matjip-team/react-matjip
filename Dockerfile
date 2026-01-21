@@ -1,7 +1,7 @@
 FROM nginx:alpine
 
 # React 빌드 산출물만 복사
-COPY build/ /usr/share/nginx/html
+COPY dist/ /usr/share/nginx/html
 
 # Nginx 설정 복사
 COPY nginx.conf /etc/nginx/conf.d/default.conf
