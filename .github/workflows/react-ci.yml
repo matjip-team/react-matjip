@@ -3,7 +3,7 @@ name: React CI/CD
 on:
   push:
     branches:
-      - main
+      - prod
 
 jobs:
   build-and-deploy:
@@ -22,15 +22,6 @@ jobs:
 
       - name: Check Node.js version
         run: node -v
-
-      - name: Clear npm modules
-        run: rm -rf node_modules package-lock.json
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build React app
-        run: npm run build
 
       # npm 캐시 활용
       - name: Cache node modules
@@ -76,3 +67,4 @@ jobs:
       #       docker rm -f react-frontend || true
       #       docker pull xxx0209/react-frontend:latest
       #       docker run -d --name react-frontend -p 80:80 xxx0209/react-frontend:latest
+      #       nginx -s reload
