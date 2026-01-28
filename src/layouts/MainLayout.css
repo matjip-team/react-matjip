@@ -225,3 +225,36 @@ html, body, #root {
   text-align: center;
   color: #666;
 }
+
+/* ===== 네비게이션 Link 스타일 (span → a 완전 대체) ===== */
+.nav a {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;   /* 기본 밑줄 제거 */
+}
+
+/* 방문/호버/클릭 시 색 고정 */
+.nav a:visited,
+.nav a:hover,
+.nav a:active {
+  color: #111827;
+}
+
+/* 활성 메뉴 */
+.nav a.active {
+  font-weight: 700;
+}
+
+/* 식신 느낌 밑줄 */
+.nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -22px;
+  width: 100%;
+  height: 2px;
+  background: #ff6b00;
+}

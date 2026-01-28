@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import "./mainLayout.css";
 
 export default function MainLayout() {
@@ -12,12 +12,22 @@ export default function MainLayout() {
        <div className="header-inner">
          <div className="logo">PROJECT MATJIB</div>
           <nav className="nav">
-         <span className="active">맛집 소개</span>
-        <span>맛집 지도</span>
-       <span>커뮤니티</span>
-      <span>AI 서비스</span>
-    </nav>
+            <NavLink to="/" end>
+                맛집 소개
+              </NavLink>
 
+              <NavLink to="/map">
+                맛집 지도
+              </NavLink>
+
+              <NavLink to="/board">
+                커뮤니티
+              </NavLink>
+
+              <NavLink to="/ai">
+                AI 서비스
+              </NavLink>
+          </nav>
     <div className="auth">로그인</div>
   </div>
 </header>
