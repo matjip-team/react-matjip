@@ -1,10 +1,13 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import "./mainLayout.css";
+import { useAuth } from "../pages/common/context/useAuth.ts";
 
 export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
+
+  const { user, logout } = useAuth();
 
   return (
     <div className="layout">
@@ -43,7 +46,20 @@ export default function MainLayout() {
             </span>
           </nav>
 
-          <div className="auth">로그인</div>
+          {user ? (
+            <>
+              <span>안녕하세요, {user?.name ?? ""}님</span>
+              <div className="auth" onClick={logout}>
+                로그아웃
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="auth" onClick={() => navigate("/auth/signup")}>
+                로그인
+              </div>
+            </>
+          )}
         </div>
       </header>
 
