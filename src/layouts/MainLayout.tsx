@@ -1,4 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Avatar, Badge, Tooltip } from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
 
@@ -8,6 +10,10 @@ export default function MainLayout() {
   const isHome = location.pathname === "/"; // 홈인지 체크
 
   const { user, logout } = useAuth();
+
+  const myHandleClick = () => {
+    navigate("/auth/mypage");
+  };
 
   return (
     <div className="layout">
@@ -23,14 +29,38 @@ export default function MainLayout() {
           </nav>
           {user ? (
             <>
-              <span>안녕하세요, {user?.name ?? ""}님</span>
-              <div className="auth" onClick={logout}>
-                로그아웃
+              <div
+                className="auth"
+                onClick={logout}
+                style={{ display: "flex", alignItems: "center" }}
+              >
+                <span>안녕하세요, {user?.name ?? ""}님</span>
+                <span style={{ marginLeft: 10 }}>로그아웃</span>
+                <Tooltip title="My 페이지 클릭">
+                  <div
+                    onClick={myHandleClick}
+                    style={{
+                      display: "inline-block",
+                      cursor: "pointer",
+                      marginLeft: 10,
+                    }}
+                  >
+                    <Badge
+                      badgeContent={1} // 표시할 숫자
+                      color="primary"
+                      overlap="circular"
+                    >
+                      <Avatar>
+                        <PersonIcon />
+                      </Avatar>
+                    </Badge>
+                  </div>
+                </Tooltip>
               </div>
             </>
           ) : (
             <>
-              <div className="auth" onClick={() => navigate("/auth/signup")}>
+              <div className="auth" onClick={() => navigate("/auth/login")}>
                 로그인
               </div>
             </>
