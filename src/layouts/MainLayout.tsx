@@ -31,11 +31,11 @@ export default function MainLayout() {
             <>
               <div
                 className="auth"
-                onClick={logout}
+                
                 style={{ display: "flex", alignItems: "center" }}
               >
                 <span>안녕하세요, {user?.name ?? ""}님</span>
-                <span style={{ marginLeft: 10 }}>로그아웃</span>
+                <span onClick={logout} style={{ marginLeft: 10 }}>로그아웃</span>
                 <Tooltip title="My 페이지 클릭">
                   <div
                     onClick={myHandleClick}

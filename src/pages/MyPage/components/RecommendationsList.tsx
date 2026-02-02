@@ -33,6 +33,8 @@ interface Props {
 }
 
 export default function RecommendationsList({ data }: Props) {
+
+  console.log("여기는 추천")
   return (
     <Box sx={{ p: 2 }}>
       <Grid container spacing={2}>
@@ -88,48 +90,6 @@ export default function RecommendationsList({ data }: Props) {
               </CardActions>
             </Card>
           </Grid>
-          //   <Grid xs={12} sm={6} md={4} key={item.id}>
-          //     <Card sx={{ borderRadius: 3 }}>
-          //       <CardMedia
-          //         component="img"
-          //         height="140"
-          //         image={item.image}
-          //         alt={item.restaurantName}
-          //       />
-          //       <CardContent>
-          //         <Box
-          //           sx={{
-          //             display: "flex",
-          //             justifyContent: "space-between",
-          //             alignItems: "center",
-          //             mb: 1,
-          //           }}
-          //         >
-          //           <Typography fontWeight={700}>
-          //             {item.restaurantName}
-          //           </Typography>
-          //           <RatingStars rating={item.rating} />
-          //         </Box>
-          //         <Typography variant="body2" color="text.secondary">
-          //           대표 메뉴: {item.menu}
-          //         </Typography>
-          //       </CardContent>
-          //       <CardActions sx={{ justifyContent: "space-between" }}>
-          //         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          //           <VisibilityIcon fontSize="small" />
-          //           <Typography variant="caption">{item.views}</Typography>
-          //         </Box>
-          //         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          //           <FavoriteIcon fontSize="small" />
-          //           <Typography variant="caption">{item.likes}</Typography>
-          //         </Box>
-          //         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          //           <BookmarkIcon fontSize="small" />
-          //           <Typography variant="caption">{item.favorites}</Typography>
-          //         </Box>
-          //       </CardActions>
-          //     </Card>
-          //   </Grid>
         ))}
       </Grid>
     </Box>
