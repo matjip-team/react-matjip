@@ -12,21 +12,24 @@ type SearchType =
 type CategoryType = "ALL" | "공지" | "후기";
 
 function highlightTitle(
-  title: string,
+  text: string,
   keyword: string,
   style: React.CSSProperties
 ) {
-  if (!keyword || !title.includes(keyword)) return title;
+  if (!keyword || !text) return text;
 
-  const parts = title.split(keyword);
+  const index = text.indexOf(keyword);
+  if (index === -1) return text;
+
+  const before = text.slice(0, index);
+  const match = text.slice(index, index + keyword.length);
+  const after = text.slice(index + keyword.length);
+
   return (
     <>
-      {parts.map((p, i) => (
-        <span key={i}>
-          {p}
-          {i < parts.length - 1 && <span style={style}>{keyword}</span>}
-        </span>
-      ))}
+      {before}
+      <span style={style}>{match}</span>
+      {after}
     </>
   );
 }
@@ -36,81 +39,55 @@ export default function Boardpage() {
   const location = useLocation();
   const MAIN_COLOR = "#ff6b00";
 
-  const initialPosts = [
-    {
-      id: 34562,
-      type: "공지",
-      title: "맛집 이용 가이드 안내",
-      content: "게시판 이용 방법 안내",
-      author: "관리자",
-      date: "25.09.29",
-      views: 9995,
-      likes: 6,
-      comments: ["확인했습니다", "공지 감사합니다"],
-    },
-    {
-      id: 35629,
-      type: "후기",
-      title: "강남역 파스타 맛집 추천",
-      content: "분위기 좋은 파스타집",
-      author: "맛집헌터",
-      date: "25.10.16",
-      views: 253,
-      likes: 2,
-      comments: ["여기 맛있어요"],
-    },
-    {
-      id: 37949,
-      type: "후기",
-      title: "ㅎㅎ 혼밥하기 좋은 곳",
-      content: "조용해서 혼밥하기 좋아요",
-      author: "혼밥러",
-      date: "25.12.14",
-      views: 8701,
-      likes: 7,
-      comments: ["공감합니다", "혼밥 최고"],
-    },
-  ];
-
-  const [posts, setPosts] = useState(initialPosts);
-
-  /** ✅ 카테고리 필터 상태 */
+  const [posts, setPosts] = useState<any[]>([]);
+  
   const [category, setCategory] = useState<CategoryType>("ALL");
-
-  /** 검색 입력/옵션 */
   const [keyword, setKeyword] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("TITLE_CONTENT");
-
-  /** ✅ 실제 적용되는 검색 조건 (버튼/엔터 눌렀을 때만) */
   const [appliedKeyword, setAppliedKeyword] = useState("");
   const [appliedSearchType, setAppliedSearchType] =
     useState<SearchType>("TITLE_CONTENT");
 
-  /** 🔍 검색 실행 */
-  const handleSearch = () => {
-    const trimmed = keyword.trim();
+    /* ================================
+     ✅ 목록 API 연동
+  ================================= */
+  useEffect(() => {
+    const fetchBoards = async () => {
+      try {
+        const typeParam =
+          category === "ALL"
+            ? ""
+            : `?type=${category === "공지" ? "NOTICE" : "REVIEW"}`;
 
-    if (!trimmed) {
-      alert("검색어를 입력하세요");
-      return;
-    }
+        const res = await fetch(`/api/boards${typeParam}`);
+        const json = await res.json();
 
-    setAppliedKeyword(trimmed);
-    setAppliedSearchType(searchType);
-  };
+        if (!json.success) return;
 
-  /** ✅ 카테고리 버튼: 언제라도 해당 목록이 뜨도록 */
-  const handleCategoryClick = (next: CategoryType) => {
-    setCategory(next);
+        const mappedPosts = json.data.map((item: any) => ({
+          id: item.id,
+          type: item.boardType === "NOTICE" ? "공지" : "후기",
+          title: item.title,
+          content: "",
+          author: item.author,
+          date: new Date(item.createdAt).toLocaleDateString("ko-KR"),
+          views: item.viewCount,
+          likes: item.recommendCount,
+          comments: [],
+        }));
 
-    // ✅ 버튼 누르면 “그 카테고리 목록”이 확실히 보이게 검색은 초기화
-    setKeyword("");
-    setAppliedKeyword("");
-    setSearchType("TITLE_CONTENT");
-    setAppliedSearchType("TITLE_CONTENT");
-  };
+        setPosts(mappedPosts);
+      } catch (e) {
+        console.error("게시글 목록 조회 실패", e);
+      }
+    };
 
-  /** 새 글 추가 */
+    fetchBoards();
+  }, [category]);
+
+  /* ================================
+     글 작성 후 state 유지 (기존 그대로)
+  ================================= */
   useEffect(() => {
     if (location.state?.newPost) {
       setPosts((prev) => {
@@ -120,12 +97,35 @@ export default function Boardpage() {
     }
   }, [location.state]);
 
-  /** ✅ 카테고리 + 검색 필터링 */
-  const filteredPosts = posts.filter((post) => {
-    // 1) 카테고리 필터
-    if (category !== "ALL" && post.type !== category) return false;
+  const handleSearch = () => {
+    const trimmed = keyword.trim();
+    if (!trimmed) {
+      alert("검색어를 입력하세요");
+      return;
+    }
+    setAppliedKeyword(trimmed);
+    setAppliedSearchType(searchType);
+  };
 
-    // 2) 검색 필터 (적용된 키워드 없으면 통과)
+  const handleCategoryClick = (next: CategoryType) => {
+    setCategory(next);
+    setKeyword("");
+    setAppliedKeyword("");
+    setSearchType("TITLE_CONTENT");
+    setAppliedSearchType("TITLE_CONTENT");
+  };
+
+  useEffect(() => {
+    if (location.state?.newPost) {
+      setPosts((prev) => {
+        const exists = prev.some((p) => p.id === location.state.newPost.id);
+        return exists ? prev : [location.state.newPost, ...prev];
+      });
+    }
+  }, [location.state]);
+
+  const filteredPosts = posts.filter((post) => {
+    if (category !== "ALL" && post.type !== category) return false;
     if (!appliedKeyword) return true;
 
     const kw = appliedKeyword;
@@ -149,14 +149,12 @@ export default function Boardpage() {
     }
   });
 
-  /** 공지 상단 고정 */
   const noticePosts = filteredPosts.filter((p) => p.type === "공지");
   const normalPosts = filteredPosts.filter((p) => p.type !== "공지");
   const sortedPosts = [...noticePosts, ...normalPosts];
 
   return (
     <div className="container mt-5">
-      {/* 제목 + 새글쓰기 */}
       <div className="text-center mb-4">
         <h2 style={{ color: MAIN_COLOR, fontWeight: 700 }}>자유게시판</h2>
         <div className="d-flex justify-content-end">
@@ -169,8 +167,7 @@ export default function Boardpage() {
         </div>
       </div>
 
-      {/* 검색 */}
-      <div className="d-flex justify-content-center gap-2 mb-3">
+      <div className="d-flex justify-content-center gap-1 mb-3">
         <Form.Select
           style={{ maxWidth: "140px" }}
           value={searchType}
@@ -204,7 +201,6 @@ export default function Boardpage() {
         </Button>
       </div>
 
-      {/* ✅ 카테고리 버튼 (gap=1) */}
       <div className="d-flex gap-1 mb-3">
         {[
           { key: "ALL" as CategoryType, label: "전체글" },
@@ -233,14 +229,29 @@ export default function Boardpage() {
         })}
       </div>
 
-      {/* 테이블 */}
-      <Table striped bordered hover responsive>
+      <Table
+        striped
+        bordered
+        hover
+        responsive={false}
+        style={{ tableLayout: "fixed" }}
+      >
+         <colgroup>
+          <col style={{ width: "80px" }} />   {/* 번호 */}
+          <col style={{ width: "90px" }} />   {/* 말머리 */}
+          <col style={{ width: "360px" }} />  {/* 제목 */}
+          <col style={{ width: "120px" }} />  {/* 글쓴이 */}
+          <col style={{ width: "120px" }} />  {/* 작성일 */}
+          <col style={{ width: "80px" }} />   {/* 조회 */}
+          <col style={{ width: "80px" }} />   {/* 추천 */}
+        </colgroup>
+
         <thead className="table-light text-center">
           <tr>
             <th>번호</th>
             <th>말머리</th>
             <th>제목</th>
-            <th>작성자</th>
+            <th>글쓴이</th>
             <th>작성일</th>
             <th>조회</th>
             <th>추천</th>
@@ -250,9 +261,6 @@ export default function Boardpage() {
         <tbody className="text-center">
           {sortedPosts.map((post) => {
             const isNotice = post.type === "공지";
-            const isTitleMatched =
-              appliedKeyword && post.title.includes(appliedKeyword);
-
             const matchedComments =
               appliedSearchType === "COMMENT"
                 ? post.comments.filter((c) => c.includes(appliedKeyword))
@@ -278,39 +286,61 @@ export default function Boardpage() {
                     style={{
                       cursor: "pointer",
                       color: isNotice ? MAIN_COLOR : "#212529",
-                      fontWeight: isNotice || isTitleMatched ? 700 : 400,
+                      fontWeight: isNotice ? 700 : 400,
+                      display: "block",
+                      maxWidth: "100%",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                     onClick={() =>
                       navigate(`/board/${post.id}`, { state: { post } })
                     }
                   >
-                    {highlightTitle(post.title, appliedKeyword, {
-                      color: MAIN_COLOR,
-                      backgroundColor: "#fff3e6",
-                      padding: "2px 4px",
-                      borderRadius: "4px",
-                    })}
+                    {(appliedSearchType === "TITLE" ||
+                      appliedSearchType === "TITLE_CONTENT") &&
+                    appliedKeyword
+                      ? highlightTitle(post.title, appliedKeyword, {
+                          color: MAIN_COLOR,
+                          backgroundColor: "#fff3e6",
+                          // padding: "2px 4px", // 하이라이트 시 띄어쓰기 제거 
+                          borderRadius: "4px",
+                        })
+                      : post.title}
                   </div>
 
-                  {matchedComments.length > 0 && (
-                    <div className="mt-1">
-                      {matchedComments.map((comment, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            fontSize: "13px",
-                            marginLeft: "12px",
-                            color: MAIN_COLOR,
-                          }}
-                        >
-                          ㄴ {comment}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {appliedSearchType === "COMMENT" &&
+                    matchedComments.map((comment, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          fontSize: "13px",
+                          marginLeft: "12px",
+                          color: MAIN_COLOR,
+                        }}
+                      >
+                        ㄴ{" "}
+                        {highlightTitle(comment, appliedKeyword, {
+                          color: MAIN_COLOR,
+                          backgroundColor: "#fff3e6",
+                          padding: "2px 4px",
+                          borderRadius: "4px",
+                        })}
+                      </div>
+                    ))}
                 </td>
 
-                <td>{post.author}</td>
+                <td>
+                  {appliedSearchType === "AUTHOR" && appliedKeyword
+                    ? highlightTitle(post.author, appliedKeyword, {
+                        color: MAIN_COLOR,
+                        backgroundColor: "#fff3e6",
+                        padding: "2px 4px",
+                        borderRadius: "4px",
+                      })
+                    : post.author}
+                </td>
+
                 <td>{post.date}</td>
                 <td>{post.views}</td>
                 <td>{post.likes}</td>

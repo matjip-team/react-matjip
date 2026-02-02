@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Button, ButtonGroup, Form, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function BoardWrite() {
   const navigate = useNavigate();
@@ -14,43 +15,49 @@ export default function BoardWrite() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const fileInputRef = useRef(null);
-  const [image, setImage] = useState(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [image, setImage] = useState<{
+    file: File;
+    previewUrl: string;
+  } | null>(null);
 
   const handleImageClick = () => {
-    fileInputRef.current.click();
+    fileInputRef.current?.click();
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const previewUrl = URL.createObjectURL(file);
-
-    setImage({
-      file,
-      previewUrl,
-    });
+    setImage({ file, previewUrl });
   };
 
-  const handleSubmit = (e) => {
+  // ✅ 핵심: 서버에 글 저장
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newPost = {
-      id: Date.now(),
-      type: category,
-      title,
-      author: "익명",
-      date: new Date().toLocaleDateString("ko-KR"),
-      views: 0,
-      likes: 0,
-      content,
-      imageUrl: image?.previewUrl || null,
-    };
+    try {
+      await axios.post(
+        "http://localhost:8080/api/boards", //  여기까지함
+        {
+          title,
+          content,
+          boardType: category === "공지" ? "NOTICE" : "REVIEW",
+        },
+        {
+          params: {
+            userId: 1, // ⚠️ JWT 붙기 전 임시
+          },
+        }
+      );
 
-    navigate("/board", {
-      state: { newPost },
-    });
+      // 저장 성공 → 목록으로 이동
+      navigate("/board");
+    } catch (error) {
+      alert("글 등록에 실패했습니다.");
+      console.error(error);
+    }
   };
 
   return (
@@ -90,7 +97,7 @@ export default function BoardWrite() {
               />
             </Form.Group>
 
-            {/* 에디터 툴바 (이미지) */}
+            {/* 이미지 (아직 서버 연동 안 함, UI만 유지) */}
             <div className="border p-2 mb-0 bg-light small">
               <Button
                 size="sm"
