@@ -1,0 +1,47 @@
+// src/api/api.ts
+import axios, { AxiosError } from "axios";
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { API_BASE_URL } from "../common/config/config";
+
+// Axios 인스턴스 생성
+const instance: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true, // HttpOnly 쿠키 JWT 사용 시 필수
+  headers: {
+    "Content-Type": "application/json", // 명시적 선언
+  },
+});
+
+// 로그인 세션 자동 연장 인터셉터
+instance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
+
+    // AccessToken 만료 시 재발급
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // refresh 요청은 기본 axios 사용 (무한루프 방지)
+        await axios.post(
+          `${API_BASE_URL}/api/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+
+        // 토큰 갱신 후 원래 요청 재시도
+        return instance(originalRequest);
+      } catch (err) {
+        return Promise.reject(err);
+      }
+    }
+
+    // 토큰 만료가 아닌 다른 에러는 그대로 전달
+    return Promise.reject(error);
+  },
+);
+
+export default instance;
