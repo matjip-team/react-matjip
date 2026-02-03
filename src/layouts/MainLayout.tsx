@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-=======
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
->>>>>>> a57ce48c045d985facc2ecb0b63ad2ef6f956b09
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
 
@@ -20,10 +16,21 @@ export default function MainLayout() {
         <div className="header-inner">
           <div className="logo">PROJECT MATJIB</div>
           <nav className="nav">
-            <span className="active">맛집 소개</span>
-            <span>맛집 지도</span>
-            <span>커뮤니티</span>
-            <span>AI 서비스</span>
+            <NavLink to="/" end>
+                맛집 소개
+              </NavLink>
+
+              <NavLink to="/map">
+                맛집 지도
+              </NavLink>
+
+              <NavLink to="/board">
+                커뮤니티
+              </NavLink>
+
+              <NavLink to="/ai">
+                AI 서비스
+              </NavLink>
           </nav>
           {user ? (
             <>
