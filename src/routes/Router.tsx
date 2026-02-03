@@ -1,11 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Homepage from "../pages/Home/Homepage";
-<<<<<<< HEAD
 import MapPage from "../pages/map/MapPage";
-=======
 import AIRecommendPage from "../pages/AIRecommendPage";
->>>>>>> a57ce48c045d985facc2ecb0b63ad2ef6f956b09
 import SignupPage from "../pages/auth/SignupPage";
 import LoginPage from "../pages/auth/LoginPage";
 import Me from "../pages/auth/Me";
