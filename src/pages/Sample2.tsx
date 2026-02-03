@@ -11,6 +11,7 @@ import {
 import type { ApiResponse } from "./common/types/api";
 import CustomizedDialogs from "./common/component/dialog";
 import axios from "./common/axios";
+import { useAuth } from "../pages/common/context/useAuth.ts"; //사용자정보
 
 export interface TestResponse {
   email: string;
@@ -19,6 +20,8 @@ export interface TestResponse {
 }
 
 export default function Sample2() {
+  const { user } = useAuth();
+  console.log("Sample2 user:", user);
   // 폼 에러 처리 훅
   const {
     globalError,
