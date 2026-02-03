@@ -15,6 +15,10 @@ export default function AvatarUpload({
 }: Props) {
   const [preview, setPreview] = React.useState(imageUrl);
 
+  React.useEffect(() => {
+    setPreview(imageUrl);
+  }, [imageUrl]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
