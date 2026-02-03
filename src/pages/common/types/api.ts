@@ -11,8 +11,9 @@ export interface ApiError {
 
 export interface ApiResponse<T> {
   success: boolean;
-  data: T | null;
-  error: ApiError | null;
+  message: string | null;
+  data?: T | null;
+  error?: ApiError | null;
 }
 
 // 페이지에서 사용하는 fieldErrors 타입

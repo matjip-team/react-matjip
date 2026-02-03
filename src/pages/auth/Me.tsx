@@ -6,7 +6,7 @@ const MyPage = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
+    //logout();
     navigate("/auth/login");
   };
 

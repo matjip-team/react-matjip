@@ -7,9 +7,7 @@ import { API_BASE_URL } from "../common/config/config";
 const instance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // HttpOnly 쿠키 JWT 사용 시 필수
-  headers: {
-    "Content-Type": "application/json", // 명시적 선언
-  },
+
 });
 
 // 로그인 세션 자동 연장 인터셉터
