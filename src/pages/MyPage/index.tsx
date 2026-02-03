@@ -23,16 +23,9 @@ export default function FixedBottomNavigation() {
     [],
   );
   const [reviews, setReviews] = React.useState<Review[]>([]);
-  // const [profile, setProfile] = React.useState<ProfileResponse>({
-  //   email: "",
-  //   name: "",
-  //   nickname: "",  
-  //   profileImageUrl: "",
-  //   bio: ""
-  // });
+  const [profile, setProfile] = React.useState<ProfileResponse | null>(null);
 
-    const [profile, setProfile] = React.useState<ProfileResponse|null>(null);
-  
+  //const [profile, setProfile] = React.useState<ProfileResponse | null>(null);
 
   // 메뉴 선택 시 데이터 가져오기
   React.useEffect(() => {
@@ -41,16 +34,17 @@ export default function FixedBottomNavigation() {
         if (value === 0) {
           // const res = await axios.get<Favorite[]>("/api/mypage/favorites");
           const res = await axios.get<Recommendation[]>("/api/mypage/reviews");
-          console.log("부모 렌더")
+          console.log("Recommendation 부모 렌더");
           setRecommendation(res.data);
         } else if (value === 1) {
           const res = await axios.get<Review[]>("/api/mypage/reviews");
-          
+          console.log("Reviews 부모 렌더");
           setReviews(res.data);
         } else if (value === 2) {
-          const res = await getProfile();  
-                  console.log("부모 렌더", );
-          setProfile(unwrapData(res.data));
+          const res = await getProfile();
+          console.log("Profile 부모 렌더");
+          const profileData = unwrapData(res.data);
+          setProfile(profileData);
         }
       } catch (err) {
         console.error(err);
@@ -72,8 +66,8 @@ export default function FixedBottomNavigation() {
           </Box>
         );
       case 2:
-      if (!profile) return <div>loading...</div>;  
-      return <ProfileEdit data={profile} />;
+        if (!profile) return <div>loading...</div>;
+        return <ProfileEdit data={profile} />;
       default:
         return null;
     }
@@ -83,6 +77,7 @@ export default function FixedBottomNavigation() {
     <Box sx={{ pb: 7 }}>
       <CssBaseline />
       {renderContent()}
+
       <Paper
         sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
         elevation={3}
