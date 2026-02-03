@@ -8,6 +8,7 @@ import AIRecommendPage from "../pages/AIRecommendPage";
 import SignupPage from "../pages/auth/SignupPage";
 import LoginPage from "../pages/auth/LoginPage";
 import Me from "../pages/auth/Me";
+import MapPage from "../pages/MyPage/index";
 
 export default function Router() {
   return (
@@ -24,6 +25,7 @@ export default function Router() {
           <Route path="/auth/signup" element={<SignupPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/me" element={<Me />} />
+          <Route path="/auth/mypage" element={<MapPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
