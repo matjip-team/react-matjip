@@ -25,7 +25,7 @@ export default function AIRecommendPage() {
 
     try {
       // 🔹 Axios 요청 URL 끝에 / 제거
-      const res = await axios.post("http://localhost:8000/recommend", {
+      const res = await axios.post("http://localhost:8000/recommend/", {
         question,
         lat: null,
         lng: null,

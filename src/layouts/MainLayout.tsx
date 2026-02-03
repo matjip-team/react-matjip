@@ -19,7 +19,7 @@ export default function MainLayout() {
             <span className="active">맛집 소개</span>
             <span>맛집 지도</span>
             <span>커뮤니티</span>
-            <span>AI 서비스</span>
+            <span onClick={() => navigate("/ai")}>AI 서비스</span>
           </nav>
           {user ? (
             <>

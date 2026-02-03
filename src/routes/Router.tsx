@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import Homepage from "../pages/Home/Homepage";
-import AIRecommendPage from "../pages/AIRecommendPage";
+import AIRecommendPage from "../pages/AI/AIRecommendPage";
 import SignupPage from "../pages/auth/SignupPage";
 import LoginPage from "../pages/auth/LoginPage";
 import Me from "../pages/auth/Me";
