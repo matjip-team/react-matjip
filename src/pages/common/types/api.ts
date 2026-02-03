@@ -11,6 +11,7 @@ export interface ApiError {
 
 export interface ApiResponse<T> {
   success: boolean;
+  message: string | null;
   data?: T | null;
   error?: ApiError | null;
 }
