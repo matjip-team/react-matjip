@@ -88,7 +88,7 @@ export default function BoardPage() {
       case "CONTENT":
         return post.content?.includes(kw);
       case "AUTHOR":
-        return post.authorNickname?.includes(kw);
+        return post.author?.includes(kw);
       case "TITLE_CONTENT":
       default:
         return (
@@ -239,7 +239,7 @@ export default function BoardPage() {
                     {post.title}
                   </TableCell>
 
-                  <TableCell>{post.authorNickname}</TableCell>
+                  <TableCell>{post.author}</TableCell>
                   <TableCell>
                     {new Date(post.createdAt).toLocaleDateString("ko-KR")}
                   </TableCell>
