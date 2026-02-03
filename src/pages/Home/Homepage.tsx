@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "../common/axios";
 
 /**
  * 카테고리
- * - label : 화면에 보여줄 텍스트 (이모지 포함)
- * - value : 실제 필터 로직에 사용할 값
  */
 const categories = [
   { label: "전체📄", value: "전체" },
@@ -17,31 +16,52 @@ const categories = [
   { label: "카페/디저트🍰", value: "카페/디저트" },
 ];
 
-/**
- * 더미 맛집 데이터
+/*
+ * Spring에서 내려주는 DTO 타입
  */
-const dummyStores = [
-  { id: 1, name: "가게이름", category: "한식", image: "/images/sample1.jpg" },
-  { id: 2, name: "가게이름", category: "고기/구이", image: "/images/sample2.jpg" },
-  { id: 3, name: "가게이름", category: "씨푸드", image: "/images/sample3.jpg" },
-  { id: 4, name: "가게이름", category: "양식", image: "/images/sample4.jpg" },
-  { id: 5, name: "가게이름", category: "카페/디저트", image: "/images/sample5.jpg" },
-  { id: 6, name: "가게이름", category: "일중/세계음식", image: "/images/sample6.jpg" },
-];
+interface Restaurant {
+  id: number;
+  name: string;
+  address: string;
+  imageUrl?: string; // 없으면 기본 이미지
+}
 
 export default function HomePage() {
   const navigate = useNavigate();
 
-  /** 선택된 카테고리 */
   const [selectedCategory, setSelectedCategory] = useState("전체");
+  const [stores, setStores] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  /*
-   * 카테고리 필터링
+  /**
+   * 맛집 조회
    */
-  const filteredStores = dummyStores.filter((store) => {
-    if (selectedCategory === "전체") return true;
-    return store.category === selectedCategory;
-  });
+  const fetchRestaurants = async (category: string) => {
+    setLoading(true);
+
+    try {
+      const params =
+        category === "전체" ? {} : { categories: category };
+
+      const res = await axios.get(
+        "/api/restaurants",
+        { params }
+      );
+
+      setStores(res.data.data);
+    } catch (e) {
+      console.error("맛집 조회 실패", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * 최초 로딩 + 카테고리 변경 시
+   */
+  useEffect(() => {
+    fetchRestaurants(selectedCategory);
+  }, [selectedCategory]);
 
   return (
     <div className="page-container">
@@ -64,23 +84,33 @@ export default function HomePage() {
           맛집 리스트
          ========================= */}
       <section className="store-grid">
-        {filteredStores.map((store) => (
+        {loading && <p>로딩 중...</p>}
+
+        {!loading && stores.length === 0 && (
+          <p>해당 카테고리의 맛집이 없습니다.</p>
+        )}
+
+        {stores.map((store) => (
           <div
             key={store.id}
             className="store-card"
             onClick={() => navigate(`/store/${store.id}`)}
           >
-            <img src={store.image} alt={store.name} />
+            <img
+              src={store.imageUrl ?? "/images/default.jpg"}
+              alt={store.name}
+            />
             <p>{store.name}</p>
+            <small>{store.address}</small>
           </div>
         ))}
       </section>
 
       {/* =========================
-          페이징
+          페이징 (다음 단계)
          ========================= */}
       <section className="pagination">
-        페이징 처리 파트
+        {/* 다음 단계에서 구현 */}
       </section>
     </div>
   );
