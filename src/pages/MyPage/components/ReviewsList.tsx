@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   Box,
-  List,
   Card,
   CardContent,
   Typography,
@@ -15,6 +14,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Grid,
 } from "@mui/material";
 
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -75,91 +75,107 @@ export default function ReviewsList({ data }: Props) {
 
   return (
     <>
-      <List sx={{ px: { xs: 1, sm: 2 } }}>
-        {sorted.map((item) => (
-          <Card
-            key={item.id}
-            sx={{
-              mb: 2,
-              borderRadius: 3,
-              boxShadow: item.pinned
-                ? "0 6px 20px rgba(25,118,210,0.25)"
-                : "0 4px 12px rgba(0,0,0,0.08)",
-              border: item.pinned ? "1px solid #1976d2" : "none",
-            }}
-          >
-            <CardContent>
-              {/* 상단 */}
-              <Box
+      <Box sx={{ p: 2 }}>
+        <Grid container spacing={2} sx={{ px: { xs: 1, sm: 2 } }}>
+          {sorted.map((item) => (
+            <Grid
+              key={item.id}
+              size={{ xs: 12, sm: 6, md: 4 }} //모바일: 1열 , 태블릿: 2열, 데스크탑: 3열
+            >
+              <Card
+                key={item.id}
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mb: 1,
+                  mb: 2,
+                  borderRadius: 3,
+                  boxShadow: item.pinned
+                    ? "0 6px 20px rgba(25,118,210,0.25)"
+                    : "0 4px 12px rgba(0,0,0,0.08)",
+                  border: item.pinned ? "1px solid #1976d2" : "none",
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {item.pinned && (
-                    <Chip
-                      size="small"
-                      icon={<PushPinIcon />}
-                      label="고정"
-                      color="primary"
-                    />
-                  )}
-                  <Typography fontWeight={700}>
-                    {item.restaurantName}
+                <CardContent>
+                  {/* 상단 */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 1,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {item.pinned && (
+                        <Chip
+                          size="small"
+                          icon={<PushPinIcon />}
+                          label="고정"
+                          color="primary"
+                        />
+                      )}
+                      <Typography fontWeight={700}>
+                        {item.restaurantName}
+                      </Typography>
+                      <RatingStars rating={item.rating} />
+                    </Box>
+
+                    <Typography variant="caption" color="text.secondary">
+                      {formatRelativeTime(item.createdAt)}
+                      {item.updatedAt && " · 수정됨"}
+                    </Typography>
+                  </Box>
+
+                  {/* 본문 */}
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    {item.content}
                   </Typography>
-                  <RatingStars rating={item.rating} />
-                </Box>
 
-                <Typography variant="caption" color="text.secondary">
-                  {formatRelativeTime(item.createdAt)}
-                  {item.updatedAt && " · 수정됨"}
-                </Typography>
-              </Box>
+                  <Divider sx={{ mb: 1 }} />
 
-              {/* 본문 */}
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                {item.content}
-              </Typography>
+                  {/* 하단 액션 */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      color: "text.secondary",
+                    }}
+                  >
+                    <IconButton
+                      size="small"
+                      onClick={() => toggleLike(item.id)}
+                    >
+                      {item.liked ? (
+                        <FavoriteIcon color="error" fontSize="small" />
+                      ) : (
+                        <FavoriteBorderIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                    <Typography variant="caption">{item.likeCount}</Typography>
 
-              <Divider sx={{ mb: 1 }} />
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
+                      <ChatBubbleOutlineIcon fontSize="small" />
+                      <Typography variant="caption">
+                        {item.commentCount}
+                      </Typography>
+                    </Box>
 
-              {/* 하단 액션 */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  color: "text.secondary",
-                }}
-              >
-                <IconButton size="small" onClick={() => toggleLike(item.id)}>
-                  {item.liked ? (
-                    <FavoriteIcon color="error" fontSize="small" />
-                  ) : (
-                    <FavoriteBorderIcon fontSize="small" />
-                  )}
-                </IconButton>
-                <Typography variant="caption">{item.likeCount}</Typography>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <ChatBubbleOutlineIcon fontSize="small" />
-                  <Typography variant="caption">{item.commentCount}</Typography>
-                </Box>
-
-                <Box sx={{ ml: "auto" }}>
-                  <IconButton size="small" onClick={() => setReportId(item.id)}>
-                    <ReportOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
-      </List>
-
+                    <Box sx={{ ml: "auto" }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => setReportId(item.id)}
+                      >
+                        <ReportOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
       {/* 신고 다이얼로그 */}
       <Dialog open={reportId !== null} onClose={() => setReportId(null)}>
         <DialogTitle>리뷰 신고</DialogTitle>

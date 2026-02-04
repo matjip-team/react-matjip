@@ -33,13 +33,12 @@ interface Props {
 }
 
 export default function RecommendationsList({ data }: Props) {
-
-  console.log("여기는 추천")
+  console.log("여기는 추천");
   return (
     <Box sx={{ p: 2 }}>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ px: { xs: 1, sm: 2 } }}>
         {data.map((item) => (
-          <Grid key={item.id} size={{ xs: 6, sm: 6, md: 3 }}>
+          <Grid key={item.id} size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 3 }}>
               <CardMedia
                 component="img"

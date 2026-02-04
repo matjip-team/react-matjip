@@ -6,7 +6,7 @@ import AIRecommendPage from "../pages/AIRecommendPage";
 import SignupPage from "../pages/auth/SignupPage";
 import LoginPage from "../pages/auth/LoginPage";
 import Me from "../pages/auth/Me";
-import MyPage from "../pages/MyPage/index";
+import MyPage from "../pages/mypage/MyPage";
 import Sample2 from "../pages/Sample2";
 
 export default function Router() {
@@ -16,7 +16,7 @@ export default function Router() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Homepage />} />
           {/* 아래는 나중에 추가 */}
-          { <Route path="/map" element={<MapPage />} /> }
+          {<Route path="/map" element={<MapPage />} />}
           {/* <Route path="/map" element={<MapPage />} /> */}
           <Route path="/ai" element={<AIRecommendPage />} />
           <Route path="/auth/signup" element={<SignupPage />} />
