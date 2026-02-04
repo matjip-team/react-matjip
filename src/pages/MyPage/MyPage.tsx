@@ -16,8 +16,10 @@ import ProfileEdit from "./components/ProfileEdit";
 import { getProfile } from "./api/mypageApi";
 import type { ProfileResponse } from "./types/profile";
 import { unwrapData } from "../common/utils/helperUtil";
+import { ThemeProvider } from "@mui/material/styles";
+import myPageTheme from "../common/theme/mypage";
 
-export default function FixedBottomNavigation() {
+export default function MyPage() {
   const [value, setValue] = React.useState(0);
   const [recommendation, setRecommendation] = React.useState<Recommendation[]>(
     [],
@@ -74,27 +76,42 @@ export default function FixedBottomNavigation() {
   };
 
   return (
-    <Box sx={{ pb: 7 }}>
-      <CssBaseline />
-      {renderContent()}
+    <ThemeProvider theme={myPageTheme}>
+      <Box sx={{ pb: 7, maxWidth: 1200, mx: "auto" }}>
+        <CssBaseline />
+        {/* 콘텐츠 영역 */}
+        {/* <Box
+        sx={{
+          //maxWidth: 1000, // 👈 여기서 가로폭 제한
+          // minWidth: "auto", // 👈 최소 폭 고정
+          mx: "auto", // 가운데 정렬
+          px: 2, // 좌우 여백 (모바일)
+        }}
+      > */}
+        {renderContent()}
+        {/* </Box> */}
 
-      <Paper
-        sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
-        elevation={3}
-      >
-        <BottomNavigation
-          value={value}
-          onChange={(_e, newValue) => setValue(newValue)}
-          showLabels
+        <Paper
+          sx={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 1000 }}
+          elevation={3}
         >
-          <BottomNavigationAction label="찜한식당" icon={<RestoreIcon />} />
-          <BottomNavigationAction
-            label="내가 쓴 리뷰"
-            icon={<FavoriteIcon />}
-          />
-          <BottomNavigationAction label="내 정보 수정" icon={<ArchiveIcon />} />
-        </BottomNavigation>
-      </Paper>
-    </Box>
+          <BottomNavigation
+            value={value}
+            onChange={(_e, newValue) => setValue(newValue)}
+            showLabels
+          >
+            <BottomNavigationAction label="찜한식당" icon={<RestoreIcon />} />
+            <BottomNavigationAction
+              label="내가 쓴 리뷰"
+              icon={<FavoriteIcon />}
+            />
+            <BottomNavigationAction
+              label="내 정보 수정"
+              icon={<ArchiveIcon />}
+            />
+          </BottomNavigation>
+        </Paper>
+      </Box>
+    </ThemeProvider>
   );
 }

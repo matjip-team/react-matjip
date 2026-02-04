@@ -73,8 +73,8 @@ export default function ProfileEdit({ data }: Props) {
   const handleChange =
     (key: keyof ProfileResponseForm) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm({ ...form, [key]: e.target.value });
-      setFieldErrors({ ...fieldErrors, [key]: undefined });
+      setForm((prev) => ({ ...prev, [key]: e.target.value }));
+      setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
       console.log("여긴 몇번을 탈까");
     };
 
@@ -123,56 +123,67 @@ export default function ProfileEdit({ data }: Props) {
   };
 
   return (
-    <Paper sx={{ p: 3, maxWidth: 500, mx: "auto", mt: 4 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Typography variant="h6">회원 정보 수정</Typography>
-        {globalError && <Alert severity="error">{globalError}</Alert>}
-        <AvatarUpload imageUrl={previewUrl} onChange={handleFileChange} />
-        <TextField label="이메일" value={form.email} disabled fullWidth />
-        <TextField
-          label="비밀번호"
-          type="password"
-          value={form.password}
-          onChange={handleChange("password")}
-          error={!!fieldErrors.password}
-          helperText={fieldErrors.password}
-          required
+    <>
+      <Paper sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
+        <Box
+          onSubmit={handleSubmit}
+          component="form"
+          sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          <Typography variant="h6">회원 정보 수정</Typography>
+          {globalError && <Alert severity="error">{globalError}</Alert>}
+          <AvatarUpload imageUrl={previewUrl} onChange={handleFileChange} />
+          <TextField
+            label="이메일"
+            value={form.email}
+            disabled
+            fullWidth
+            required
+          />
+          <TextField
+            label="비밀번호"
+            type="password"
+            value={form.password}
+            onChange={handleChange("password")}
+            error={!!fieldErrors.password}
+            helperText={fieldErrors.password}
+          />
+          <TextField
+            label="비밀번호 확인"
+            type="password"
+            value={form.passwordConfirm}
+            onChange={handleChange("passwordConfirm")}
+            error={!!fieldErrors.passwordConfirm}
+            helperText={fieldErrors.passwordConfirm}
+          />
+          <TextField
+            label="닉네임"
+            value={form.nickname}
+            onChange={handleChange("nickname")}
+            error={!!fieldErrors.nickname}
+            helperText={fieldErrors.nickname}
+            required
+          />
+          <TextField
+            label="자기소개"
+            value={form.bio || ""}
+            onChange={handleChange("bio")}
+            error={!!fieldErrors.bio}
+            helperText={fieldErrors.bio}
+            multiline
+            rows={4}
+          />
+          <Button variant="contained" type="submit">
+            저장
+          </Button>
+        </Box>
+        <CustomizedDialogs
+          open={modal.open}
+          onClose={() => setModal({ ...modal, open: false })}
+          title={modal.title}
+          message={modal.message}
         />
-        <TextField
-          label="비밀번호 확인"
-          type="password"
-          value={form.passwordConfirm}
-          onChange={handleChange("passwordConfirm")}
-          error={!!fieldErrors.passwordConfirm}
-          helperText={fieldErrors.passwordConfirm}
-          required
-        />
-        <TextField
-          label="닉네임"
-          value={form.nickname}
-          onChange={handleChange("nickname")}
-          error={!!fieldErrors.nickname}
-          helperText={fieldErrors.nickname}
-          required
-        />
-        <TextField
-          label="자기소개"
-          value={form.bio || ""}
-          onChange={handleChange("bio")}
-          error={!!fieldErrors.bio}
-          helperText={fieldErrors.bio}
-          required
-        />
-        <Button variant="contained" onClick={handleSubmit}>
-          저장
-        </Button>
-      </Box>
-      <CustomizedDialogs
-        open={modal.open}
-        onClose={() => setModal({ ...modal, open: false })}
-        title={modal.title}
-        message={modal.message}
-      />
-    </Paper>
+      </Paper>
+    </>
   );
 }
