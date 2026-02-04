@@ -23,32 +23,6 @@ export default function MainLayout() {
           <div className="logo">PROJECT MATJIB</div>
 
           <nav className="nav">
-<<<<<<< HEAD
-<<<<<<< HEAD
-            <NavLink to="/" end>
-                맛집 소개
-              </NavLink>
-
-              <NavLink to="/map">
-                맛집 지도
-              </NavLink>
-
-              <NavLink to="/board">
-                커뮤니티
-              </NavLink>
-
-              <NavLink to="/ai">
-                AI 서비스
-              </NavLink>
-=======
-<<<<<<< HEAD
-            <span className="active">맛집 소개</span>
-            <span>맛집 지도</span>
-            <span>커뮤니티</span>
-            <span onClick={() => navigate("/ai")}>AI 서비스</span>
-=======
-=======
->>>>>>> d5a255f9a538adfe1dda949e635969ac9916ad24
             <span
               className={location.pathname === "/" ? "active" : ""}
               onClick={() => navigate("/")}
@@ -76,11 +50,6 @@ export default function MainLayout() {
             >
               AI 서비스
             </span>
-<<<<<<< HEAD
->>>>>>> 053f79f777e4d2a8804499cc08c934cbc41c8ada
->>>>>>> 76f4ce4e862fcc4766460afd28b80dfa9284573f
-=======
->>>>>>> d5a255f9a538adfe1dda949e635969ac9916ad24
           </nav>
 
           {user ? (
