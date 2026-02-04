@@ -11,11 +11,11 @@ import {
 } from "@mui/material";
 import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
-import { boardTheme } from "../../theme/boardTheme";
+import { boardTheme } from "./theme/boardTheme"; // ❗ 네가 쓰던 경로 그대로
 
 export default function BoardWrite() {
   const navigate = useNavigate();
-  const MAIN_COLOR = "#ff6b00"; // ✅ 기존 컨셉 색상 유지
+  const MAIN_COLOR = "#ff6b00";
 
   const categories = [
     { key: "후기", label: "후기" },
@@ -26,11 +26,12 @@ export default function BoardWrite() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
+  /** ✅ 이미지 URL 방식 */
+  const [imageUrl, setImageUrl] = useState("");
+
+  /** (UI 유지를 위한 미리보기용) */
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [image, setImage] = useState<{
-    file: File;
-    previewUrl: string;
-  } | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
@@ -40,8 +41,14 @@ export default function BoardWrite() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const previewUrl = URL.createObjectURL(file);
-    setImage({ file, previewUrl });
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
+    /**
+     * ⚠️ 지금은 서버 업로드가 아니라
+     * 임시로 preview URL을 imageUrl로 저장
+     */
+    setImageUrl(url);
   };
 
   /** ✅ 글 등록 */
@@ -49,14 +56,12 @@ export default function BoardWrite() {
     e.preventDefault();
 
     try {
-      await axios.post(
-        "/api/boards",
-        {
-          title,
-          content,
-          boardType: category === "공지" ? "NOTICE" : "REVIEW",
-        },
-      );
+      await axios.post("/api/boards", {
+        title,
+        content,
+        boardType: category === "공지" ? "NOTICE" : "REVIEW",
+        imageUrl, // ✅ 핵심
+      });
 
       navigate("/board");
     } catch (error) {
@@ -87,16 +92,10 @@ export default function BoardWrite() {
                   {categories.map((c) => (
                     <Button
                       key={c.key}
-                      variant={
-                        category === c.key
-                          ? "contained"
-                          : "outlined"
-                      }
+                      variant={category === c.key ? "contained" : "outlined"}
                       sx={{
-                        bgcolor:
-                          category === c.key ? MAIN_COLOR : "#fff",
-                        color:
-                          category === c.key ? "#fff" : MAIN_COLOR,
+                        bgcolor: category === c.key ? MAIN_COLOR : "#fff",
+                        color: category === c.key ? "#fff" : MAIN_COLOR,
                         borderColor: MAIN_COLOR,
                         "&:hover": {
                           bgcolor: MAIN_COLOR,
@@ -125,8 +124,8 @@ export default function BoardWrite() {
                 sx={{
                   border: "1px solid #ddd",
                   p: 1,
-                  mb: 1,
-                  bgcolor: "#fff3e6", // 🔸 기존 톤 유지
+                  mb: 2,
+                  bgcolor: "#fff3e6",
                 }}
               >
                 <Button
@@ -140,10 +139,15 @@ export default function BoardWrite() {
                 >
                   🖼 이미지
                 </Button>
-                {image && (
-                  <Typography variant="caption" sx={{ ml: 2 }}>
-                    {image.file.name}
-                  </Typography>
+
+                {previewUrl && (
+                  <Box sx={{ mt: 2 }}>
+                    <img
+                      src={previewUrl}
+                      alt="미리보기"
+                      style={{ maxWidth: "100%", borderRadius: 4 }}
+                    />
+                  </Box>
                 )}
               </Box>
 
@@ -195,6 +199,6 @@ export default function BoardWrite() {
           </CardContent>
         </Card>
       </Box>
-    </ThemeProvider>  
+    </ThemeProvider>
   );
 }

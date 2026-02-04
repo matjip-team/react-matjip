@@ -20,7 +20,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
-import { boardTheme } from "../../theme/boardTheme";
+import { boardTheme } from "./theme/boardTheme";
 
 type SearchType =
   | "TITLE_CONTENT"
@@ -88,7 +88,7 @@ export default function BoardPage() {
       case "CONTENT":
         return post.content?.includes(kw);
       case "AUTHOR":
-        return post.author?.includes(kw);
+        return post.authorNickname?.includes(kw);
       case "TITLE_CONTENT":
       default:
         return (
@@ -97,6 +97,17 @@ export default function BoardPage() {
         );
     }
   });
+
+  const getBoardType = (post: any) => {
+    return post.boardType ?? post.type;
+  };
+
+  const getBoardLabel = (post: any) => {
+    const type = getBoardType(post);
+    if (type === "NOTICE") return "공지";
+    if (type === "REVIEW") return "후기";
+    return "-";
+  };
 
   return (
     <ThemeProvider theme={boardTheme}>
@@ -193,60 +204,65 @@ export default function BoardPage() {
         <TableContainer component={Paper}>
           <Table sx={{ tableLayout: "fixed" }}>
             <TableHead>
-              <TableRow>
-                <TableCell width={80}>번호</TableCell>
-                <TableCell width={90}>말머리</TableCell>
-                <TableCell width={300}>제목</TableCell>
-                <TableCell width={120}>글쓴이</TableCell>
-                <TableCell width={120}>작성일</TableCell>
-                <TableCell width={80}>조회</TableCell>
-                <TableCell width={80}>추천</TableCell>
+              <TableRow sx={{ borderBottom: "2px solid #ff6b00" }}>
+                <TableCell align="center" width={80}>번호</TableCell>
+                <TableCell align="center" width={90}>말머리</TableCell>
+                <TableCell align="center" width={300}>제목</TableCell>
+                <TableCell align="center" width={120}>글쓴이</TableCell>
+                <TableCell align="center" width={120}>작성일</TableCell>
+                <TableCell align="center" width={80}>조회</TableCell>
+                <TableCell align="center" width={80}>추천</TableCell>
               </TableRow>
             </TableHead>
+            
+             <TableBody>
+              {filteredPosts.map((post, index) => {
+                const type = getBoardType(post);
 
-            <TableBody>
-              {filteredPosts.map((post) => (
-                <TableRow key={post.id} hover>
-                  <TableCell>{post.id}</TableCell>
-
-                  <TableCell>
-                    <Chip
-                      label={post.boardType === "NOTICE" ? "공지" : "후기"}
-                      size="small"
+                return (
+                  <TableRow
+                    key={post.id}
+                    hover
+                    sx={{ borderBottom: "1px solid #e0e0e0" }}
+                    >
+                    <TableCell align="center">{post.id}</TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={getBoardLabel(post)}
+                        size="small"
+                        sx={{
+                          bgcolor:
+                            type === "NOTICE"
+                              ? MAIN_COLOR
+                              : "#adb5bd",
+                          color: "#fff",
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell
+                      align="left"
                       sx={{
-                        bgcolor:
-                          post.boardType === "NOTICE"
-                            ? MAIN_COLOR
-                            : "#adb5bd",
-                        color: "#fff",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        fontWeight:
+                          post.boardType === "NOTICE" ? 700 : 400,
                       }}
-                    />
-                  </TableCell>
-
-                  <TableCell
-                    sx={{
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      fontWeight:
-                        post.boardType === "NOTICE" ? 700 : 400,
-                    }}
-                    onClick={() =>
-                      navigate(`/board/${post.id}`)
-                    }
-                  >
-                    {post.title}
-                  </TableCell>
-
-                  <TableCell>{post.author}</TableCell>
-                  <TableCell>
-                    {new Date(post.createdAt).toLocaleDateString("ko-KR")}
-                  </TableCell>
-                  <TableCell>{post.viewCount}</TableCell>
-                  <TableCell>{post.recommendCount}</TableCell>
-                </TableRow>
-              ))}
+                      onClick={() =>
+                        navigate(`/board/${post.id}`)
+                      }
+                    >
+                      {post.title}
+                    </TableCell>
+                    <TableCell align="center">{post.authorNickname}</TableCell>
+                    <TableCell align="center">
+                      {new Date(post.createdAt).toLocaleDateString("ko-KR")}
+                    </TableCell>
+                    <TableCell align="center">{post.viewCount}</TableCell>
+                    <TableCell align="center">{post.recommendCount}</TableCell>
+                  </TableRow>
+              )})}
             </TableBody>
           </Table>
         </TableContainer>
