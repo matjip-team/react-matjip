@@ -35,13 +35,13 @@ export default function MyPage() {
       try {
         if (value === 0) {
           // const res = await axios.get<Favorite[]>("/api/mypage/favorites");
-          const res = await axios.get<Recommendation[]>("/api/mypage/reviews");
-          console.log("Recommendation 부모 렌더");
-          setRecommendation(res.data);
+          // const res = await axios.get<Recommendation[]>("/api/mypage/reviews");
+          // console.log("Recommendation 부모 렌더");
+          // setRecommendation(res.data);
         } else if (value === 1) {
-          const res = await axios.get<Review[]>("/api/mypage/reviews");
-          console.log("Reviews 부모 렌더");
-          setReviews(res.data);
+          // const res = await axios.get<Review[]>("/api/mypage/reviews");
+          // console.log("Reviews 부모 렌더");
+          // setReviews(res.data);
         } else if (value === 2) {
           const res = await getProfile();
           console.log("Profile 부모 렌더");
@@ -64,7 +64,7 @@ export default function MyPage() {
         return (
           <Box sx={{ pb: 7 }}>
             <CssBaseline />
-            <ReviewsList data={reviews} />
+            <ReviewsList  />
           </Box>
         );
       case 2:

@@ -2,7 +2,7 @@ import { type ProfileResponse, type ProfileRequest } from './../types/profile';
 import axios from "../../common/axios";
 import type { ApiResponse } from "../../common/types/api";
 import type { Recommendation } from "../types/recommendation";
-import type { Review } from "../types/review";
+import type { ReviewPage } from "../types/review";
 
 
 export const updateProfile = (data: FormData) =>
@@ -14,4 +14,7 @@ export const getProfile = () =>
 export const recommendation = () =>
   axios.get<ApiResponse<Recommendation>>("/api/mypage/recommendations");
 
-export const review = () => axios.get<ApiResponse<Review>>("/api/mypage/reviews");
+export const getReview = (cursor:number, limit:number) => {
+  const params = new URLSearchParams({ cursor: cursor.toString(), limit: limit.toString() });
+  return axios.get<ReviewPage>(`/api/mypage/reviews?${params.toString()}`);
+}

@@ -10,3 +10,9 @@ export interface Review {
   createdAt: string;
   updatedAt?: string;
 }
+
+export interface ReviewPage {
+  data: Review[];
+  nextCursor?: number;
+  prevCursor?: number;
+}
