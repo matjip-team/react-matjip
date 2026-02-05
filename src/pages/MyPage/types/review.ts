@@ -12,7 +12,7 @@ export interface Review {
 }
 
 export interface ReviewPage {
-  data: Review[];
+  reviews: Review[];
   nextCursor?: number;
   prevCursor?: number;
 }

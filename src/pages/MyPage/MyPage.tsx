@@ -10,8 +10,8 @@ import ArchiveIcon from "@mui/icons-material/Archive";
 import { type Review } from "./types/review";
 import axios from "../common/axios";
 import ReviewsList from "./components/ReviewsList";
-import RecommendationsList from "./components/RecommendationsList";
-import { type Recommendation } from "./types/recommendation";
+import RecommendationsList from "./components/LikeList";
+import { type Recommendation } from "./types/likes";
 import ProfileEdit from "./components/ProfileEdit";
 import { getProfile } from "./api/mypageApi";
 import type { ProfileResponse } from "./types/profile";
@@ -64,7 +64,7 @@ export default function MyPage() {
         return (
           <Box sx={{ pb: 7 }}>
             <CssBaseline />
-            <ReviewsList  />
+            <ReviewsList />
           </Box>
         );
       case 2:

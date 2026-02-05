@@ -1,6 +1,4 @@
-// src/pages/mypage/components/ReviewsList.tsx
-
-import { Fragment, useEffect } from "react";
+import { useEffect } from "react";
 import {
   Box,
   Card,
@@ -8,84 +6,45 @@ import {
   Typography,
   IconButton,
   Divider,
-  // Chip,
-  // Dialog,
-  // DialogTitle,
-  // DialogContent,
-  // DialogActions,
-  // Button,
   Grid,
-  Skeleton,
+  Alert,
 } from "@mui/material";
 
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ReportOutlinedIcon from "@mui/icons-material/ReportOutlined";
-// import PushPinIcon from "@mui/icons-material/PushPin";
-
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 
-// import { type Review } from "../types/review";
 import RatingStars from "./RatingStars";
-import { getReview } from "../api/mypageApi";
-
-// interface Props {
-//   data: Review[];
-// }
-
-const formatRelativeTime = (iso: string) => {
-  const now = new Date();
-  const target = new Date(iso);
-  const diff = now.getTime() - target.getTime();
-
-  const min = Math.floor(diff / 60000);
-  const hour = Math.floor(diff / 3600000);
-  const day = Math.floor(diff / 86400000);
-
-  if (min < 1) return "방금 전";
-  if (min < 60) return `${min}분 전`;
-  if (hour < 24) return `${hour}시간 전`;
-  if (day < 7) return `${day}일 전`;
-
-  return target.toLocaleDateString("ko-KR");
-};
-
-// fetch 함수
-const fetchReview = async ({ pageParam = 0 }) => {
-  //const res = await axios.get<Review>(`/api/products?cursor=${pageParam}&limit=20`);
-  const res = await getReview(pageParam, 21)
-  return res.data;
-}
-
-
-const useReviews = () => {
-  return useInfiniteQuery({
-    queryKey : ['review'],
-    queryFn: fetchReview,
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,
-    staleTime: 1000 * 60 * 5, // 5분 동안 데이터 fresh
-    gcTime: 1000 * 60 * 10, // 캐시 10분 유지
-  })
-}
+import { formatRelativeTime } from "../../common/utils/helperUtil";
+import { useReviews } from "../hooks/reviewsHook";
+import { useFormError } from "../../common/utils/useFormError";
+import type { ReviewPage } from "../types/review";
+import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
 
 export default function ReviewsList() {
-  
-   const {
+  // Intersection Observer
+  const { ref, inView } = useInView({
+    threshold: 0.5, // 화면에 절반 이상 보이면 nextPage 호출
+  });
+
+  const { globalError, handleApiError } = useFormError<ReviewPage>();
+
+  const {
     data,
     error,
     fetchNextPage,
     hasNextPage,
-    isFetching,
+    // isFetching,
     isFetchingNextPage,
     status,
   } = useReviews();
-  
-  // Intersection Observer
-  const { ref, inView } = useInView({
-    threshold: 0.5, // 화면에 절반 이상 보이면 nextPage 호출
+
+  useQueryErrorHandler({
+    status,
+    error,
+    handleApiError,
   });
 
   useEffect(() => {
@@ -94,18 +53,10 @@ export default function ReviewsList() {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (status === 'pending') {
+  if (status === "pending") {
     // 초기 로딩 Skeleton
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, idx) => (
-          <Skeleton key={idx} variant="rectangular" height={250} />
-        ))}
-      </div>
-    );
-  } else if (status === 'error') {
-    return (<p>Error: {error.message}</p>)
-  } 
+    return <div>로딩중</div>;
+  }
 
   const toggleLike = (id: number) => {
     // 좋아요 토글은 부모에서 상태 관리하는 방식으로 바꾸거나,
@@ -113,24 +64,52 @@ export default function ReviewsList() {
     console.log("좋아요 클릭:", id);
   };
 
-  // const test = data?.pages.flatMap((page) => page?.data) ?? [];
+  // 모든 페이지의 리뷰를 하나의 배열로 합치기
+  const reviews = data?.pages.flatMap((page) => page?.reviews ?? []) ?? [];
+
+  // if (!reviews || reviews.length === 0) {
+  //   return (
+  //     <Box sx={{ p: 2 }}>
+  //       <Typography variant="body2" color="text.secondary">
+  //         작성한 리뷰가 없습니다.
+  //       </Typography>
+  //     </Box>
+  //   );
+  // }
 
   return (
     <>
       <Box sx={{ p: 2 }}>
+        {globalError && (
+          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+            {globalError}
+          </Alert>
+        )}
+
+        <Box
+          sx={{
+            py: 6,
+            textAlign: "center",
+            color: "text.secondary",
+          }}
+        >
+          <Typography variant="body1" fontWeight={500}>
+            작성한 리뷰가 없습니다
+          </Typography>
+          <Typography variant="caption">첫 리뷰를 작성해보세요 ✍️</Typography>
+        </Box>
+
         <Grid container spacing={2} sx={{ px: { xs: 1, sm: 2 } }}>
-          {data.pages.map((group) => (
-            
-            group.review.map((item) => (
+          {reviews.map((review) => (
             <Grid
-              key={item?.id}
+              key={review.id}
               size={{ xs: 12, sm: 6, md: 4 }} //모바일: 1열 , 태블릿: 2열, 데스크탑: 3열
             >
               <Card
-                key={item?.id}
+                key={review.id}
                 sx={{
                   mb: 2,
-                  borderRadius: 3,                  
+                  borderRadius: 3,
                 }}
               >
                 <CardContent>
@@ -145,20 +124,21 @@ export default function ReviewsList() {
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography fontWeight={700}>
-                        {item?.restaurantName}
+                        {review.restaurantName}
                       </Typography>
-                      <RatingStars rating={item?.rating ?? 0} />
+                      내평가
+                      <RatingStars rating={review.rating} />
                     </Box>
 
                     <Typography variant="caption" color="text.secondary">
-                      {formatRelativeTime(item?.createdAt ?? "")}
-                      {item?.updatedAt && " · 수정됨"}
+                      {formatRelativeTime(review.createdAt)}
+                      {review.updatedAt && " · 수정됨"}
                     </Typography>
                   </Box>
 
                   {/* 본문 */}
                   <Typography variant="body2" sx={{ mb: 2 }}>
-                    {item?.content}
+                    {review.content}
                   </Typography>
 
                   <Divider sx={{ mb: 1 }} />
@@ -174,22 +154,24 @@ export default function ReviewsList() {
                   >
                     <IconButton
                       size="small"
-                      onClick={() => toggleLike(item?.id ?? 0)}
+                      onClick={() => toggleLike(review.id)}
                     >
-                      {item?.liked ? (
+                      {review.liked ? (
                         <FavoriteIcon color="error" fontSize="small" />
                       ) : (
                         <FavoriteBorderIcon fontSize="small" />
                       )}
                     </IconButton>
-                    <Typography variant="caption">{item?.likeCount}</Typography>
+                    <Typography variant="caption">
+                      {review.likeCount}
+                    </Typography>
 
                     <Box
                       sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                     >
                       <ChatBubbleOutlineIcon fontSize="small" />
                       <Typography variant="caption">
-                        {item?.commentCount}
+                        {review.commentCount}
                       </Typography>
                     </Box>
 
@@ -205,34 +187,11 @@ export default function ReviewsList() {
                 </CardContent>
               </Card>
               {/* Intersection Observer가 감지할 div */}
-          {/* Intersection Observer가 감지할 div (테스트용) */}
-<div
-  ref={ref}
-  className="h-10 w-full"
-  // style={{
-  //   backgroundColor: "rgba(255,0,0,0.3)", // 반투명 빨강
-  //   border: "1px solid red",             // 테두리
-  // }}
-/>
-
-{/* 다음 페이지 로딩 중 Skeleton 필요 없을거 같음 뼈다귀*/}
-{/* {isFetchingNextPage &&
-  Array.from({ length: 4 }).map((_, idx) => (
-    <Skeleton
-  key={idx}
-  variant="rectangular"
-  width="100%"  // 부모 Grid 기준
-  height={250}
-  sx={{ bgcolor: "rgba(0,0,255,0.3)", border: "1px solid blue" }}
-/>
-  ))
-} */}
+              <div ref={ref} className="h-10 w-full" />
             </Grid>
-            ))
           ))}
-          
         </Grid>
-      </Box>      
+      </Box>
     </>
   );
 }
