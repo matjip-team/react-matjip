@@ -9,3 +9,4 @@ export interface Recommendation {
   favorites: number; // 즐겨찾기 횟수
   reason?: string; // 추천 이유
 }
+
