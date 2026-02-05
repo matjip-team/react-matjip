@@ -1,6 +1,6 @@
 // src/pages/mypage/components/ReviewsList.tsx
 
-import { Fragment, useEffect } from "react";
+import * as React from "react";
 import {
   Box,
   Card,
@@ -8,32 +8,27 @@ import {
   Typography,
   IconButton,
   Divider,
-  // Chip,
-  // Dialog,
-  // DialogTitle,
-  // DialogContent,
-  // DialogActions,
-  // Button,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
   Grid,
-  Skeleton,
 } from "@mui/material";
 
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ReportOutlinedIcon from "@mui/icons-material/ReportOutlined";
-// import PushPinIcon from "@mui/icons-material/PushPin";
+import PushPinIcon from "@mui/icons-material/PushPin";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useInView } from "react-intersection-observer";
-
-// import { type Review } from "../types/review";
+import { type Review } from "../types/review";
 import RatingStars from "./RatingStars";
-import { getReview } from "../api/mypageApi";
 
-// interface Props {
-//   data: Review[];
-// }
+interface Props {
+  data: Review[];
+}
 
 const formatRelativeTime = (iso: string) => {
   const now = new Date();
@@ -52,60 +47,11 @@ const formatRelativeTime = (iso: string) => {
   return target.toLocaleDateString("ko-KR");
 };
 
-// fetch 함수
-const fetchReview = async ({ pageParam = 0 }) => {
-  //const res = await axios.get<Review>(`/api/products?cursor=${pageParam}&limit=20`);
-  const res = await getReview(pageParam, 21)
-  return res.data;
-}
+export default function ReviewsList({ data }: Props) {
+  //const [reviews, setReviews] = React.useState(data);
+  const [reportId, setReportId] = React.useState<number | null>(null);
 
-
-const useReviews = () => {
-  return useInfiniteQuery({
-    queryKey : ['review'],
-    queryFn: fetchReview,
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) => lastPage?.nextCursor ?? undefined,
-    staleTime: 1000 * 60 * 5, // 5분 동안 데이터 fresh
-    gcTime: 1000 * 60 * 10, // 캐시 10분 유지
-  })
-}
-
-export default function ReviewsList() {
-  
-   const {
-    data,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetching,
-    isFetchingNextPage,
-    status,
-  } = useReviews();
-  
-  // Intersection Observer
-  const { ref, inView } = useInView({
-    threshold: 0.5, // 화면에 절반 이상 보이면 nextPage 호출
-  });
-
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  if (status === 'pending') {
-    // 초기 로딩 Skeleton
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, idx) => (
-          <Skeleton key={idx} variant="rectangular" height={250} />
-        ))}
-      </div>
-    );
-  } else if (status === 'error') {
-    return (<p>Error: {error.message}</p>)
-  } 
+  const sorted = [...data].sort((a, b) => Number(b.pinned) - Number(a.pinned));
 
   const toggleLike = (id: number) => {
     // 좋아요 토글은 부모에서 상태 관리하는 방식으로 바꾸거나,
@@ -113,24 +59,24 @@ export default function ReviewsList() {
     console.log("좋아요 클릭:", id);
   };
 
-  // const test = data?.pages.flatMap((page) => page?.data) ?? [];
-
   return (
     <>
       <Box sx={{ p: 2 }}>
         <Grid container spacing={2} sx={{ px: { xs: 1, sm: 2 } }}>
-          {data.pages.map((group) => (
-            
-            group.review.map((item) => (
+          {sorted.map((item) => (
             <Grid
-              key={item?.id}
+              key={item.id}
               size={{ xs: 12, sm: 6, md: 4 }} //모바일: 1열 , 태블릿: 2열, 데스크탑: 3열
             >
               <Card
-                key={item?.id}
+                key={item.id}
                 sx={{
                   mb: 2,
-                  borderRadius: 3,                  
+                  borderRadius: 3,
+                  boxShadow: item.pinned
+                    ? "0 6px 20px rgba(25,118,210,0.25)"
+                    : "0 4px 12px rgba(0,0,0,0.08)",
+                  border: item.pinned ? "1px solid #1976d2" : "none",
                 }}
               >
                 <CardContent>
@@ -144,21 +90,29 @@ export default function ReviewsList() {
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {item.pinned && (
+                        <Chip
+                          size="small"
+                          icon={<PushPinIcon />}
+                          label="고정"
+                          color="primary"
+                        />
+                      )}
                       <Typography fontWeight={700}>
-                        {item?.restaurantName}
+                        {item.restaurantName}
                       </Typography>
-                      <RatingStars rating={item?.rating ?? 0} />
+                      <RatingStars rating={item.rating} />
                     </Box>
 
                     <Typography variant="caption" color="text.secondary">
-                      {formatRelativeTime(item?.createdAt ?? "")}
-                      {item?.updatedAt && " · 수정됨"}
+                      {formatRelativeTime(item.createdAt)}
+                      {item.updatedAt && " · 수정됨"}
                     </Typography>
                   </Box>
 
                   {/* 본문 */}
                   <Typography variant="body2" sx={{ mb: 2 }}>
-                    {item?.content}
+                    {item.content}
                   </Typography>
 
                   <Divider sx={{ mb: 1 }} />
@@ -174,29 +128,29 @@ export default function ReviewsList() {
                   >
                     <IconButton
                       size="small"
-                      onClick={() => toggleLike(item?.id ?? 0)}
+                      onClick={() => toggleLike(item.id)}
                     >
-                      {item?.liked ? (
+                      {item.liked ? (
                         <FavoriteIcon color="error" fontSize="small" />
                       ) : (
                         <FavoriteBorderIcon fontSize="small" />
                       )}
                     </IconButton>
-                    <Typography variant="caption">{item?.likeCount}</Typography>
+                    <Typography variant="caption">{item.likeCount}</Typography>
 
                     <Box
                       sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                     >
                       <ChatBubbleOutlineIcon fontSize="small" />
                       <Typography variant="caption">
-                        {item?.commentCount}
+                        {item.commentCount}
                       </Typography>
                     </Box>
 
                     <Box sx={{ ml: "auto" }}>
                       <IconButton
                         size="small"
-                        // onClick={() => setReportId(item.id)}
+                        onClick={() => setReportId(item.id)}
                       >
                         <ReportOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -204,35 +158,23 @@ export default function ReviewsList() {
                   </Box>
                 </CardContent>
               </Card>
-              {/* Intersection Observer가 감지할 div */}
-          {/* Intersection Observer가 감지할 div (테스트용) */}
-<div
-  ref={ref}
-  className="h-10 w-full"
-  // style={{
-  //   backgroundColor: "rgba(255,0,0,0.3)", // 반투명 빨강
-  //   border: "1px solid red",             // 테두리
-  // }}
-/>
-
-{/* 다음 페이지 로딩 중 Skeleton 필요 없을거 같음 뼈다귀*/}
-{/* {isFetchingNextPage &&
-  Array.from({ length: 4 }).map((_, idx) => (
-    <Skeleton
-  key={idx}
-  variant="rectangular"
-  width="100%"  // 부모 Grid 기준
-  height={250}
-  sx={{ bgcolor: "rgba(0,0,255,0.3)", border: "1px solid blue" }}
-/>
-  ))
-} */}
             </Grid>
-            ))
           ))}
-          
         </Grid>
-      </Box>      
+      </Box>
+      {/* 신고 다이얼로그 */}
+      <Dialog open={reportId !== null} onClose={() => setReportId(null)}>
+        <DialogTitle>리뷰 신고</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            부적절한 리뷰를 신고하시겠습니까?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReportId(null)}>취소</Button>
+          <Button color="error">신고</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
