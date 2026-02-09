@@ -17,6 +17,7 @@ import StarBorderIcon from "@mui/icons-material/StarBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 
 import { type LikesPage } from "../types/likes";
 import { useEffect, useState } from "react";
@@ -24,6 +25,8 @@ import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
 import { useLikes } from "../hooks/LikesHook";
 import { useFormError } from "../../common/utils/useFormError";
 import { useInView } from "react-intersection-observer";
+import { renderCategories } from "../components/categoryUtils";
+
 
 /* ⭐ 별점 */
 const RatingStars = ({ rating }: { rating: number }) => (
@@ -166,7 +169,7 @@ export default function LikeList() {
       {/* 🧱 카드 리스트 */}
       <Grid container spacing={2}>
         {filteredLikes.map((item) => (
-          <Grid key={item.id} size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid key={item.id} size={{ xs: 12, sm: 4, md: 4 }}>
             <Card sx={{ borderRadius: 3 }}>
               <CardMedia
                 component="img"
@@ -179,9 +182,40 @@ export default function LikeList() {
                 <Typography fontWeight={700} noWrap>
                   {item.restaurantName}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  대표 메뉴: {item.menu}
-                </Typography>
+                {/* 카테고리 배지 */}
+                <Box sx={{ display: "flex", gap: 0.3, flexWrap: "wrap", mt: 0.5 }}>
+                  {renderCategories(item.categories)}
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center", // ✅ 세로 중앙 정렬
+                    gap: 0.1,
+                    minWidth: 0,
+                    mt: 2,
+                    mb: 0,
+                  }}
+                >
+                  <LocationOnOutlinedIcon
+                    sx={{
+                      fontSize: "0.9rem",
+                      color: "text.secondary",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      lineHeight: 1.2,
+                      whiteSpace: "nowrap", // 한 줄 고정
+                      overflow: "hidden",
+                      textOverflow: "ellipsis", // … 처리
+                    }}
+                  >
+                    {item.address}
+                  </Typography>
+                </Box>
               </CardContent>
               <CardActions sx={{ justifyContent: "space-between" }}>
                 <Box sx={{ display: "flex", gap: 0.5 }}>

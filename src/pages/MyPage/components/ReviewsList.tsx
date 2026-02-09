@@ -21,14 +21,14 @@ import ReportOutlinedIcon from "@mui/icons-material/ReportOutlined";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import { useInView } from "react-intersection-observer";
 
-import RatingStars from "./RatingStars";
 import { formatRelativeTime } from "../../common/utils/helperUtil";
 import { useReviews } from "../hooks/reviewsHook";
 import { useFormError } from "../../common/utils/useFormError";
 import type { ReviewPage } from "../types/review";
 import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
+import { renderCategories } from "../components/categoryUtils";
 
-export default function ReviewsList() {
+export default function ReviewList() {
   /* 🔎 필터 상태 */
   const [keyword, setKeyword] = useState("");
   const [minRating, setMinRating] = useState(0);
@@ -153,7 +153,7 @@ export default function ReviewsList() {
         {filteredReviews.map((review) => (
           <Grid
             key={review.id}
-            size={{ xs: 12, sm: 6, md: 4 }} // ✅ 3열 유지
+            size={{ xs: 12, sm: 6, md: 6 }} // ✅ 3열 유지
           >
             <Card sx={{ borderRadius: 3, height: "100%" }}>
               <CardContent
@@ -251,7 +251,9 @@ export default function ReviewsList() {
                       {review.content}
                     </Typography>
                   </Box>
-
+                  <Box sx={{ display: "flex", gap: 0.3, flexWrap: "wrap", mt: 0.5 }}>
+                    {renderCategories(review.categories)}
+                  </Box>
                   <Box
                     sx={{
                       display: "flex",
@@ -269,7 +271,6 @@ export default function ReviewsList() {
                         flexShrink: 0,
                       }}
                     />
-
                     <Typography
                       variant="caption"
                       color="text.secondary"

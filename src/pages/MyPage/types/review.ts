@@ -1,3 +1,5 @@
+import type { Category } from "./catetory";
+
 export interface Review {
   id: number;
   restaurantName: string;
@@ -11,7 +13,9 @@ export interface Review {
   updatedAt?: string;
   avgRating: number; // 평균 평점
   reviewCount: number; // 리뷰 개수
+  categories: Category[];
   address: string;
+  
 }
 
 export interface ReviewPage {
