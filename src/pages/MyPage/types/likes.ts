@@ -9,6 +9,7 @@ export interface Likes {
   favorites: number; // 즐겨찾기 횟수
   reason?: string; // 추천 이유
   avgRating: number; // 평균 평점
+  reviewCount: number; // 리뷰 개수
 }
 
 export interface LikesPage {

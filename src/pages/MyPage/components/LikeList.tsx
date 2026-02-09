@@ -6,6 +6,10 @@ import {
   Typography,
   CardActions,
   Alert,
+  TextField,
+  Select,
+  MenuItem,
+  Divider,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import StarIcon from "@mui/icons-material/Star";
@@ -15,13 +19,13 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 
 import { type LikesPage } from "../types/likes";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
 import { useLikes } from "../hooks/LikesHook";
 import { useFormError } from "../../common/utils/useFormError";
 import { useInView } from "react-intersection-observer";
 
-// 별점 컴포넌트
+/* ⭐ 별점 */
 const RatingStars = ({ rating }: { rating: number }) => (
   <Box sx={{ display: "flex", alignItems: "center" }}>
     {Array.from({ length: 5 }).map((_, i) =>
@@ -35,10 +39,13 @@ const RatingStars = ({ rating }: { rating: number }) => (
 );
 
 export default function LikeList() {
-  // Intersection Observer
-  const { ref, inView } = useInView({
-    threshold: 0.5, // 화면에 절반 이상 보이면 nextPage 호출
-  });
+  /* 🔎 필터 상태 */
+  const [keyword, setKeyword] = useState("");
+  const [minRating, setMinRating] = useState(0);
+  const [sort, setSort] = useState<"rating" | "reviews" | "views">("rating");
+
+  /* ♾ Infinite Scroll */
+  const { ref, inView } = useInView({ threshold: 0.5 });
 
   const { globalError, handleApiError } = useFormError<LikesPage>();
 
@@ -47,16 +54,11 @@ export default function LikeList() {
     error,
     fetchNextPage,
     hasNextPage,
-    // isFetching,
     isFetchingNextPage,
     status,
   } = useLikes();
 
-  useQueryErrorHandler({
-    status,
-    error,
-    handleApiError,
-  });
+  useQueryErrorHandler({ status, error, handleApiError });
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -65,86 +67,140 @@ export default function LikeList() {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (status === "pending") {
-    // 초기 로딩 Skeleton
-    return <div>로딩중</div>;
+    return <div>로딩중...</div>;
   }
 
-  // 모든 페이지의 리뷰를 하나의 배열로 합치기
+  /* 📦 데이터 병합 */
   const likes = data?.pages.flatMap((page) => page?.likes ?? []) ?? [];
+
+  /* 🔍 필터 + 정렬 */
+  const filteredLikes = likes
+    .filter((item) =>
+      item.restaurantName.toLowerCase().includes(keyword.toLowerCase()),
+    )
+    .filter((item) => item.avgRating >= minRating)
+    .sort((a, b) => {
+      if (sort === "rating") return b.avgRating - a.avgRating;
+      if (sort === "reviews") return b.reviewCount - a.reviewCount;
+      if (sort === "views") return b.views - a.views;
+      return 0;
+    });
 
   return (
     <Box sx={{ p: 2 }}>
+      {/* ❌ 에러 */}
       {globalError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
           {globalError}
         </Alert>
       )}
+
+      {/* 🔎 필터 영역 */}
       <Box
         sx={{
-          py: 6,
-          textAlign: "center",
-          color: "text.secondary",
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1.5,
+          mb: 2,
+          flexWrap: "wrap",
         }}
       >
-        <Typography variant="body1" fontWeight={500}>
-          선택한 좋아요가 없습니다
-        </Typography>
-        <Typography variant="caption">
-          첫 좋아요를 누르고 싶은 가게를 선택해보세요 ✍️
-        </Typography>
+        <TextField
+          size="small"
+          placeholder="가게명 검색"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2,
+            },
+          }}
+        />
+
+        <Select
+          size="small"
+          value={minRating}
+          onChange={(e) => setMinRating(Number(e.target.value))}
+          sx={{ borderRadius: 2, minWidth: 110 }}
+        >
+          <MenuItem value={0}>전체</MenuItem>
+          <MenuItem value={4}>⭐ 4점+</MenuItem>
+          <MenuItem value={3}>⭐ 3점+</MenuItem>
+        </Select>
+
+        <Select
+          size="small"
+          value={sort}
+          onChange={(e) =>
+            setSort(e.target.value as "rating" | "reviews" | "views")
+          }
+          sx={{ borderRadius: 2, minWidth: 120 }}
+        >
+          <MenuItem value="rating">별점순</MenuItem>
+          <MenuItem value="reviews">리뷰순</MenuItem>
+          <MenuItem value="views">조회순</MenuItem>
+        </Select>
       </Box>
-      <Grid container spacing={2} sx={{ px: { xs: 1, sm: 2 } }}>
-        {likes.map((item) => (
+
+      {/* ➖ 구분선 */}
+      <Divider sx={{ mb: 3 }} />
+
+      {/* 📭 결과 없음 */}
+      {filteredLikes.length === 0 && (
+        <Box
+          sx={{
+            py: 6,
+            textAlign: "center",
+            color: "text.secondary",
+          }}
+        >
+          <Typography fontWeight={500}>
+            조건에 맞는 좋아요가 없습니다
+          </Typography>
+          <Typography variant="caption">
+            다른 조건으로 다시 검색해보세요 ✍️
+          </Typography>
+        </Box>
+      )}
+
+      {/* 🧱 카드 리스트 */}
+      <Grid container spacing={2}>
+        {filteredLikes.map((item) => (
           <Grid key={item.id} size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 3 }}>
               <CardMedia
                 component="img"
                 height="140"
-                // image={item.image}
                 image="/images/hero-bg.jpg"
                 alt={item.restaurantName}
               />
               <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column", // 위아래로 쌓이도록
-                    mb: 1,
-                  }}
-                >
-                  <RatingStars rating={item.avgRating} />
-                  <Typography
-                    fontWeight={700}
-                    sx={{
-                      mt: 0.5,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {item.restaurantName}
-                  </Typography>
-                </Box>
+                <RatingStars rating={item.avgRating} />
+                <Typography fontWeight={700} noWrap>
+                  {item.restaurantName}
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   대표 메뉴: {item.menu}
                 </Typography>
               </CardContent>
               <CardActions sx={{ justifyContent: "space-between" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: "flex", gap: 0.5 }}>
                   <VisibilityIcon fontSize="small" />
-                  <Typography variant="caption">{item.views}11111</Typography>
+                  <Typography variant="caption">{item.views}</Typography>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: "flex", gap: 0.5 }}>
                   <FavoriteIcon fontSize="small" />
-                  <Typography variant="caption">{item.likes}1111</Typography>
+                  <Typography variant="caption">{item.reviewCount}</Typography>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: "flex", gap: 0.5 }}>
                   <BookmarkIcon fontSize="small" />
                   <Typography variant="caption">{item.favorites}</Typography>
                 </Box>
               </CardActions>
             </Card>
-            {/* Intersection Observer가 감지할 div */}
-            <div ref={ref} className="h-10 w-full" />
+
+            {/* ♾ Observer */}
+            <div ref={ref} style={{ height: 10 }} />
           </Grid>
         ))}
       </Grid>

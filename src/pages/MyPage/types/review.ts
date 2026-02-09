@@ -9,6 +9,9 @@ export interface Review {
   pinned: boolean;
   createdAt: string;
   updatedAt?: string;
+  avgRating: number; // 평균 평점
+  reviewCount: number; // 리뷰 개수
+  address: string;
 }
 
 export interface ReviewPage {
