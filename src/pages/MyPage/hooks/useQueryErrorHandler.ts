@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { CommonError } from "../../common/types/error";
 
 interface Props {
-  status: "pending" | "error" | "success";
+  status: "pending" | "error" | "success" | "idle";
   error: unknown;
   handleApiError: (data: unknown) => void;
 }

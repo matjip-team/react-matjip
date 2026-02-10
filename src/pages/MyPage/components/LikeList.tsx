@@ -10,6 +10,8 @@ import {
   Select,
   MenuItem,
   Divider,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import StarIcon from "@mui/icons-material/Star";
@@ -20,13 +22,13 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 
 import { type LikesPage } from "../types/likes";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
-import { useLikes } from "../hooks/LikesHook";
+import { useDeleteLike, useLikes } from "../hooks/LikesHook";
 import { useFormError } from "../../common/utils/useFormError";
 import { useInView } from "react-intersection-observer";
 import { renderCategories } from "../components/categoryUtils";
-
+import CustomizedDialogs from "../../common/component/dialog";
 
 /* ⭐ 별점 */
 const RatingStars = ({ rating }: { rating: number }) => (
@@ -52,6 +54,13 @@ export default function LikeList() {
 
   const { globalError, handleApiError } = useFormError<LikesPage>();
 
+  // 성공 다이얼로그
+  const [modal, setModal] = React.useState({
+    open: false,
+    title: "",
+    message: "",
+  });
+
   const {
     data,
     error,
@@ -61,7 +70,19 @@ export default function LikeList() {
     status,
   } = useLikes();
 
+  const {
+    mutate: deleteLike,
+    isPending: isDeleting,
+    status: deleteLikeStatus,
+    error: deleteLikeError,
+  } = useDeleteLike();
+
   useQueryErrorHandler({ status, error, handleApiError });
+  useQueryErrorHandler({
+    status: deleteLikeStatus,
+    error: deleteLikeError,
+    handleApiError,
+  });
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -88,6 +109,21 @@ export default function LikeList() {
       if (sort === "views") return b.views - a.views;
       return 0;
     });
+
+  const handleDeleteLike = (likeId: number) => {
+    deleteLike(likeId, {
+      onSuccess: () => {
+        setModal({
+          open: true,
+          title: "성공!",
+          message: "좋아요가 삭제되었습니다.",
+        });
+      },
+      onError: (error) => {
+        handleApiError(error);
+      },
+    });
+  };
 
   return (
     <Box sx={{ p: 2 }}>
@@ -183,7 +219,9 @@ export default function LikeList() {
                   {item.restaurantName}
                 </Typography>
                 {/* 카테고리 배지 */}
-                <Box sx={{ display: "flex", gap: 0.3, flexWrap: "wrap", mt: 0.5 }}>
+                <Box
+                  sx={{ display: "flex", gap: 0.3, flexWrap: "wrap", mt: 0.5 }}
+                >
                   {renderCategories(item.categories)}
                 </Box>
                 <Box
@@ -222,9 +260,20 @@ export default function LikeList() {
                   <VisibilityIcon fontSize="small" />
                   <Typography variant="caption">{item.views}</Typography>
                 </Box>
-                <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <FavoriteIcon fontSize="small" />
-                  <Typography variant="caption">{item.reviewCount}</Typography>
+                <Box
+                  sx={{ display: "flex", gap: 0.5 }}
+                  onClick={() => {
+                    if (!isDeleting) handleDeleteLike(item.id);
+                  }}
+                >
+                  <IconButton size="small">
+                    <Tooltip title="좋아요 취소">
+                      <FavoriteIcon fontSize="small" sx={{ color: "red" }} />
+                    </Tooltip>
+                    <Typography variant="caption">
+                      {item.reviewCount}
+                    </Typography>
+                  </IconButton>
                 </Box>
                 <Box sx={{ display: "flex", gap: 0.5 }}>
                   <BookmarkIcon fontSize="small" />
@@ -238,6 +287,12 @@ export default function LikeList() {
           </Grid>
         ))}
       </Grid>
+      <CustomizedDialogs
+        open={modal.open}
+        onClose={() => setModal({ ...modal, open: false })}
+        title={modal.title}
+        message={modal.message}
+      />
     </Box>
   );
 }
