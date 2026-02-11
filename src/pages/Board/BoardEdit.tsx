@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -16,35 +16,43 @@ import { Editor } from "@toast-ui/react-editor";
 import "@toast-ui/editor/dist/toastui-editor.css";
 
 /* ===============================
-   게시글 작성 페이지
+   게시글 수정 페이지
 ================================ */
 
-export default function BoardWrite() {
+export default function BoardEdit() {
+  const { id } = useParams(); // 게시글 id
   const navigate = useNavigate();
   const MAIN_COLOR = "#ff6b00";
-
-  /* ===============================
-     말머리 옵션
-  ================================ */
 
   const categories = [
     { key: "후기", label: "후기" },
     { key: "공지", label: "공지" },
   ];
 
-  /* ===============================
-     상태 관리
-  ================================ */
-
   const [category, setCategory] = useState("후기");
   const [title, setTitle] = useState("");
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
 
   const editorRef = useRef<any>(null);
 
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  /* ===============================
+     ✅ 기존 게시글 불러오기
+  ================================ */
+
+  useEffect(() => {
+    axios.get(`/api/boards/${id}`).then((res) => {
+      const data = res.data.data;
+
+      setTitle(data.title);
+      setCategory(data.boardType === "NOTICE" ? "공지" : "후기");
+
+      // 에디터 내용 세팅
+      editorRef.current?.getInstance().setHTML(data.content);
+    });
+  }, [id]);
 
   /* ===============================
-     글 등록
+     수정 저장
   ================================ */
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,15 +62,8 @@ export default function BoardWrite() {
     const html = editorInstance.getHTML();
     const text = editorInstance.getMarkdown().trim();
 
-    /* ===== 프론트 1차 검증 ===== */
-
     if (!title.trim()) {
       setErrors({ title: ["제목을 입력하십시오."] });
-      return;
-    }
-
-    if (title.trim().length < 2) {
-      setErrors({ title: ["제목은 최소 2자 이상 입력해 주십시오."] });
       return;
     }
 
@@ -71,30 +72,16 @@ export default function BoardWrite() {
       return;
     }
 
-    /* ===== 서버 요청 ===== */
-
     try {
-      await axios.post("/api/boards", {
+      await axios.put(`/api/boards/${id}`, {
         title,
         content: html,
         boardType: category === "공지" ? "NOTICE" : "REVIEW",
       });
 
-      navigate("/board");
-    } catch (error: any) {
-      const res = error?.response?.data;
-
-      if (res?.code === "VALIDATION_ERROR") {
-        const fieldErrors: Record<string, string[]> = {};
-
-        res.fields.forEach((f: any) => {
-          fieldErrors[f.field] = f.messages;
-        });
-
-        setErrors(fieldErrors);
-      } else {
-        alert("글 등록에 실패했습니다.");
-      }
+      navigate(`/board/${id}`);
+    } catch {
+      alert("글 수정 실패");
     }
   };
 
@@ -107,16 +94,15 @@ export default function BoardWrite() {
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Card>
           <CardContent>
-            {/* 제목 */}
             <Typography
               variant="h5"
               sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}
             >
-              글 작성
+              글 수정
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
-              {/* ================= 말머리 ================= */}
+              {/* 말머리 */}
               <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <Typography sx={{ mr: 2, fontWeight: 600 }}>
                   말머리
@@ -131,10 +117,6 @@ export default function BoardWrite() {
                         bgcolor: category === c.key ? MAIN_COLOR : "#fff",
                         color: category === c.key ? "#fff" : MAIN_COLOR,
                         borderColor: MAIN_COLOR,
-                        "&:hover": {
-                          bgcolor: MAIN_COLOR,
-                          color: "#fff",
-                        },
                       }}
                       onClick={() => setCategory(c.key)}
                     >
@@ -144,21 +126,18 @@ export default function BoardWrite() {
                 </ButtonGroup>
               </Box>
 
-              {/* ================= 제목 ================= */}
+              {/* 제목 */}
               <TextField
                 fullWidth
                 placeholder="제목을 입력하세요"
                 value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setErrors((prev) => ({ ...prev, title: [] }));
-                }}
+                onChange={(e) => setTitle(e.target.value)}
                 error={!!errors.title}
                 helperText={errors.title?.[0]}
                 sx={{ mb: 3 }}
               />
 
-              {/* ================= 에디터 ================= */}
+              {/* 에디터 */}
               <Box sx={{ mb: 3 }}>
                 <Editor
                   ref={editorRef}
@@ -166,26 +145,15 @@ export default function BoardWrite() {
                   previewStyle="vertical"
                   height="400px"
                   initialEditType="wysiwyg"
-                  useCommandShortcut
                 />
-
-                {errors.content && (
-                  <Typography color="error" sx={{ mt: 1 }}>
-                    {errors.content[0]}
-                  </Typography>
-                )}
               </Box>
 
-              {/* ================= 버튼 ================= */}
+              {/* 버튼 */}
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button
                   variant="outlined"
-                  sx={{
-                    mr: 1,
-                    color: MAIN_COLOR,
-                    borderColor: MAIN_COLOR,
-                  }}
-                  onClick={() => navigate("/board")}
+                  sx={{ mr: 1, color: MAIN_COLOR, borderColor: MAIN_COLOR }}
+                  onClick={() => navigate(-1)}
                 >
                   취소
                 </Button>
@@ -193,12 +161,9 @@ export default function BoardWrite() {
                 <Button
                   type="submit"
                   variant="contained"
-                  sx={{
-                    bgcolor: MAIN_COLOR,
-                    "&:hover": { bgcolor: MAIN_COLOR },
-                  }}
+                  sx={{ bgcolor: MAIN_COLOR }}
                 >
-                  등록
+                  저장
                 </Button>
               </Box>
             </Box>
