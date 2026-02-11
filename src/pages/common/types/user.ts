@@ -3,5 +3,5 @@ export interface User {
   email: string;
   name: string;
   nickname: string;
-  roles: string[];
+  role: string;  // "ROLE_USER", "ROLE_ADMIN" 등
 }

@@ -15,9 +15,7 @@ import { boardTheme } from "./theme/boardTheme";
 import { Editor } from "@toast-ui/react-editor";
 import "@toast-ui/editor/dist/toastui-editor.css";
 
-/* ===============================
-   게시글 수정 페이지
-================================ */
+// 게시글 수정 페이지
 
 export default function BoardEdit() {
   const { id } = useParams(); // 게시글 id
@@ -35,9 +33,7 @@ export default function BoardEdit() {
 
   const editorRef = useRef<any>(null);
 
-  /* ===============================
-     ✅ 기존 게시글 불러오기
-  ================================ */
+  // 기존 게시글 불러오기
 
   useEffect(() => {
     axios.get(`/api/boards/${id}`).then((res) => {
@@ -51,11 +47,10 @@ export default function BoardEdit() {
     });
   }, [id]);
 
-  /* ===============================
-     수정 저장
-  ================================ */
+  // 수정 저장
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    // 수정 저장 처리
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const editorInstance = editorRef.current?.getInstance();
@@ -64,6 +59,11 @@ export default function BoardEdit() {
 
     if (!title.trim()) {
       setErrors({ title: ["제목을 입력하십시오."] });
+      return;
+    }
+
+    if (title.trim().length < 2) {
+      setErrors({ title: ["제목은 최소 2자 이상 입력해 주십시오."] });
       return;
     }
 
@@ -85,9 +85,7 @@ export default function BoardEdit() {
     }
   };
 
-  /* ===============================
-     렌더
-  ================================ */
+    // 렌더
 
   return (
     <ThemeProvider theme={boardTheme}>

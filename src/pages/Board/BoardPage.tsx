@@ -1,4 +1,6 @@
+// 게시글 목록 페이지
 import { useEffect, useState } from "react";
+// 자유게시판 목록 페이지
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -24,15 +26,14 @@ import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
 import { boardTheme } from "./theme/boardTheme";
 
-/* ===============================
-   타입 정의
-================================ */
+// 타입 정의
 
 type CategoryType = "ALL" | "공지" | "후기";
 
 interface Board {
   id: number;
   title: string;
+  // 타입 정의
   content?: string;
   boardType: "NOTICE" | "REVIEW";
   authorNickname: string;
@@ -42,19 +43,19 @@ interface Board {
   commentCount: number;
 }
 
-/* ===============================
-   메인 컴포넌트
-================================ */
+// 메인 컴포넌트
 
 export default function BoardPage() {
   const navigate = useNavigate();
   const MAIN_COLOR = "#ff6b00";
 
-  /* ===== 상태 ===== */
+  // 메인 컴포넌트
+  // 상태
   const [posts, setPosts] = useState<Board[]>([]);
   const [category, setCategory] = useState<CategoryType>("ALL");
 
   const [keyword, setKeyword] = useState("");
+    // 상태
   const [appliedKeyword, setAppliedKeyword] = useState("");
 
   const [totalPages, setTotalPages] = useState(1);
@@ -68,13 +69,13 @@ export default function BoardPage() {
   const [authorAnchor, setAuthorAnchor] = useState<null | HTMLElement>(null);
   const [selectedAuthor, setSelectedAuthor] = useState<string>("");
 
-  /* ===============================
-     게시글 목록 조회
-  ================================ */
+    // 게시글 목록 조회
+    // 글쓴이 메뉴
 
   useEffect(() => {
     const fetchBoards = async () => {
       const res = await axios.get("/api/boards", {
+    // 게시글 목록 조회
         params: {
           page,
           size,
@@ -112,18 +113,20 @@ export default function BoardPage() {
     fetchBoards();
   }, [page, category, appliedKeyword, size, appliedSearchType]);
 
-  /* ===============================
-     헬퍼 함수
-  ================================ */
+    // 헬퍼 함수
 
+  // 글 타입 반환
   const getBoardType = (post?: Board) => post?.boardType ?? "";
+    // 헬퍼 함수
 
+  // 글 타입 레이블 변환
   const getBoardLabel = (post: Board) => {
     if (post.boardType === "NOTICE") return "공지";
     if (post.boardType === "REVIEW") return "후기";
     return "-";
   };
 
+  // 검색 실행
   const handleSearch = () => {
     if (!keyword.trim()) {
       setToast("검색어를 입력해주세요.");
@@ -135,10 +138,10 @@ export default function BoardPage() {
     setAppliedSearchType(searchType);
   };
 
-  /* ===============================
-     글쓴이 메뉴
-  ================================ */
+    // 글쓴이 메뉴
 
+  // 글쓴이 메뉴 오픈
+    // 글쓴이 메뉴
   const openAuthorMenu = (
     e: React.MouseEvent<HTMLElement>,
     author: string
@@ -147,19 +150,19 @@ export default function BoardPage() {
     setSelectedAuthor(author);
   };
 
+  // 글쓴이 메뉴 닫기
   const closeAuthorMenu = () => {
     setAuthorAnchor(null);
   };
 
-  /* ===============================
-     렌더
-  ================================ */
+    // 렌더
 
+    // 렌더
   return (
     <ThemeProvider theme={boardTheme}>
       <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
 
-        {/* ===== 제목 / 글쓰기 ===== */}
+        {/* 제목 / 글쓰기 */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
           <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
             자유게시판
@@ -174,7 +177,7 @@ export default function BoardPage() {
           </Button>
         </Box>
 
-        {/* ===== 검색 ===== */}
+        {/* 검색 */}
         <Box sx={{ display: "flex", gap: 1, mb: 4 }}>
           <Select
             size="small"
@@ -214,7 +217,7 @@ export default function BoardPage() {
           </IconButton>
         </Box>
 
-        {/* ===== 카테고리 ===== */}
+        {/* 카테고리 */}
         <Box sx={{ display: "flex", gap: 0.5, mb: 1, alignItems: "center" }}>
           {["ALL", "공지", "후기"].map((c) => (
             <Button
@@ -255,7 +258,7 @@ export default function BoardPage() {
           </Box>
         </Box>
 
-        {/* ===== 테이블 ===== */}
+        {/* 테이블 */}
         <TableContainer component={Paper}>
           <Table sx={{ tableLayout: "fixed" }}>
             <TableHead>
@@ -346,7 +349,7 @@ export default function BoardPage() {
           </Table>
         </TableContainer>
 
-        {/* ===== 글쓴이 메뉴 ===== */}
+        {/* 글쓴이 메뉴 */}
         <Menu anchorEl={authorAnchor} open={Boolean(authorAnchor)} onClose={closeAuthorMenu}>
           <MenuItem onClick={() => alert(`${selectedAuthor} 글 보기`)}>글</MenuItem>
           <MenuItem onClick={() => alert(`${selectedAuthor} 댓글 보기`)}>댓글</MenuItem>
@@ -355,7 +358,7 @@ export default function BoardPage() {
           </MenuItem>
         </Menu>
 
-        {/* ===== 페이지네이션 ===== */}
+        {/* 페이지네이션 */}
         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
           <Pagination
             count={posts.length === 0 ? 1 : totalPages}

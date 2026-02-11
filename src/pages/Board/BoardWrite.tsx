@@ -15,26 +15,20 @@ import { boardTheme } from "./theme/boardTheme";
 import { Editor } from "@toast-ui/react-editor";
 import "@toast-ui/editor/dist/toastui-editor.css";
 
-/* ===============================
-   게시글 작성 페이지
-================================ */
+// 게시글 작성 페이지
 
 export default function BoardWrite() {
   const navigate = useNavigate();
   const MAIN_COLOR = "#ff6b00";
 
-  /* ===============================
-     말머리 옵션
-  ================================ */
+    // 말머리 옵션
 
   const categories = [
     { key: "후기", label: "후기" },
     { key: "공지", label: "공지" },
   ];
 
-  /* ===============================
-     상태 관리
-  ================================ */
+    // 상태 관리
 
   const [category, setCategory] = useState("후기");
   const [title, setTitle] = useState("");
@@ -43,10 +37,9 @@ export default function BoardWrite() {
 
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  /* ===============================
-     글 등록
-  ================================ */
+    // 글 등록
 
+  // 글 등록 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -54,7 +47,7 @@ export default function BoardWrite() {
     const html = editorInstance.getHTML();
     const text = editorInstance.getMarkdown().trim();
 
-    /* ===== 프론트 1차 검증 ===== */
+    // 프론트 1차 검증
 
     if (!title.trim()) {
       setErrors({ title: ["제목을 입력하십시오."] });
@@ -71,7 +64,7 @@ export default function BoardWrite() {
       return;
     }
 
-    /* ===== 서버 요청 ===== */
+    // 서버 요청
 
     try {
       await axios.post("/api/boards", {
@@ -98,9 +91,7 @@ export default function BoardWrite() {
     }
   };
 
-  /* ===============================
-     렌더
-  ================================ */
+    // 렌더
 
   return (
     <ThemeProvider theme={boardTheme}>
@@ -116,7 +107,7 @@ export default function BoardWrite() {
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
-              {/* ================= 말머리 ================= */}
+              {/* 말머리 */}
               <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <Typography sx={{ mr: 2, fontWeight: 600 }}>
                   말머리
@@ -144,7 +135,7 @@ export default function BoardWrite() {
                 </ButtonGroup>
               </Box>
 
-              {/* ================= 제목 ================= */}
+              {/* 제목 */}
               <TextField
                 fullWidth
                 placeholder="제목을 입력하세요"
@@ -158,7 +149,7 @@ export default function BoardWrite() {
                 sx={{ mb: 3 }}
               />
 
-              {/* ================= 에디터 ================= */}
+              {/* 에디터 */}
               <Box sx={{ mb: 3 }}>
                 <Editor
                   ref={editorRef}
@@ -176,7 +167,7 @@ export default function BoardWrite() {
                 )}
               </Box>
 
-              {/* ================= 버튼 ================= */}
+              {/* 버튼 */}
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button
                   variant="outlined"

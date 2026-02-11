@@ -50,6 +50,12 @@ export default function MainLayout() {
             >
               AI 서비스
             </span>
+             <span
+              className={location.pathname === "/register" ? "active" : ""}
+              onClick={() => navigate("/register")}
+            >
+              맛집 등록
+            </span>
           </nav>
 
           {user ? (
