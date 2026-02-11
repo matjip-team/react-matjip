@@ -5,6 +5,7 @@ import Homepage from "../pages/home/Homepage";
 import BoardPage from "../pages/board/BoardPage";
 import BoardWrite from "../pages/board/BoardWrite";
 import BoardDetail from "../pages/board/BoardDetail";
+import BoardEdit from "../pages/board/BoardEdit";
 import MapPage from "../pages/map/MapPage";
 import AIRecommendPage from "../pages/ai/AIRecommendPage";
 import SignupPage from "../pages/auth/SignupPage";
@@ -13,6 +14,7 @@ import Me from "../pages/auth/Me";
 import MyPage from "../pages/mypage/MyPage";
 import Sample2 from "../pages/Sample2";
 import Restaurant from "../pages/restaurant/Restaurant";
+import Register from "../pages/register/RegisterPage.tsx";
 
 export default function Router() {
   return (
@@ -23,6 +25,8 @@ export default function Router() {
           <Route path="/board" element={<BoardPage />} />
           <Route path="/board/write" element={<BoardWrite />} />
           <Route path="/board/:id" element={<BoardDetail />} />
+          <Route path="/board/edit/:id" element={<BoardEdit />} />
+
           {/* 아래는 나중에 추가 */}
           {<Route path="/map" element={<MapPage />} />}
           {/* <Route path="/map" element={<MapPage />} /> */}
@@ -33,6 +37,7 @@ export default function Router() {
           <Route path="/auth/mypage" element={<MyPage />} />
           <Route path="/sample" element={<Sample2 />} />
           <Route path="/restaurant/:id" element={<Restaurant />} />
+          <Route path="/register" element={<Register />} />
         </Route>
       </Routes>
     </BrowserRouter>

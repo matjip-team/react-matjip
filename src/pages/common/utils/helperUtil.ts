@@ -12,3 +12,37 @@ export function unwrapData<T>(res: ApiResponse<T>): T {
   }
   return res.data;
 }
+
+export const formatRelativeTime = (iso: string) => {
+  const now = new Date();
+  const target = new Date(iso);
+  const diff = now.getTime() - target.getTime();
+
+  const min = Math.floor(diff / 60000);
+  const hour = Math.floor(diff / 3600000);
+  const day = Math.floor(diff / 86400000);
+
+  if (min < 1) return "방금 전";
+  if (min < 60) return `${min}분 전`;
+  if (hour < 24) return `${hour}시간 전`;
+  if (day < 7) return `${day}일 전`;
+
+  return target.toLocaleDateString("ko-KR");
+};
+
+/**
+ * 날짜/시간을 "YYYY.MM.DD HH:MM:SS" 형식으로 포맷
+ */
+export const formatDateTime = (value: string): string => {
+  const d = new Date(value);
+
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}.${String(d.getDate()).padStart(2, "0")} ${String(
+    d.getHours()
+  ).padStart(2, "0")}:${String(d.getMinutes()).padStart(
+    2,
+    "0"
+  )}:${String(d.getSeconds()).padStart(2, "0")}`;
+};

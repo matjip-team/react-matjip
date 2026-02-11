@@ -38,8 +38,8 @@ export default function MainLayout() {
             </span>
 
             <span
-              className={location.pathname === "/community" ? "active" : ""}
-              onClick={() => navigate("/community")}
+              className={location.pathname === "/board" ? "active" : ""}
+              onClick={() => navigate("/board")}
             >
               커뮤니티
             </span>
@@ -49,6 +49,12 @@ export default function MainLayout() {
               onClick={() => navigate("/ai")}
             >
               AI 서비스
+            </span>
+             <span
+              className={location.pathname === "/register" ? "active" : ""}
+              onClick={() => navigate("/register")}
+            >
+              맛집 등록
             </span>
           </nav>
 
