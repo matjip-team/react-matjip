@@ -73,6 +73,8 @@ export default function ProfileEdit({ data }: Props) {
   const handleChange =
     (key: keyof ProfileResponseForm) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      if (key === "bio" && value.length > 200) return; // 200자 제한
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
       setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
       console.log("여긴 몇번을 탈까");
@@ -147,6 +149,7 @@ export default function ProfileEdit({ data }: Props) {
             onChange={handleChange("password")}
             error={!!fieldErrors.password}
             helperText={fieldErrors.password}
+            autoComplete="new-password" 
           />
           <TextField
             label="비밀번호 확인"
@@ -155,6 +158,7 @@ export default function ProfileEdit({ data }: Props) {
             onChange={handleChange("passwordConfirm")}
             error={!!fieldErrors.passwordConfirm}
             helperText={fieldErrors.passwordConfirm}
+            autoComplete="new-password" 
           />
           <TextField
             label="닉네임"
@@ -173,6 +177,12 @@ export default function ProfileEdit({ data }: Props) {
             multiline
             rows={4}
           />
+          <Typography
+            variant="caption"
+            sx={{ alignSelf: "flex-end", color: "text.secondary" }}
+          >
+            {form.bio?.length || 0} / 200
+          </Typography>
           <Button variant="contained" type="submit">
             저장
           </Button>

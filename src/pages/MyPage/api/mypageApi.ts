@@ -29,3 +29,7 @@ export const getLikes = (cursor: number, limit: number) => {
     `/api/mypage/likes?${params.toString()}`,
   );
 };
+
+export const deleteLike = (likeId: number) => {
+  return axios.delete(`/api/mypage/likes/${likeId}`);
+};

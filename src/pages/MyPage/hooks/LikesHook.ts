@@ -1,5 +1,9 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { getLikes } from "../api/mypageApi";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { getLikes, deleteLike } from "../api/mypageApi";
 import { CommonError } from "../../common/types/error";
 import type { AxiosError } from "axios";
 
@@ -20,5 +24,16 @@ export const useLikes = () => {
     staleTime: 1000 * 60 * 5, // 5분 동안 데이터 fresh
     gcTime: 1000 * 60 * 10, // 캐시 10분 유지
     retry: 0, // 실패 시 재시도 안 함
+  });
+};
+
+export const useDeleteLike = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (likeId: number) => deleteLike(likeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["likes"] });
+    },
   });
 };
