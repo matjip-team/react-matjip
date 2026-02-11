@@ -1,4 +1,4 @@
-import {  NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Badge, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import "./mainLayout.css";

@@ -16,14 +16,29 @@ const categories = [
   { label: "카페/디저트🍰", value: "카페/디저트" },
 ];
 
-/*
- * Spring에서 내려주는 DTO 타입
+/**
+ * 카테고리별 기본 이미지
+ */
+const categoryImageMap: Record<string, string> = {
+  "한식": "/images/korean.jpg",
+  "양식": "/images/western.jpg",
+  "고기/구이": "/images/meat.jpg",
+  "씨푸드": "/images/seafood.jpg",
+  "일중/세계음식": "/images/world.jpg",
+  "비건": "/images/vegan.jpg",
+  "카페/디저트": "/images/cafe.jpg",
+  "전체": "/images/world.jpg",
+};
+
+/**
+ * Spring DTO 타입
  */
 interface Restaurant {
   id: number;
   name: string;
   address: string;
-  imageUrl?: string; // 없으면 기본 이미지
+  category: string;
+  imageUrl?: string;
 }
 
 export default function HomePage() {
@@ -43,11 +58,7 @@ export default function HomePage() {
       const params =
         category === "전체" ? {} : { categories: category };
 
-      const res = await axios.get(
-        "/api/restaurants",
-        { params }
-      );
-
+      const res = await axios.get("/api/restaurants", { params });
       setStores(res.data.data);
     } catch (e) {
       console.error("맛집 조회 실패", e);
@@ -57,7 +68,7 @@ export default function HomePage() {
   };
 
   /**
-   * 최초 로딩 + 카테고리 변경 시
+   * 최초 로딩 + 카테고리 변경
    */
   useEffect(() => {
     fetchRestaurants(selectedCategory);
@@ -65,9 +76,7 @@ export default function HomePage() {
 
   return (
     <div className="page-container">
-      {/* =========================
-          카테고리 필터
-         ========================= */}
+      {/* 카테고리 필터 */}
       <section className="category-filter">
         {categories.map((cat) => (
           <button
@@ -80,9 +89,7 @@ export default function HomePage() {
         ))}
       </section>
 
-      {/* =========================
-          맛집 리스트
-         ========================= */}
+      {/* 맛집 리스트 */}
       <section className="store-grid">
         {loading && <p>로딩 중...</p>}
 
@@ -94,10 +101,15 @@ export default function HomePage() {
           <div
             key={store.id}
             className="store-card"
-            onClick={() => navigate(`/store/${store.id}`)}
+            onClick={() => navigate(`/restaurant/${store.id}`)}
           >
             <img
-              src={store.imageUrl ?? "/images/default.jpg"}
+              src={
+                store.imageUrl
+                  ? store.imageUrl
+                  : categoryImageMap[store.category] ??
+                    "/images/세계음식_레퍼런스.jpg"
+              }
               alt={store.name}
             />
             <p>{store.name}</p>
