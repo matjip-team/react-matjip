@@ -1,9 +1,8 @@
-import { type ProfileResponse, type ProfileRequest } from './../types/profile';
+import { type ProfileResponse, type ProfileRequest } from "./../types/profile";
 import axios from "../../common/axios";
 import type { ApiResponse } from "../../common/types/api";
-import type { Recommendation } from "../types/recommendation";
-import type { Review } from "../types/review";
-
+import type { LikesPage } from "../types/likes";
+import type { ReviewPage } from "../types/review";
 
 export const updateProfile = (data: FormData) =>
   axios.put<ApiResponse<ProfileRequest>>("/api/mypage/profile", data);
@@ -11,7 +10,26 @@ export const updateProfile = (data: FormData) =>
 export const getProfile = () =>
   axios.get<ApiResponse<ProfileResponse>>("/api/mypage/profile");
 
-export const recommendation = () =>
-  axios.get<ApiResponse<Recommendation>>("/api/mypage/recommendations");
+export const getReview = (cursor: number, limit: number) => {
+  const params = new URLSearchParams({
+    cursor: cursor.toString(),
+    limit: limit.toString(),
+  });
+  return axios.get<ApiResponse<ReviewPage>>(
+    `/api/mypage/reviews?${params.toString()}`,
+  );
+};
 
-export const review = () => axios.get<ApiResponse<Review>>("/api/mypage/reviews");
+export const getLikes = (cursor: number, limit: number) => {
+  const params = new URLSearchParams({
+    cursor: cursor.toString(),
+    limit: limit.toString(),
+  });
+  return axios.get<ApiResponse<LikesPage>>(
+    `/api/mypage/likes?${params.toString()}`,
+  );
+};
+
+export const deleteLike = (likeId: number) => {
+  return axios.delete(`/api/mypage/likes/${likeId}`);
+};

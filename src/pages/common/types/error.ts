@@ -14,3 +14,13 @@ export interface ValidationErrorResponse {
   data: null;
   error: ApiError;
 }
+
+export class CommonError<T> extends Error {
+  data?: T;
+
+  constructor(message: string, data?: T) {
+    super(message);
+    this.name = "ApiError";
+    this.data = data;
+  }
+}

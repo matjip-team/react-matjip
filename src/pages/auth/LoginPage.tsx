@@ -51,9 +51,13 @@ const LoginPage = () => {
       if (response.data?.success) {
         // 로그인 성공 시 홈으로 이동
         const user = response.data.data;
-        setUser(user); // ⭐ 전역 로그인 상태 저장
-
-        navigate("/");
+        if (user) {
+          setUser(user); // ⭐ 전역 로그인 상태 저장
+          navigate("/");  
+        } else {
+          throw new Error("로그인 오류 발생");
+        }
+        
         return;
       }
 

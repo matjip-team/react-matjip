@@ -15,7 +15,7 @@ type RecommendResponse = {
   ai_comment?: string;
 };
 
-export default function AIRecommendPage() {s
+export default function AIRecommendPage() {
   const { user } = useAuth();
   const [question, setQuestion] = useState("");
   const [places, setPlaces] = useState<Place[]>([]);
@@ -23,7 +23,6 @@ export default function AIRecommendPage() {s
   const [loading, setLoading] = useState(false);
 
   // 🔥 로그인 상태 확인 (예: localStorage, API 등)
-
 
   const getRecommendation = async () => {
     if (!question.trim()) return;
