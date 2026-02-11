@@ -12,7 +12,7 @@ import SignupPage from "../pages/auth/SignupPage";
 import LoginPage from "../pages/auth/LoginPage";
 import Me from "../pages/auth/Me";
 import MyPage from "../pages/mypage/MyPage";
-import Sample2 from "../pages/Sample2";
+import Sample3 from "../pages/Sample3";
 import Register from "../pages/register/RegisterPage.tsx";
 
 export default function Router() {
@@ -34,7 +34,7 @@ export default function Router() {
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/me" element={<Me />} />
           <Route path="/auth/mypage" element={<MyPage />} />
-          <Route path="/sample" element={<Sample2 />} />
+          <Route path="/sample3" element={<Sample3 />} />
           <Route path="/register" element={<Register />} />
         </Route>
       </Routes>
