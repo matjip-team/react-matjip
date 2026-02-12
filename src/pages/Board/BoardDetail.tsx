@@ -341,7 +341,7 @@ export default function BoardDetail() {
         <Divider sx={{ my: 1 }} />
 
         {/* 이미지 */}
-        {post.imageUrl && (
+        {false && post.imageUrl && (
           <Box sx={{ my: 3, textAlign: "center" }}>
             <img
               src={post.imageUrl}
