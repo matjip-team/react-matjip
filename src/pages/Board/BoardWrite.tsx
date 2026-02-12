@@ -15,6 +15,10 @@ import "react-quill/dist/quill.snow.css";
 import axios from "../common/axios";
 import { boardTheme } from "./theme/boardTheme";
 import { uploadBoardImage } from "./api/boardImageUpload";
+// import { Editor } from "@toast-ui/react-editor";
+// import "@toast-ui/editor/dist/toastui-editor.css";
+
+// 게시글 작성 페이지
 
 export default function BoardWrite() {
   const navigate = useNavigate();
@@ -229,6 +233,8 @@ export default function BoardWrite() {
                   </Typography>
                 )}
               </Box>
+              {/* 에디터 */}
+
 
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button

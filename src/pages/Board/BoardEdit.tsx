@@ -15,6 +15,8 @@ import { boardTheme } from "./theme/boardTheme";
 import { uploadBoardImage } from "./api/boardImageUpload";
 import { Editor } from "@toast-ui/react-editor";
 import "@toast-ui/editor/dist/toastui-editor.css";
+// import { Editor } from "@toast-ui/react-editor";
+// import "@toast-ui/editor/dist/toastui-editor.css";
 
 // 게시글 수정 페이지
 
@@ -189,6 +191,7 @@ export default function BoardEdit() {
                     이미지 업로드 중입니다...
                   </Typography>
                 )}
+               
               </Box>
 
               {/* 버튼 */}
