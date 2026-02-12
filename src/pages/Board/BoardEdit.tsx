@@ -12,6 +12,7 @@ import {
 import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
 import { boardTheme } from "./theme/boardTheme";
+import { uploadBoardImage } from "./api/boardImageUpload";
 import { Editor } from "@toast-ui/react-editor";
 import "@toast-ui/editor/dist/toastui-editor.css";
 
@@ -30,8 +31,38 @@ export default function BoardEdit() {
   const [category, setCategory] = useState("후기");
   const [title, setTitle] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const editorRef = useRef<any>(null);
+
+  const handleImageUpload = async (
+    blob: Blob | File,
+    callback: (url: string, altText?: string) => void,
+  ) => {
+    const file =
+      blob instanceof File
+        ? blob
+        : new File([blob], `board-image-${Date.now()}`, {
+            type: blob.type || "image/png",
+          });
+
+    try {
+      setIsUploadingImage(true);
+      const fileUrl = await uploadBoardImage(file);
+      callback(fileUrl, file.name);
+    } catch (error: any) {
+      console.error(error);
+      const status = error?.response?.status;
+
+      if (status === 401 || status === 403) {
+        alert("로그인이 필요합니다.");
+      } else {
+        alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+      }
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   // 기존 게시글 불러오기
 
@@ -143,7 +174,21 @@ export default function BoardEdit() {
                   previewStyle="vertical"
                   height="400px"
                   initialEditType="wysiwyg"
+                  hooks={{
+                    addImageBlobHook: (
+                      blob: Blob | File,
+                      callback: (url: string, altText?: string) => void,
+                    ) => {
+                      void handleImageUpload(blob, callback);
+                      return false;
+                    },
+                  }}
                 />
+                {isUploadingImage && (
+                  <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
+                    이미지 업로드 중입니다...
+                  </Typography>
+                )}
               </Box>
 
               {/* 버튼 */}

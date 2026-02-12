@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -9,45 +9,109 @@ import {
   CardContent,
   Typography,
 } from "@mui/material";
-import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import axios from "../common/axios";
 import { boardTheme } from "./theme/boardTheme";
-import { Editor } from "@toast-ui/react-editor";
-import "@toast-ui/editor/dist/toastui-editor.css";
-
-// 게시글 작성 페이지
+import { uploadBoardImage } from "./api/boardImageUpload";
 
 export default function BoardWrite() {
   const navigate = useNavigate();
   const MAIN_COLOR = "#ff6b00";
-
-    // 말머리 옵션
 
   const categories = [
     { key: "후기", label: "후기" },
     { key: "공지", label: "공지" },
   ];
 
-    // 상태 관리
-
   const [category, setCategory] = useState("후기");
   const [title, setTitle] = useState("");
-
-  const editorRef = useRef<any>(null);
-
+  const [content, setContent] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-    // 글 등록
+  const quillRef = useRef<ReactQuill | null>(null);
 
-  // 글 등록 처리
+  const extractPlainText = (html: string) => {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent?.trim() ?? "";
+  };
+
+  const insertImageToEditor = useCallback((fileUrl: string) => {
+    const quill = quillRef.current?.getEditor();
+    if (!quill) return;
+
+    const range = quill.getSelection(true);
+    const index = range ? range.index : quill.getLength();
+
+    quill.insertEmbed(index, "image", fileUrl, "user");
+    quill.setSelection(index + 1);
+  }, []);
+
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      try {
+        setIsUploadingImage(true);
+        const fileUrl = await uploadBoardImage(file);
+        insertImageToEditor(fileUrl);
+      } catch (error: any) {
+        console.error(error);
+        const status = error?.response?.status;
+        const uploadStep = error?.uploadStep;
+
+        if (uploadStep === "presign" && (status === 401 || status === 403)) {
+          alert("로그인이 필요합니다.");
+        } else if (uploadStep === "s3-put" && status === 403) {
+          alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
+        } else {
+          alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+        }
+      } finally {
+        setIsUploadingImage(false);
+      }
+    },
+    [insertImageToEditor],
+  );
+
+  const handleToolbarImage = useCallback(() => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        void handleImageUpload(file);
+      }
+    };
+  }, [handleImageUpload]);
+
+  const quillModules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ["bold", "italic", "underline", "strike"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link", "image"],
+          ["clean"],
+        ],
+        handlers: {
+          image: handleToolbarImage,
+        },
+      },
+    }),
+    [handleToolbarImage],
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const editorInstance = editorRef.current?.getInstance();
-    const html = editorInstance.getHTML();
-    const text = editorInstance.getMarkdown().trim();
-
-    // 프론트 1차 검증
+    const html = content;
+    const text = extractPlainText(content);
 
     if (!title.trim()) {
       setErrors({ title: ["제목을 입력하십시오."] });
@@ -63,8 +127,6 @@ export default function BoardWrite() {
       setErrors({ content: ["내용을 입력해 주세요."] });
       return;
     }
-
-    // 서버 요청
 
     try {
       await axios.post("/api/boards", {
@@ -91,14 +153,11 @@ export default function BoardWrite() {
     }
   };
 
-    // 렌더
-
   return (
     <ThemeProvider theme={boardTheme}>
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Card>
           <CardContent>
-            {/* 제목 */}
             <Typography
               variant="h5"
               sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}
@@ -107,11 +166,8 @@ export default function BoardWrite() {
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
-              {/* 말머리 */}
               <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Typography sx={{ mr: 2, fontWeight: 600 }}>
-                  말머리
-                </Typography>
+                <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
 
                 <ButtonGroup size="small">
                   {categories.map((c) => (
@@ -135,7 +191,6 @@ export default function BoardWrite() {
                 </ButtonGroup>
               </Box>
 
-              {/* 제목 */}
               <TextField
                 fullWidth
                 placeholder="제목을 입력하세요"
@@ -149,15 +204,17 @@ export default function BoardWrite() {
                 sx={{ mb: 3 }}
               />
 
-              {/* 에디터 */}
               <Box sx={{ mb: 3 }}>
-                <Editor
-                  ref={editorRef}
-                  initialValue=""
-                  previewStyle="vertical"
-                  height="400px"
-                  initialEditType="wysiwyg"
-                  useCommandShortcut
+                <ReactQuill
+                  ref={quillRef}
+                  theme="snow"
+                  value={content}
+                  onChange={(value) => {
+                    setContent(value);
+                    setErrors((prev) => ({ ...prev, content: [] }));
+                  }}
+                  modules={quillModules}
+                  style={{ height: "400px", marginBottom: "45px" }}
                 />
 
                 {errors.content && (
@@ -165,9 +222,14 @@ export default function BoardWrite() {
                     {errors.content[0]}
                   </Typography>
                 )}
+
+                {isUploadingImage && (
+                  <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
+                    이미지 업로드 중입니다...
+                  </Typography>
+                )}
               </Box>
 
-              {/* 버튼 */}
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button
                   variant="outlined"
