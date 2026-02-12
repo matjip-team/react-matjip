@@ -1,0 +1,10 @@
+/* styles.css */
+.custom-quill .ql-toolbar {
+  background-color: #a3d5f1;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid #ccc;
+}
+
+.custom-quill .ql-container {
+  border-top: none;
+}

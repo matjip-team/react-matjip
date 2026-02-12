@@ -1,128 +1,96 @@
-import "./styles.scss";
-import Document from "@tiptap/extension-document";
-import Paragraph from "@tiptap/extension-paragraph";
-import { TableKit } from "@tiptap/extension-table";
-import Text from "@tiptap/extension-text";
-import { Gapcursor } from "@tiptap/extensions";
-import { EditorContent, useEditor } from "@tiptap/react";
 
-export default function PostWritePage() {
-  const editor = useEditor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      Gapcursor,
-      TableKit.configure({
-        table: { resizable: true },
-      }),
-    ],
-    content: `
-        <table>
-          <tbody>
-            <tr>
-              <th>Name</th>
-              <th colspan="3">Description</th>
-            </tr>
-            <tr>
-              <td>Cyndi Lauper</td>
-              <td>Singer</td>
-              <td>Songwriter</td>
-              <td>Actress</td>
-            </tr>
-          </tbody>
-        </table>
-      `,
-  });
+import { useRef, useMemo, useEffect } from "react";
+import ReactQuill, { Quill } from "react-quill-new";
+import QuillTableBetter from "quill-table-better";
+import "react-quill-new/dist/quill.snow.css";
+import "quill-table-better/dist/quill-table-better.css";
 
-  if (!editor) {
-    return null;
-  }
+import hljs from 'highlight.js';
+import "highlight.js/styles/atom-one-dark.css";
+import "./styles.css"; // <-- 여기서 import
+
+// import ImageResize from 'quill-image-resize-module-react';
+
+import ImageResize from 'quill-image-resize';
+
+Quill.register('modules/ImageResize', ImageResize);
+
+Quill.register({ "modules/table-better": QuillTableBetter }, true);
+Quill.register('modules/imageResize', ImageResize);
+
+const QuillTableBetterDemo = () => {
+  const quillRef = useRef<ReactQuill | null>(null);
+
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ header: 1 }, { header: 2 }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image", "video", "code-block", "formula"],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+        [{ indent: "-1" }, { indent: "+1" }],
+        [{ direction: "rtl" }],
+        [{ size: ["small", false, "large", "huge"] }],
+        [{ color: [] }, { background: [] }],
+        [{ font: [] }],
+        [{ align: [] }],
+        ["table-better"],
+        ['clean'],
+         [{ 'direction': 'rtl' }],  
+         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+         [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+         [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+      ],
+    },
+    table: false,
+    "table-better": {
+      language: "en_US",
+      menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+      toolbarTable: true,
+    },
+    keyboard: {
+      bindings: QuillTableBetter.keyboardBindings,
+    },
+    imageResize: {
+      parchment: Quill.import('parchment'),
+      modules: ['Resize', 'DisplaySize', 'Toolbar']
+    },
+    syntax: { hljs },
+  }), []);
+
+  useEffect(() => {
+    if (quillRef.current) {
+      const editor = quillRef.current.getEditor();
+      const html = `
+      <table class="ql-table-better">
+        <tbody>
+          <tr><td>1</td><td>2</td><td>3</td></tr>
+          <tr><td>4</td><td>5</td><td>6</td></tr>
+          <tr><td>7</td><td>8</td><td>9</td></tr>
+        </tbody>
+      </table>`;
+      editor.clipboard.dangerouslyPasteHTML(html);
+    }
+  }, []);
 
   return (
-    <>
-      <div className="control-group">
-        <div className="button-group">
-          <button
-            onClick={() =>
-              editor
-                .chain()
-                .focus()
-                .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                .run()
-            }
-          >
-            Insert table
-          </button>
-          <button
-            onClick={() => editor.chain().focus().addColumnBefore().run()}
-          >
-            Add column before
-          </button>
-          <button onClick={() => editor.chain().focus().addColumnAfter().run()}>
-            Add column after
-          </button>
-          <button onClick={() => editor.chain().focus().deleteColumn().run()}>
-            Delete column
-          </button>
-          <button onClick={() => editor.chain().focus().addRowBefore().run()}>
-            Add row before
-          </button>
-          <button onClick={() => editor.chain().focus().addRowAfter().run()}>
-            Add row after
-          </button>
-          <button onClick={() => editor.chain().focus().deleteRow().run()}>
-            Delete row
-          </button>
-          <button onClick={() => editor.chain().focus().deleteTable().run()}>
-            Delete table
-          </button>
-          <button onClick={() => editor.chain().focus().mergeCells().run()}>
-            Merge cells
-          </button>
-          <button onClick={() => editor.chain().focus().splitCell().run()}>
-            Split cell
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeaderColumn().run()}
-          >
-            Toggle header column
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeaderRow().run()}
-          >
-            Toggle header row
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleHeaderCell().run()}
-          >
-            Toggle header cell
-          </button>
-          <button onClick={() => editor.chain().focus().mergeOrSplit().run()}>
-            Merge or split
-          </button>
-          <button
-            onClick={() =>
-              editor.chain().focus().setCellAttribute("colspan", 2).run()
-            }
-          >
-            Set cell attribute
-          </button>
-          <button onClick={() => editor.chain().focus().fixTables().run()}>
-            Fix tables
-          </button>
-          <button onClick={() => editor.chain().focus().goToNextCell().run()}>
-            Go to next cell
-          </button>
-          <button
-            onClick={() => editor.chain().focus().goToPreviousCell().run()}
-          >
-            Go to previous cell
-          </button>
-        </div>
+    <div style={{ padding: "40px", maxWidth: "900px", margin: "0 auto" }}>
+      <h1>🍽 Quill 샘플 페이지</h1>
+      <p>Table, 이미지 리사이즈, 동영상, 이미지 상/중/하 정렬 포함</p>
+
+      {/* 이미지 상/중/하 버튼 */}
+      <div style={{ marginBottom: 10 }}>       
       </div>
 
-      <EditorContent editor={editor} />
-    </>
-  );
-}
+      <ReactQuill
+        ref={quillRef}
+        theme="snow"
+        modules={modules}
+        style={{ height: 400 }}
+        className="custom-quill"
+      />
+    </div>
+  )
+};
+
+export default QuillTableBetterDemo;

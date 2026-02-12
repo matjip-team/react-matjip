@@ -29,3 +29,20 @@ export const formatRelativeTime = (iso: string) => {
 
   return target.toLocaleDateString("ko-KR");
 };
+
+/**
+ * 날짜/시간을 "YYYY.MM.DD HH:MM:SS" 형식으로 포맷
+ */
+export const formatDateTime = (value: string): string => {
+  const d = new Date(value);
+
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}.${String(d.getDate()).padStart(2, "0")} ${String(
+    d.getHours()
+  ).padStart(2, "0")}:${String(d.getMinutes()).padStart(
+    2,
+    "0"
+  )}:${String(d.getSeconds()).padStart(2, "0")}`;
+};
