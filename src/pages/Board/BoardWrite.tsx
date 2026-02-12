@@ -15,10 +15,6 @@ import "react-quill/dist/quill.snow.css";
 import axios from "../common/axios";
 import { boardTheme } from "./theme/boardTheme";
 import { uploadBoardImage } from "./api/boardImageUpload";
-// import { Editor } from "@toast-ui/react-editor";
-// import "@toast-ui/editor/dist/toastui-editor.css";
-
-// 게시글 작성 페이지
 
 export default function BoardWrite() {
   const navigate = useNavigate();
@@ -63,12 +59,9 @@ export default function BoardWrite() {
       } catch (error: any) {
         console.error(error);
         const status = error?.response?.status;
-        const uploadStep = error?.uploadStep;
 
-        if (uploadStep === "presign" && (status === 401 || status === 403)) {
+        if (status === 401 || status === 403) {
           alert("로그인이 필요합니다.");
-        } else if (uploadStep === "s3-put" && status === 403) {
-          alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
         } else {
           alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
         }
@@ -233,8 +226,6 @@ export default function BoardWrite() {
                   </Typography>
                 )}
               </Box>
-              {/* 에디터 */}
-
 
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button
