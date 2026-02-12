@@ -1,109 +1,128 @@
-// // src/pages/WebEditorFullSample.tsx
-// import React, { useState, useRef } from "react";
-// import ReactQuill, { Quill } from "react-quill";
-// import { Box, Button } from "@mui/material";
-// import "react-quill/dist/quill.snow.css";
+import "./styles.scss";
+import Document from "@tiptap/extension-document";
+import Paragraph from "@tiptap/extension-paragraph";
+import { TableKit } from "@tiptap/extension-table";
+import Text from "@tiptap/extension-text";
+import { Gapcursor } from "@tiptap/extensions";
+import { EditorContent, useEditor } from "@tiptap/react";
 
-// // 이미지 크기 조절
-// // @ts-ignore
-// import ImageResize from "quill-image-resize-module-react";
+export default function PostWritePage() {
+  const editor = useEditor({
+    extensions: [
+      Document,
+      Paragraph,
+      Text,
+      Gapcursor,
+      TableKit.configure({
+        table: { resizable: true },
+      }),
+    ],
+    content: `
+        <table>
+          <tbody>
+            <tr>
+              <th>Name</th>
+              <th colspan="3">Description</th>
+            </tr>
+            <tr>
+              <td>Cyndi Lauper</td>
+              <td>Singer</td>
+              <td>Songwriter</td>
+              <td>Actress</td>
+            </tr>
+          </tbody>
+        </table>
+      `,
+  });
 
-// // 테이블 관련
-// import QuillTable from "quill-table";
-// import QuillTableUI from "quill-table-ui";
+  if (!editor) {
+    return null;
+  }
 
-// // 모듈 등록
-// Quill.register("modules/imageResize", ImageResize);
-// Quill.register("modules/table", QuillTable);
-// Quill.register("modules/tableUI", QuillTableUI);
+  return (
+    <>
+      <div className="control-group">
+        <div className="button-group">
+          <button
+            onClick={() =>
+              editor
+                .chain()
+                .focus()
+                .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                .run()
+            }
+          >
+            Insert table
+          </button>
+          <button
+            onClick={() => editor.chain().focus().addColumnBefore().run()}
+          >
+            Add column before
+          </button>
+          <button onClick={() => editor.chain().focus().addColumnAfter().run()}>
+            Add column after
+          </button>
+          <button onClick={() => editor.chain().focus().deleteColumn().run()}>
+            Delete column
+          </button>
+          <button onClick={() => editor.chain().focus().addRowBefore().run()}>
+            Add row before
+          </button>
+          <button onClick={() => editor.chain().focus().addRowAfter().run()}>
+            Add row after
+          </button>
+          <button onClick={() => editor.chain().focus().deleteRow().run()}>
+            Delete row
+          </button>
+          <button onClick={() => editor.chain().focus().deleteTable().run()}>
+            Delete table
+          </button>
+          <button onClick={() => editor.chain().focus().mergeCells().run()}>
+            Merge cells
+          </button>
+          <button onClick={() => editor.chain().focus().splitCell().run()}>
+            Split cell
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeaderColumn().run()}
+          >
+            Toggle header column
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeaderRow().run()}
+          >
+            Toggle header row
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeaderCell().run()}
+          >
+            Toggle header cell
+          </button>
+          <button onClick={() => editor.chain().focus().mergeOrSplit().run()}>
+            Merge or split
+          </button>
+          <button
+            onClick={() =>
+              editor.chain().focus().setCellAttribute("colspan", 2).run()
+            }
+          >
+            Set cell attribute
+          </button>
+          <button onClick={() => editor.chain().focus().fixTables().run()}>
+            Fix tables
+          </button>
+          <button onClick={() => editor.chain().focus().goToNextCell().run()}>
+            Go to next cell
+          </button>
+          <button
+            onClick={() => editor.chain().focus().goToPreviousCell().run()}
+          >
+            Go to previous cell
+          </button>
+        </div>
+      </div>
 
-// // 이미지 업로드 핸들러
-// function imageHandler(this: any) {
-//   const input = document.createElement("input");
-//   input.setAttribute("type", "file");
-//   input.setAttribute("accept", "image/*");
-//   input.click();
-
-//   input.onchange = () => {
-//     const file = input.files?.[0];
-//     if (file) {
-//       const reader = new FileReader();
-//       reader.onload = (e) => {
-//         const range = this.quill.getSelection(true);
-//         this.quill.insertEmbed(range.index, "image", e.target?.result);
-//         this.quill.setSelection(range.index + 1);
-//       };
-//       reader.readAsDataURL(file);
-//     }
-//   };
-// }
-
-// // Quill 모듈 설정
-// const modules = {
-//   toolbar: {
-//     container: [
-//       ["bold", "italic", "underline", "strike"],
-//       ["link", "image", "table"], // table 버튼 포함
-//       [{ header: [1, 2, 3, false] }],
-//       [{ list: "ordered" }, { list: "bullet" }],
-//       ["clean"],
-//     ],
-//     handlers: {
-//       image: imageHandler,
-//     },
-//   },
-//   imageResize: {
-//     parchment: Quill.import("parchment"),
-//     modules: ["Resize", "DisplaySize"],
-//   },
-//   table: true,
-//   tableUI: true,
-// };
-
-// export default function WebEditorFullSample() {
-//   const [content, setContent] = useState<string>("");
-//   const [htmlMode, setHtmlMode] = useState<boolean>(false);
-//   const quillRef = useRef<ReactQuill>(null);
-
-//   return (
-//     <Box sx={{ p: 2 }}>
-//       <Button
-//         variant="contained"
-//         onClick={() => setHtmlMode((prev) => !prev)}
-//         sx={{ mb: 2 }}
-//       >
-//         {htmlMode ? "리치 에디터 모드" : "HTML 모드"}
-//       </Button>
-
-//       {htmlMode ? (
-//         <textarea
-//           value={content}
-//           onChange={(e) => setContent(e.target.value)}
-//           style={{ width: "100%", minHeight: 200, fontFamily: "monospace" }}
-//         />
-//       ) : (
-//         <ReactQuill
-//           ref={quillRef}
-//           value={content}
-//           onChange={setContent}
-//           modules={modules}
-//           theme="snow"
-//           style={{ height: 300, marginBottom: 20 }}
-//         />
-//       )}
-
-//       <Box sx={{ mt: 4 }}>
-//         <h3>Preview</h3>
-//         <Box
-//           sx={{
-//             border: "1px solid #ddd",
-//             p: 2,
-//             minHeight: 200,
-//             backgroundColor: "#fefefe",
-//           }}
-//           dangerouslySetInnerHTML={{ __html: content }}
-//         />
-//       </Box>
-//     </Box>
-//   );
-// }
+      <EditorContent editor={editor} />
+    </>
+  );
+}
