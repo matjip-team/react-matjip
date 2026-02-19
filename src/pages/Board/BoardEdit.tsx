@@ -12,8 +12,8 @@ import {
 import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
 import { boardTheme } from "./theme/boardTheme";
-import { Editor } from "@toast-ui/react-editor";
-import "@toast-ui/editor/dist/toastui-editor.css";
+// import { Editor } from "@toast-ui/react-editor";
+// import "@toast-ui/editor/dist/toastui-editor.css";
 
 // 게시글 수정 페이지
 
@@ -137,13 +137,13 @@ export default function BoardEdit() {
 
               {/* 에디터 */}
               <Box sx={{ mb: 3 }}>
-                <Editor
+                {/* <Editor
                   ref={editorRef}
                   initialValue=""
                   previewStyle="vertical"
                   height="400px"
                   initialEditType="wysiwyg"
-                />
+                /> */}
               </Box>
 
               {/* 버튼 */}

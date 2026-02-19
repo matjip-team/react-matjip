@@ -40,3 +40,14 @@
 .read-the-docs {
   color: #888;
 }
+
+.categroy-filter {
+  margin-bottom: 10em;
+  font-size: smaller;
+}
+
+
+.css-g1daf-MuiButtonBase-root-MuiButton-root {
+  background-color: #f5c905 !important;
+  color: white;
+}

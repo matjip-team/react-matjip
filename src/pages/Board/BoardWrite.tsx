@@ -12,8 +12,8 @@ import {
 import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
 import { boardTheme } from "./theme/boardTheme";
-import { Editor } from "@toast-ui/react-editor";
-import "@toast-ui/editor/dist/toastui-editor.css";
+// import { Editor } from "@toast-ui/react-editor";
+// import "@toast-ui/editor/dist/toastui-editor.css";
 
 // 게시글 작성 페이지
 
@@ -151,14 +151,14 @@ export default function BoardWrite() {
 
               {/* 에디터 */}
               <Box sx={{ mb: 3 }}>
-                <Editor
+                {/* <Editor
                   ref={editorRef}
                   initialValue=""
                   previewStyle="vertical"
                   height="400px"
                   initialEditType="wysiwyg"
                   useCommandShortcut
-                />
+                /> */}
 
                 {errors.content && (
                   <Typography color="error" sx={{ mt: 1 }}>

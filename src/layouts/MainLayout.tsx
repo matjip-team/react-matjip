@@ -2,7 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Badge, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import "./mainLayout.css";
-import { useAuth } from "../pages/common/context/useAuth.ts";
+import { useAuth } from "../pages/common/context/useAuth";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -20,7 +20,20 @@ export default function MainLayout() {
       {/* 헤더 */}
       <header className="header">
         <div className="header-inner">
-          <div className="logo">PROJECT MATJIB</div>
+
+          {/* 🔥 로고 영역 변경 */}
+          <div
+            className="logo"
+            onClick={() => navigate("/")}
+            style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+          >
+            <img
+             src="/images/logo.png"
+             alt="MATJIB Logo"
+             style={{ height:100 }}
+            />
+
+          </div>
 
           <nav className="nav">
             <span
@@ -50,7 +63,8 @@ export default function MainLayout() {
             >
               AI 서비스
             </span>
-             <span
+
+            <span
               className={location.pathname === "/register" ? "active" : ""}
               onClick={() => navigate("/register")}
             >
@@ -59,42 +73,43 @@ export default function MainLayout() {
           </nav>
 
           {user ? (
-            <>
-              <div
-                className="auth"
-                
-                style={{ display: "flex", alignItems: "center" }}
-              >
-                <span>안녕하세요, {user?.name ?? ""}님</span>
-                <span onClick={logout} style={{ marginLeft: 10 }}>로그아웃</span>
-                <Tooltip title="My 페이지 클릭">
-                  <div
-                    onClick={myHandleClick}
-                    style={{
-                      display: "inline-block",
-                      cursor: "pointer",
-                      marginLeft: 10,
-                    }}
+            <div
+              className="auth"
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              <span>안녕하세요, {user?.name ?? ""}님</span>
+              <span onClick={logout} style={{ marginLeft: 10 }}>
+                로그아웃
+              </span>
+
+              <Tooltip title="My 페이지 클릭">
+                <div
+                  onClick={myHandleClick}
+                  style={{
+                    display: "inline-block",
+                    cursor: "pointer",
+                    marginLeft: 10,
+                  }}
+                >
+                  <Badge
+                    badgeContent={1}
+                    color="primary"
+                    overlap="circular"
                   >
-                    <Badge
-                      badgeContent={1} // 표시할 숫자
-                      color="primary"
-                      overlap="circular"
-                    >
-                      <Avatar>
-                        <PersonIcon />
-                      </Avatar>
-                    </Badge>
-                  </div>
-                </Tooltip>
-              </div>
-            </>
+                    <Avatar>
+                      <PersonIcon />
+                    </Avatar>
+                  </Badge>
+                </div>
+              </Tooltip>
+            </div>
           ) : (
-            <>
-              <div className="auth" onClick={() => navigate("/auth/login")}>
-                로그인
-              </div>
-            </>
+            <div
+              className="auth"
+              onClick={() => navigate("/auth/login")}
+            >
+              로그인
+            </div>
           )}
         </div>
       </header>
@@ -106,9 +121,6 @@ export default function MainLayout() {
           <div className="hero-content">
             <h1>오늘 뭐 먹지?</h1>
             <p>지역과 취향에 맞는 맛집을 찾아보세요</p>
-            <div className="hero-search">
-              <input placeholder="맛집명, 지역명을 검색해보세요" />
-            </div>
           </div>
         </section>
       )}
@@ -118,7 +130,9 @@ export default function MainLayout() {
         <Outlet />
       </main>
 
-      <footer className="footer">Copyright © MATJIB</footer>
+      <footer className="footer">
+        Copyright © MATJIB
+      </footer>
     </div>
   );
 }
