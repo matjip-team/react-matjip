@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -62,6 +62,9 @@ const ACCEPTED_LICENSE_TYPES = [
 
 const MAX_LICENSE_FILE_SIZE = 10 * 1024 * 1024;
 
+const getHttpStatus = (error: unknown): number | undefined =>
+  (error as HttpErrorLike)?.response?.status;
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -92,11 +95,15 @@ export default function RegisterPage() {
   );
 
   useEffect(() => {
-    if (!window.kakao || !window.kakao.maps) return;
+    if (!window.kakao || !window.kakao.maps) {
+      return;
+    }
 
     kakao.maps.load(() => {
       const container = mapContainerRef.current;
-      if (!container) return;
+      if (!container) {
+        return;
+      }
 
       const map = new kakao.maps.Map(container, {
         center: new kakao.maps.LatLng(37.5665, 126.978),
@@ -113,7 +120,9 @@ export default function RegisterPage() {
 
   const moveMapToPlace = (place: PlaceItem) => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map) {
+      return;
+    }
 
     const position = new kakao.maps.LatLng(place.lat, place.lng);
     map.setCenter(position);
@@ -211,7 +220,7 @@ export default function RegisterPage() {
       setLicenseFileName(file.name);
       setToast("사업자등록증 파일 업로드가 완료되었습니다.");
     } catch (error: unknown) {
-      const status = (error as HttpErrorLike)?.response?.status;
+      const status = getHttpStatus(error);
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -236,6 +245,7 @@ export default function RegisterPage() {
     }
     if (lat < -90 || lat > 90) return "위도는 -90 ~ 90 범위여야 합니다.";
     if (lng < -180 || lng > 180) return "경도는 -180 ~ 180 범위여야 합니다.";
+
     return null;
   };
 
@@ -271,7 +281,7 @@ export default function RegisterPage() {
         categoryNames,
       });
 
-      setToast("등록 요청이 접수되었습니다. 관리자 승인 후 노출됩니다.");
+      setToast("등록 요청이 접수되었습니다. 관리자 확인 후 노출됩니다.");
       setForm(initialForm);
       setSearchKeyword("");
       setSearchResults([]);
@@ -279,7 +289,7 @@ export default function RegisterPage() {
       setLicenseFileName("");
       navigate("/register/requests");
     } catch (error: unknown) {
-      const status = (error as HttpErrorLike)?.response?.status;
+      const status = getHttpStatus(error);
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else if (status === 404 || status === 405) {
@@ -298,6 +308,7 @@ export default function RegisterPage() {
         <Alert severity="warning" sx={{ mb: 2, border: `1px solid ${ACCENT}` }}>
           맛집 등록은 로그인 후 이용할 수 있습니다.
         </Alert>
+
         <Stack direction="row" spacing={1}>
           <Button
             variant="contained"
@@ -363,8 +374,14 @@ export default function RegisterPage() {
                   label="주소/상호 검색"
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSearchPlace();
+                    }
+                  }}
                   fullWidth
-                  placeholder="예: 강남 갈비"
+                  placeholder="예) 강남 갈비"
                 />
                 <Button
                   type="button"
@@ -446,7 +463,7 @@ export default function RegisterPage() {
                 value={form.phone}
                 onChange={handleChange("phone")}
                 fullWidth
-                placeholder="예: 02-123-4567"
+                placeholder="예) 02-123-4567"
               />
 
               <TextField
@@ -454,8 +471,8 @@ export default function RegisterPage() {
                 value={form.categories}
                 onChange={handleChange("categories")}
                 fullWidth
-                placeholder="예: 한식, 고깃집, 해장국"
-                helperText="쉼표(,)로 구분해 입력하세요"
+                placeholder="예) 한식, 고깃집, 회장국"
+                helperText="쉼표(,)로 구분하여 입력하세요."
               />
 
               <TextField
