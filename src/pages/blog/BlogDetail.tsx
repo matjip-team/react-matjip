@@ -4,15 +4,19 @@ import axios from "../common/axios";
 import { Box, Button, Typography, Paper, Divider, Snackbar, TextField, CircularProgress } from "@mui/material";
 import { useAuth } from "../../pages/common/context/useAuth";
 import { formatDateTime } from "../common/utils/helperUtil";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill, { Quill } from "react-quill-new";
+import "react-quill-new/dist/quill.bubble.css";
+import "quill-table-better/dist/quill-table-better.css";
+import { registerBlogQuillModules } from "./quillSetup";
+
+registerBlogQuillModules(Quill);
 
 export interface User {
   role: string;
 }
 // 게시글 상세 페이지
 
-export default function BoardDetail() {
+export default function BlogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -34,11 +38,13 @@ export default function BoardDetail() {
   const [editingText, setEditingText] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
+
+  const quillRef = useRef<ReactQuill | null>(null);
+
   
   // 로딩 상태
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const quillRef = useRef<ReactQuill | null>(null);
 
   const quillReadOnlyModules = useMemo(
     () => ({
@@ -72,10 +78,10 @@ export default function BoardDetail() {
 
     try {
       // 서버 토글
-      await axios.post(`/api/boards/${id}/recommendations`);
+      await axios.post(`/api/blogs/${id}/recommendations`);
 
       // ✅ 서버가 계산한 최신값으로 다시 덮어쓰기
-      const res = await axios.get(`/api/boards/${id}`);
+      const res = await axios.get(`/api/blogs/${id}`);
       const data = res.data.data;
 
       setPost(data);
@@ -106,9 +112,9 @@ export default function BoardDetail() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
     try {
-      await axios.delete(`/api/boards/${id}`);
+      await axios.delete(`/api/blogs/${id}`);
       alert("삭제되었습니다.");
-      navigate("/board");
+      navigate("/blog");
     } catch {
       alert("삭제 권한이 없습니다.");
     }
@@ -120,7 +126,7 @@ export default function BoardDetail() {
   const fetchComments = async () => {
     try {
       setLoadingComments(true);
-      const res = await axios.get(`/api/boards/${id}/comments`, {
+      const res = await axios.get(`/api/blogs/${id}/comments`, {
         params: {
           sort: sortType,
         },
@@ -152,7 +158,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/boards/${id}/comments`, {
+      await axios.post(`/api/blogs/${id}/comments`, {
         content: newComment,
       });
 
@@ -184,7 +190,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/boards/${id}/comments`, {
+      await axios.post(`/api/blogs/${id}/comments`, {
         content: content,
         parentId: parentId,
       });
@@ -218,7 +224,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.put(`/api/boards/${id}/comments/${commentId}`, {
+      await axios.put(`/api/blogs/${id}/comments/${commentId}`, {
         content: editingText,
       });
 
@@ -248,7 +254,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.delete(`/api/boards/${id}/comments/${commentId}`);
+      await axios.delete(`/api/blogs/${id}/comments/${commentId}`);
       await fetchComments();
       await fetchPost();
       setToast("댓글이 삭제되었습니다.");
@@ -266,7 +272,7 @@ export default function BoardDetail() {
 
   // 게시글 상세 조회
   const fetchPost = async () => {
-    const res = await axios.get(`/api/boards/${id}`);
+    const res = await axios.get(`/api/blogs/${id}`);
     setPost(res.data.data);
     setRecommended(res.data.data.recommended);
   };
@@ -345,7 +351,11 @@ export default function BoardDetail() {
     if (!editor) return;
     const delta = parseContentDelta(post.contentDelta);
     if (delta) {
-      editor.setContents(delta as any);
+      const length = editor.getLength();
+      if (length > 0) {
+        editor.deleteText(0, length, Quill.sources.SILENT);
+      }
+      editor.updateContents(delta as any, Quill.sources.API);
       return;
     }
     const html = post.contentHtml || post.content || "";
@@ -441,7 +451,7 @@ export default function BoardDetail() {
             },
           }}
         >
-          <ReactQuill ref={quillRef} theme="snow" readOnly modules={quillReadOnlyModules} />
+          <ReactQuill ref={quillRef} theme="bubble" readOnly modules={quillReadOnlyModules} />
         </Box>
 
         <Divider sx={{ my: 3 }} />
@@ -869,7 +879,7 @@ export default function BoardDetail() {
                   height: 32, 
                   fontSize: 12, 
                 }}
-                onClick={() => navigate(`/board/edit/${id}`)}
+                onClick={() => navigate(`/blog/edit/${id}`)}
               >
                 수정
               </Button>
@@ -893,7 +903,7 @@ export default function BoardDetail() {
               height: 32, 
               fontSize: 12, 
             }}
-            onClick={() => navigate("/board")}
+            onClick={() => navigate("/blog")}
           >
             목록으로
           </Button>

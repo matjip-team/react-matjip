@@ -1,109 +1,87 @@
-// // src/pages/WebEditorFullSample.tsx
-// import React, { useState, useRef } from "react";
-// import ReactQuill, { Quill } from "react-quill";
-// import { Box, Button } from "@mui/material";
-// import "react-quill/dist/quill.snow.css";
+import { useEffect, useMemo, useRef } from "react";
+import ReactQuill, { Quill } from "react-quill-new";
+import QuillTableBetter from "quill-table-better";
+import "react-quill-new/dist/quill.snow.css";
+import "quill-table-better/dist/quill-table-better.css";
+import hljs from "highlight.js";
+import "highlight.js/styles/atom-one-dark.css";
+import "./styles.css";
+import { registerBlogQuillModules } from "./blog/quillSetup";
 
-// // 이미지 크기 조절
-// // @ts-ignore
-// import ImageResize from "quill-image-resize-module-react";
+registerBlogQuillModules(Quill);
 
-// // 테이블 관련
-// import QuillTable from "quill-table";
-// import QuillTableUI from "quill-table-ui";
+const QuillTableBetterDemo = () => {
+  const quillRef = useRef<ReactQuill | null>(null);
 
-// // 모듈 등록
-// Quill.register("modules/imageResize", ImageResize);
-// Quill.register("modules/table", QuillTable);
-// Quill.register("modules/tableUI", QuillTableUI);
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [{ header: 1 }, { header: 2 }],
+          ["bold", "italic", "underline", "strike"],
+          ["link", "image", "video", "code-block", "formula"],
+          [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
+          [{ indent: "-1" }, { indent: "+1" }],
+          [{ direction: "rtl" }],
+          [{ size: ["small", false, "large", "huge"] }],
+          [{ color: [] }, { background: [] }],
+          [{ font: [] }],
+          [{ align: [] }],
+          ["table-better"],
+          ["clean"],
+          [{ direction: "rtl" }],
+          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ size: ["small", false, "large", "huge"] }],
+          [{ script: "sub" }, { script: "super" }],
+        ],
+      },
+      table: false,
+      "table-better": {
+        language: "en_US",
+        menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+        toolbarTable: true,
+      },
+      keyboard: {
+        bindings: QuillTableBetter.keyboardBindings,
+      },
+      imageResize: {
+        parchment: Quill.import("parchment"),
+        modules: ["Resize", "DisplaySize", "Toolbar"],
+      },
+      syntax: { hljs },
+    }),
+    [],
+  );
 
-// // 이미지 업로드 핸들러
-// function imageHandler(this: any) {
-//   const input = document.createElement("input");
-//   input.setAttribute("type", "file");
-//   input.setAttribute("accept", "image/*");
-//   input.click();
+  useEffect(() => {
+    if (quillRef.current) {
+      const editor = quillRef.current.getEditor();
+      const html = `
+      <table class="ql-table-better">
+        <tbody>
+          <tr><td>1</td><td>2</td><td>3</td></tr>
+          <tr><td>4</td><td>5</td><td>6</td></tr>
+          <tr><td>7</td><td>8</td><td>9</td></tr>
+        </tbody>
+      </table>`;
+      editor.clipboard.dangerouslyPasteHTML(html);
+    }
+  }, []);
 
-//   input.onchange = () => {
-//     const file = input.files?.[0];
-//     if (file) {
-//       const reader = new FileReader();
-//       reader.onload = (e) => {
-//         const range = this.quill.getSelection(true);
-//         this.quill.insertEmbed(range.index, "image", e.target?.result);
-//         this.quill.setSelection(range.index + 1);
-//       };
-//       reader.readAsDataURL(file);
-//     }
-//   };
-// }
+  return (
+    <div style={{ padding: "40px", maxWidth: "900px", margin: "0 auto" }}>
+      <h1>Quill Sample Page</h1>
+      <p>Table, image resize, video and rich formatting demo</p>
+      <div style={{ marginBottom: 10 }} />
+      <ReactQuill
+        ref={quillRef}
+        theme="snow"
+        modules={modules}
+        style={{ height: 400 }}
+        className="custom-quill"
+      />
+    </div>
+  );
+};
 
-// // Quill 모듈 설정
-// const modules = {
-//   toolbar: {
-//     container: [
-//       ["bold", "italic", "underline", "strike"],
-//       ["link", "image", "table"], // table 버튼 포함
-//       [{ header: [1, 2, 3, false] }],
-//       [{ list: "ordered" }, { list: "bullet" }],
-//       ["clean"],
-//     ],
-//     handlers: {
-//       image: imageHandler,
-//     },
-//   },
-//   imageResize: {
-//     parchment: Quill.import("parchment"),
-//     modules: ["Resize", "DisplaySize"],
-//   },
-//   table: true,
-//   tableUI: true,
-// };
-
-// export default function WebEditorFullSample() {
-//   const [content, setContent] = useState<string>("");
-//   const [htmlMode, setHtmlMode] = useState<boolean>(false);
-//   const quillRef = useRef<ReactQuill>(null);
-
-//   return (
-//     <Box sx={{ p: 2 }}>
-//       <Button
-//         variant="contained"
-//         onClick={() => setHtmlMode((prev) => !prev)}
-//         sx={{ mb: 2 }}
-//       >
-//         {htmlMode ? "리치 에디터 모드" : "HTML 모드"}
-//       </Button>
-
-//       {htmlMode ? (
-//         <textarea
-//           value={content}
-//           onChange={(e) => setContent(e.target.value)}
-//           style={{ width: "100%", minHeight: 200, fontFamily: "monospace" }}
-//         />
-//       ) : (
-//         <ReactQuill
-//           ref={quillRef}
-//           value={content}
-//           onChange={setContent}
-//           modules={modules}
-//           theme="snow"
-//           style={{ height: 300, marginBottom: 20 }}
-//         />
-//       )}
-
-//       <Box sx={{ mt: 4 }}>
-//         <h3>Preview</h3>
-//         <Box
-//           sx={{
-//             border: "1px solid #ddd",
-//             p: 2,
-//             minHeight: 200,
-//             backgroundColor: "#fefefe",
-//           }}
-//           dangerouslySetInnerHTML={{ __html: content }}
-//         />
-//       </Box>
-//     </Box>
-//   );
-// }
+export default QuillTableBetterDemo;

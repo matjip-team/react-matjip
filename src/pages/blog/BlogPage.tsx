@@ -1,23 +1,20 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   Menu,
   MenuItem,
   Select,
   Snackbar,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   Pagination,
   IconButton,
+  Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
@@ -26,11 +23,11 @@ import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
 import { ThemeProvider } from "@mui/material/styles";
-import { boardTheme } from "./theme/boardTheme";
+import { blogTheme } from "./theme/blogTheme";
 
 type CategoryType = "ALL" | "NOTICE" | "REVIEW";
 
-interface Board {
+interface BlogPost {
   id: number;
   title: string;
   content?: string;
@@ -53,7 +50,7 @@ interface Board {
 const toBoolean = (value: unknown): boolean =>
   value === true || value === "true" || value === 1 || value === "1";
 
-const normalizeBoard = (board: any): Board => ({
+const normalizeBlog = (board: any): BlogPost => ({
   ...board,
   hasImage: toBoolean(board?.hasImage),
   hasVideo: toBoolean(board?.hasVideo),
@@ -76,14 +73,14 @@ const hasEmbedInDelta = (rawDelta: unknown, embedType: "image" | "video") => {
   return ops.some((op: any) => typeof op?.insert === "object" && op.insert?.[embedType]);
 };
 
-const getPostHtml = (post: Board) => post.contentHtml ?? post.content ?? "";
+const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
 
-export default function BoardPage() {
+export default function BlogPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const MAIN_COLOR = "#ff6b00";
 
-  const [posts, setPosts] = useState<Board[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [category, setCategory] = useState<CategoryType>("ALL");
   const [keyword, setKeyword] = useState("");
   const [appliedKeyword, setAppliedKeyword] = useState("");
@@ -97,8 +94,8 @@ export default function BoardPage() {
   const [selectedAuthor, setSelectedAuthor] = useState("");
 
   useEffect(() => {
-    const fetchBoards = async () => {
-      const res = await axios.get("/api/boards", {
+    const fetchBlogs = async () => {
+      const res = await axios.get("/api/blogs", {
         params: {
           page,
           size,
@@ -109,8 +106,8 @@ export default function BoardPage() {
       });
 
       const data = res.data.data;
-      const notices = (data.notices ?? []).filter(Boolean).map(normalizeBoard);
-      const contents = (data.contents ?? []).filter(Boolean).map(normalizeBoard);
+      const notices = (data.notices ?? []).filter(Boolean).map(normalizeBlog);
+      const contents = (data.contents ?? []).filter(Boolean).map(normalizeBlog);
 
       if (category === "ALL") {
         setPosts([...notices, ...contents]);
@@ -124,18 +121,18 @@ export default function BoardPage() {
       setTotalPages(Math.max(1, computedTotalPages));
     };
 
-    fetchBoards();
+    fetchBlogs();
   }, [page, category, appliedKeyword, size, appliedSearchType]);
 
-  const getBoardType = (post?: Board) => post?.boardType ?? "";
+  const getBlogType = (post?: BlogPost) => post?.boardType ?? "";
 
-  const getBoardLabel = (post: Board) => {
+  const getBlogLabel = (post: BlogPost) => {
     if (post.boardType === "NOTICE") return "공지";
     if (post.boardType === "REVIEW") return "후기";
     return "-";
   };
 
-  const hasImageContent = (post: Board) => {
+  const hasImageContent = (post: BlogPost) => {
     if (post.hasImage) return true;
     const content = getPostHtml(post);
     return (
@@ -148,7 +145,7 @@ export default function BoardPage() {
     );
   };
 
-  const hasVideoContent = (post: Board) => {
+  const hasVideoContent = (post: BlogPost) => {
     if (post.hasVideo) return true;
     const content = getPostHtml(post);
     return (
@@ -159,6 +156,16 @@ export default function BoardPage() {
       (Array.isArray(post.mediaUrls) &&
         post.mediaUrls.some((url) => /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url)))
     );
+  };
+
+  const getThumbnailUrl = (post: BlogPost) => {
+    if (post.imageUrl?.trim()) {
+      return post.imageUrl.trim();
+    }
+
+    const content = getPostHtml(post);
+    const match = content.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
+    return match?.[1] ?? "";
   };
 
   const handleSearch = () => {
@@ -183,14 +190,14 @@ export default function BoardPage() {
       setToast("로그인이 필요합니다.");
       return;
     }
-    navigate("/board/write");
+    navigate("/blog/write");
   };
 
   return (
-    <ThemeProvider theme={boardTheme}>
+    <ThemeProvider theme={blogTheme}>
       <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>자유게시판</Box>
+          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>블로그</Box>
           <Button variant="contained" sx={{ bgcolor: MAIN_COLOR }} onClick={handleWriteClick}>
             새글쓰기
           </Button>
@@ -277,130 +284,138 @@ export default function BoardPage() {
           </Box>
         </Box>
 
-        <TableContainer component={Paper}>
-          <Table sx={{ tableLayout: "fixed" }}>
-            <TableHead>
-              <TableRow sx={{ borderBottom: "2px solid #ff6b00" }}>
-                <TableCell align="center" sx={{ width: 30 }}>
-                  번호
-                </TableCell>
-                <TableCell align="center" sx={{ width: 90 }}>
-                  말머리
-                </TableCell>
-                <TableCell align="center">제목</TableCell>
-                <TableCell align="center" sx={{ width: 130 }}>
-                  글쓴이
-                </TableCell>
-                <TableCell align="center" sx={{ width: 100 }}>
-                  작성일
-                </TableCell>
-                <TableCell align="center" sx={{ width: 40 }}>
-                  조회
-                </TableCell>
-                <TableCell align="center" sx={{ width: 40 }}>
-                  추천
-                </TableCell>
-              </TableRow>
-            </TableHead>
+        {posts.length === 0 ? (
+          <Paper sx={{ py: 6, textAlign: "center", color: "#888" }}>게시글이 없습니다.</Paper>
+        ) : (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, minmax(0, 1fr))",
+                md: "repeat(4, minmax(0, 1fr))",
+              },
+              gap: 1.2,
+            }}
+          >
+            {posts.map((post) => {
+              const type = getBlogType(post);
+              const showImageIcon = hasImageContent(post);
+              const showVideoIcon = hasVideoContent(post);
+              const showDefaultBubble = !showImageIcon && !showVideoIcon;
+              const thumbnailUrl = getThumbnailUrl(post);
 
-            <TableBody>
-              {posts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 5, color: "#888" }}>
-                    게시글이 없습니다.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                posts.map((post) => {
-                  const type = getBoardType(post);
-                  const showImageIcon = hasImageContent(post);
-                  const showVideoIcon = hasVideoContent(post);
-                  const showDefaultBubble = !showImageIcon && !showVideoIcon;
+              return (
+                <Card
+                  key={post.id}
+                  variant="outlined"
+                  onClick={() => navigate(`/blog/${post.id}`)}
+                  sx={{
+                    borderColor: "#ececec",
+                    cursor: "pointer",
+                    "&:hover": {
+                      borderColor: MAIN_COLOR,
+                      boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+                    },
+                  }}
+                >
+                  <CardContent sx={{ py: 1.6, px: 2 }}>
+                    {thumbnailUrl && (
+                      <Box
+                        component="img"
+                        src={thumbnailUrl}
+                        alt="블로그 썸네일"
+                        sx={{
+                          width: "100%",
+                          height: 160,
+                          objectFit: "cover",
+                          borderRadius: 1,
+                          border: "1px solid #efefef",
+                          mb: 1.1,
+                        }}
+                      />
+                    )}
 
-                  return (
-                    <TableRow key={post.id} hover>
-                      <TableCell align="center">{post.id}</TableCell>
-
-                      <TableCell align="center">
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.9 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Chip
-                          label={getBoardLabel(post)}
+                          label={getBlogLabel(post)}
                           size="small"
                           sx={{
                             bgcolor: type === "NOTICE" ? MAIN_COLOR : "#adb5bd",
                             color: "#fff",
                           }}
                         />
-                      </TableCell>
+                        <Typography sx={{ fontSize: 12, color: "#999" }}>#{post.id}</Typography>
+                      </Box>
 
-                      <TableCell
-                        align="left"
+                      <Typography sx={{ fontSize: 12, color: "#999" }}>
+                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString("ko-KR") : "-"}
+                      </Typography>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.9,
+                        mb: 1,
+                        "&:hover .blog-title": { textDecoration: "underline" },
+                      }}
+                    >
+                      {showDefaultBubble && (
+                        <ChatBubbleOutlineIcon sx={{ fontSize: 18, color: "#9e9e9e" }} />
+                      )}
+                      {showImageIcon && (
+                        <ImageOutlinedIcon sx={{ fontSize: 18, color: "#2e7d32" }} />
+                      )}
+                      {showVideoIcon && (
+                        <VideocamOutlinedIcon sx={{ fontSize: 18, color: "#1565c0" }} />
+                      )}
+
+                      <Typography
+                        className="blog-title"
                         sx={{
-                          pl: 4,
-                          whiteSpace: "nowrap",
+                          flex: 1,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
-                          fontWeight: type === "NOTICE" ? 700 : 400,
+                          whiteSpace: "nowrap",
+                          fontWeight: type === "NOTICE" ? 700 : 500,
                         }}
                       >
-                        <Box
-                          component="span"
-                          onClick={() => navigate(`/board/${post.id}`)}
-                          sx={{
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.75,
-                            maxWidth: "100%",
-                            "&:hover": { textDecoration: "underline" },
-                          }}
-                        >
-                          {showDefaultBubble && (
-                            <ChatBubbleOutlineIcon sx={{ fontSize: 16, color: "#9e9e9e" }} />
-                          )}
-                          {showImageIcon && (
-                            <ImageOutlinedIcon sx={{ fontSize: 16, color: "#2e7d32" }} />
-                          )}
-                          {showVideoIcon && (
-                            <VideocamOutlinedIcon sx={{ fontSize: 16, color: "#1565c0" }} />
-                          )}
-                          <Box
-                            component="span"
-                            sx={{
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {post.title}
-                          </Box>
-                          {post.commentCount > 0 && (
-                            <span style={{ color: "#999", marginLeft: 4 }}>[{post.commentCount}]</span>
-                          )}
-                        </Box>
-                      </TableCell>
+                        {post.title}
+                      </Typography>
 
-                      <TableCell align="center">
-                        <Box
-                          component="span"
-                          sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
-                          onClick={(e) => openAuthorMenu(e, post.authorNickname)}
-                        >
-                          {post.authorNickname}
-                        </Box>
-                      </TableCell>
+                      {post.commentCount > 0 && (
+                        <Typography sx={{ fontSize: 13, color: "#888" }}>
+                          [{post.commentCount}]
+                        </Typography>
+                      )}
+                    </Box>
 
-                      <TableCell align="center">
-                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString("ko-KR") : "-"}
-                      </TableCell>
-                      <TableCell align="center">{post.viewCount}</TableCell>
-                      <TableCell align="center">{post.recommendCount}</TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Box
+                        component="span"
+                        sx={{ fontSize: 13, color: "#666", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAuthorMenu(e, post.authorNickname);
+                        }}
+                      >
+                        {post.authorNickname}
+                      </Box>
+
+                      <Box sx={{ display: "flex", gap: 1.4, color: "#777", fontSize: 13 }}>
+                        <Typography sx={{ fontSize: 13 }}>조회 {post.viewCount}</Typography>
+                        <Typography sx={{ fontSize: 13 }}>추천 {post.recommendCount}</Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Box>
+        )}
 
         <Menu anchorEl={authorAnchor} open={Boolean(authorAnchor)} onClose={closeAuthorMenu}>
           <MenuItem onClick={() => alert(`${selectedAuthor} 글 보기`)}>글</MenuItem>
@@ -428,3 +443,4 @@ export default function BoardPage() {
     </ThemeProvider>
   );
 }
+

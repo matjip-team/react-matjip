@@ -14,6 +14,7 @@ import type { LoginRequest } from "./api/types";
 import type { FieldErrors } from "../common/types/api";
 import { handleApiError } from "../common/utils/handleApiError";
 import { useAuth } from "../common/context/useAuth";
+import type { User } from "../common/types/user";
 
 export type LoginForm = LoginRequest;
 
@@ -49,15 +50,21 @@ const LoginPage = () => {
       });
 
       if (response.data?.success) {
-        // 로그인 성공 시 홈으로 이동
-        const user = response.data.data;
-        if (user) {
-          setUser(user); // ⭐ 전역 로그인 상태 저장
-          navigate("/");  
+        const loginUser = response.data.data;
+        if (loginUser) {
+          const normalizedUser: User = {
+            id: loginUser.id,
+            email: loginUser.email,
+            name: loginUser.name,
+            nickname: loginUser.nickname,
+            role: loginUser.role ?? loginUser.roles?.[0] ?? "ROLE_USER",
+          };
+          setUser(normalizedUser);
+          navigate("/");
         } else {
           throw new Error("로그인 오류 발생");
         }
-        
+
         return;
       }
 

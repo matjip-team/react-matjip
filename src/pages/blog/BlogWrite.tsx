@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -10,15 +10,25 @@ import {
   Typography,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
-import axios from "../common/axios";
-import { boardTheme } from "./theme/boardTheme";
-import { uploadBoardImage } from "./api/boardImageUpload";
+import ReactQuill, { Quill } from "react-quill-new";
+import QuillTableBetter from "quill-table-better";
+import "react-quill-new/dist/quill.snow.css";
+import "quill-table-better/dist/quill-table-better.css";
 
-export default function BoardWrite() {
+import hljs from 'highlight.js';
+import "highlight.js/styles/atom-one-dark.css";
+import axios from "../common/axios";
+import { blogTheme } from "./theme/blogTheme";
+import { uploadBlogImage } from "./api/blogImageUpload";
+import { registerBlogQuillModules } from "./quillSetup";
+
+registerBlogQuillModules(Quill);
+
+export default function BlogWrite() {
+
   const navigate = useNavigate();
   const MAIN_COLOR = "#ff6b00";
+  const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
 
   const categories = [
     { key: "후기", label: "후기" },
@@ -30,8 +40,12 @@ export default function BoardWrite() {
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailFileName, setThumbnailFileName] = useState("");
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
 
   const quillRef = useRef<ReactQuill | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
 
   const extractPlainText = (html: string) => {
     const div = document.createElement("div");
@@ -62,7 +76,7 @@ export default function BoardWrite() {
     async (file: File) => {
       try {
         setIsUploadingMedia(true);
-        const fileUrl = await uploadBoardImage(file);
+        const fileUrl = await uploadBlogImage(file);
         insertMediaToEditor(fileUrl, file.type || "");
       } catch (error: any) {
         console.error(error);
@@ -101,19 +115,89 @@ export default function BoardWrite() {
     () => ({
       toolbar: {
         container: [
-          [{ header: [1, 2, 3, false] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          ["link", "image"],
-          ["clean"],
-        ],
+        [{ header: 1 }, { header: 2 }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image", "video", "code-block", "formula"],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+        [{ indent: "-1" }, { indent: "+1" }],
+        [{ direction: "rtl" }],
+        [{ size: ["small", false, "large", "huge"] }],
+        [{ color: [] }, { background: [] }],
+        [{ font: [] }],
+        [{ align: [] }],
+        ["table-better"],
+        ['clean'],
+         [{ 'direction': 'rtl' }],  
+         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+         [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+         [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+      ],
         handlers: {
           image: handleToolbarMedia,
         },
       },
+      table: false,
+    "table-better": {
+      language: "en_US",
+      menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+      toolbarTable: true,
+    },
+    keyboard: {
+      bindings: QuillTableBetter.keyboardBindings,
+    },
+    imageResize: {
+      parchment: Quill.import('parchment'),
+      modules: ['Resize', 'DisplaySize', 'Toolbar']
+    },
+    syntax: { hljs },
     }),
     [handleToolbarMedia],
   );
+
+  const handleThumbnailPick = () => {
+    thumbnailInputRef.current?.click();
+  };
+
+  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("썸네일은 이미지 파일만 업로드할 수 있습니다.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_THUMBNAIL_SIZE) {
+      alert("썸네일 파일 크기는 10MB 이하만 가능합니다.");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      setThumbnailUploading(true);
+      const url = await uploadBlogImage(file);
+      setThumbnailUrl(url);
+      setThumbnailFileName(file.name);
+    } catch (error: any) {
+      console.error(error);
+      const status = error?.response?.status;
+      const uploadStep = error?.uploadStep;
+
+      if (uploadStep === "presign" && (status === 401 || status === 403)) {
+        alert("로그인이 필요합니다.");
+      } else if (uploadStep === "s3-put" && status === 403) {
+        alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
+      } else {
+        alert("썸네일 업로드에 실패했습니다. 다시 시도해 주세요.");
+      }
+    } finally {
+      setThumbnailUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,16 +223,22 @@ export default function BoardWrite() {
       return;
     }
 
+    if (thumbnailUploading) {
+      alert("썸네일 업로드가 끝난 뒤 등록해 주세요.");
+      return;
+    }
+
     try {
-      await axios.post("/api/boards", {
+      await axios.post("/api/blogs", {
         title,
         content: html,
         contentHtml: html,
         contentDelta: delta ? JSON.stringify(delta) : null,
         boardType: category === "공지" ? "NOTICE" : "REVIEW",
+        imageUrl: thumbnailUrl || null,
       });
 
-      navigate("/board");
+      navigate("/blog");
     } catch (error: any) {
       const res = error?.response?.data;
 
@@ -167,7 +257,7 @@ export default function BoardWrite() {
   };
 
   return (
-    <ThemeProvider theme={boardTheme}>
+    <ThemeProvider theme={blogTheme}>
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Card>
           <CardContent>
@@ -217,7 +307,78 @@ export default function BoardWrite() {
                 sx={{ mb: 3 }}
               />
 
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 3, p: 1.5, border: "1px solid #eee", borderRadius: 1 }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>썸네일 이미지</Typography>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleThumbnailPick}
+                    disabled={thumbnailUploading}
+                    sx={{ color: MAIN_COLOR, borderColor: MAIN_COLOR }}
+                  >
+                    {thumbnailUploading ? "업로드 중..." : "썸네일 업로드"}
+                  </Button>
+
+                  {thumbnailUrl && (
+                    <Button
+                      variant="text"
+                      color="error"
+                      onClick={() => {
+                        setThumbnailUrl("");
+                        setThumbnailFileName("");
+                      }}
+                    >
+                      썸네일 제거
+                    </Button>
+                  )}
+
+                  <Typography sx={{ fontSize: 13, color: "#666" }}>
+                    {thumbnailFileName || "선택된 썸네일 없음"}
+                  </Typography>
+                </Box>
+
+                {thumbnailUrl && (
+                  <Box
+                    component="img"
+                    src={thumbnailUrl}
+                    alt="썸네일 미리보기"
+                    sx={{
+                      width: 220,
+                      height: 130,
+                      objectFit: "cover",
+                      borderRadius: 1,
+                      border: "1px solid #ddd",
+                    }}
+                  />
+                )}
+
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleThumbnailChange}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  mb: 2,
+                  "& .ql-toolbar.ql-snow": {
+                    borderRadius: "4px 4px 0 0",
+                  },
+                  "& .ql-container.ql-snow": {
+                    minHeight: 360,
+                    borderRadius: "0 0 4px 4px",
+                  },
+                  "& .ql-editor": {
+                    minHeight: 320,
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                  },
+                }}
+              >
                 <ReactQuill
                   ref={quillRef}
                   theme="snow"
@@ -227,7 +388,6 @@ export default function BoardWrite() {
                     setErrors((prev) => ({ ...prev, content: [] }));
                   }}
                   modules={quillModules}
-                  style={{ height: "400px", marginBottom: "45px" }}
                 />
 
                 {errors.content && (
@@ -243,7 +403,7 @@ export default function BoardWrite() {
                 )}
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                 <Button
                   variant="outlined"
                   sx={{
@@ -251,7 +411,7 @@ export default function BoardWrite() {
                     color: MAIN_COLOR,
                     borderColor: MAIN_COLOR,
                   }}
-                  onClick={() => navigate("/board")}
+                  onClick={() => navigate("/blog")}
                 >
                   취소
                 </Button>

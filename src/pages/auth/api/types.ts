@@ -24,5 +24,6 @@ export interface LoginResponse {
   email: string;
   name: string;
   nickname: string;
-  roles: string[];
+  role?: string;
+  roles?: string[];
 }

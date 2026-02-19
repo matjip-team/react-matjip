@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Avatar, Badge, Tooltip } from "@mui/material";
+import { Avatar, Badge, Snackbar, Tooltip } from "@mui/material";
+import { useState } from "react";
 import PersonIcon from "@mui/icons-material/Person";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth";
@@ -8,16 +9,33 @@ export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
+  const [toast, setToast] = useState("");
 
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
 
   const myHandleClick = () => {
     navigate("/auth/mypage");
   };
 
+  const handleRegisterClick = () => {
+    if (!user) {
+      setToast("로그인이 필요합니다.");
+      return;
+    }
+    navigate("/register");
+  };
+
+  const handleMyRequestClick = () => {
+    if (!user) {
+      setToast("로그인이 필요합니다.");
+      return;
+    }
+    navigate("/register/requests");
+  };
+
   return (
     <div className="layout">
-      {/* 헤더 */}
       <header className="header">
         <div className="header-inner">
 
@@ -51,10 +69,17 @@ export default function MainLayout() {
             </span>
 
             <span
-              className={location.pathname === "/board" ? "active" : ""}
+              className={location.pathname.startsWith("/board") ? "active" : ""}
               onClick={() => navigate("/board")}
             >
               커뮤니티
+            </span>
+
+            <span
+              className={location.pathname.startsWith("/blog") ? "active" : ""}
+              onClick={() => navigate("/blog")}
+            >
+              블로그
             </span>
 
             <span
@@ -66,10 +91,26 @@ export default function MainLayout() {
 
             <span
               className={location.pathname === "/register" ? "active" : ""}
-              onClick={() => navigate("/register")}
+              onClick={handleRegisterClick}
             >
               맛집 등록
             </span>
+
+            <span
+              className={location.pathname === "/register/requests" ? "active" : ""}
+              onClick={handleMyRequestClick}
+            >
+              내 신청내역
+            </span>
+
+            {isAdmin && (
+              <span
+                className={location.pathname === "/admin/restaurant-requests" ? "active" : ""}
+                onClick={() => navigate("/admin/restaurant-requests")}
+              >
+                신청 접수
+              </span>
+            )}
           </nav>
 
           {user ? (
@@ -114,7 +155,6 @@ export default function MainLayout() {
         </div>
       </header>
 
-      {/* 홈일 때만 Hero */}
       {isHome && (
         <section className="hero">
           <div className="hero-bg" />
@@ -125,7 +165,6 @@ export default function MainLayout() {
         </section>
       )}
 
-      {/* 페이지 영역 */}
       <main className="content">
         <Outlet />
       </main>
