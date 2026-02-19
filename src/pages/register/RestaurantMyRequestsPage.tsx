@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -23,8 +23,8 @@ const STATUS_META: Record<
   RestaurantApprovalStatus,
   { label: string; color: "warning" | "success" | "error" | "default" }
 > = {
-  PENDING: { label: "승인 대기", color: "warning" },
-  APPROVED: { label: "승인 완료", color: "success" },
+  PENDING: { label: "확인 대기", color: "warning" },
+  APPROVED: { label: "확인 완료", color: "success" },
   REJECTED: { label: "반려", color: "error" },
   CANCELLED: { label: "철회", color: "default" },
 };
@@ -39,9 +39,7 @@ export default function RestaurantMyRequestsPage() {
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const fetchMyRequests = useCallback(async () => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     try {
       setLoading(true);
@@ -65,21 +63,14 @@ export default function RestaurantMyRequestsPage() {
     void fetchMyRequests();
   }, [fetchMyRequests]);
 
-  const pendingCount = useMemo(
-    () => items.filter((item) => item.approvalStatus === "PENDING").length,
-    [items],
-  );
-
   const handleCancel = async (requestId: number) => {
     const shouldCancel = window.confirm("해당 신청을 철회하시겠습니까?");
-    if (!shouldCancel) {
-      return;
-    }
+    if (!shouldCancel) return;
 
     try {
       setProcessingId(requestId);
       await cancelRestaurantRequest(requestId);
-      setToast("신청이 철회되었습니다.");
+      setToast("신청을 철회했습니다.");
       await fetchMyRequests();
     } catch (error: any) {
       const status = error?.response?.status;
@@ -99,7 +90,7 @@ export default function RestaurantMyRequestsPage() {
     return (
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
-          로그인 후 내 신청내역을 확인할 수 있습니다.
+          로그인해야 신청내역을 확인할 수 있습니다.
         </Alert>
         <Stack direction="row" spacing={1}>
           <Button variant="contained" onClick={() => navigate("/auth/login")}>
@@ -126,13 +117,7 @@ export default function RestaurantMyRequestsPage() {
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
             내 맛집 등록 신청내역
           </Typography>
-          <Typography sx={{ color: "#666", mt: 0.5 }}>
-            진행 중인 신청: {pendingCount}건
-          </Typography>
         </Box>
-        <Button variant="outlined" onClick={() => navigate("/register")}>
-          새 신청 등록
-        </Button>
       </Stack>
 
       {loading && (
@@ -142,7 +127,7 @@ export default function RestaurantMyRequestsPage() {
       )}
 
       {!loading && items.length === 0 && (
-        <Alert severity="info">등록한 신청내역이 없습니다.</Alert>
+        <Alert severity="info">등록된 신청내역이 없습니다.</Alert>
       )}
 
       <Stack spacing={2}>
@@ -155,7 +140,12 @@ export default function RestaurantMyRequestsPage() {
                 spacing={2}
               >
                 <Box>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    sx={{ mb: 0.6 }}
+                  >
                     <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
                       {item.name}
                     </Typography>
