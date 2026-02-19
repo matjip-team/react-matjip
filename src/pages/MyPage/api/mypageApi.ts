@@ -1,11 +1,11 @@
-import { type ProfileResponse } from "./../types/profile";
+import { type ProfileResponse, type ProfileRequest } from "./../types/profile";
 import axios from "../../common/axios";
 import type { ApiResponse } from "../../common/types/api";
 import type { LikesPage } from "../types/likes";
 import type { ReviewPage } from "../types/review";
 
 export const updateProfile = (data: FormData) =>
-  axios.put<ApiResponse<void>>("/api/mypage/profile", data);
+  axios.put<ApiResponse<ProfileRequest>>("/api/mypage/profile", data);
 
 export const getProfile = () =>
   axios.get<ApiResponse<ProfileResponse>>("/api/mypage/profile");
