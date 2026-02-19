@@ -32,14 +32,6 @@ export default function MainLayout() {
     navigate("/auth/mypage");
   };
 
-  const handleMyRequestClick = () => {
-    if (!user) {
-      setToast("로그인이 필요합니다.");
-      return;
-    }
-    navigate("/register/requests");
-  };
-
   return (
     <div className="layout">
       {/* 헤더 */}
@@ -82,18 +74,22 @@ export default function MainLayout() {
             >
               AI 서비스
             </span>
-             <span
-              className={location.pathname === "/register" ? "active" : ""}
-              onClick={() => navigate("/register")}
-            >
-              맛집 등록
-            </span>
-            <span
-              className={location.pathname === "/register/requests" ? "active" : ""}
-              onClick={handleMyRequestClick}
-            >
-              내 신청내역
-            </span>
+            {user && (
+              <>
+                <span
+                  className={location.pathname === "/register" ? "active" : ""}
+                  onClick={() => navigate("/register")}
+                >
+                  맛집 등록
+                </span>
+                <span
+                  className={location.pathname === "/register/requests" ? "active" : ""}
+                  onClick={() => navigate("/register/requests")}
+                >
+                  내 신청내역
+                </span>
+              </>
+            )}
 
             {isAdmin && (
               <div className="nav-dropdown" ref={adminMenuRef}>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { AdminRouteGuard } from "./AdminRouteGuard";
+import { AuthRouteGuard } from "./AuthRouteGuard";
 
 import Homepage from "../pages/home/Homepage";
 import BoardPage from "../pages/board/BoardPage";
@@ -55,8 +56,10 @@ export default function Router() {
           <Route path="/sample" element={<Sample2 />} />
           <Route path="/restaurant/:id" element={<Restaurant />} />
           <Route path="/sample3" element={<Sample3 />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/register/requests" element={<RestaurantMyRequestsPage />} />
+          <Route element={<AuthRouteGuard />}>
+            <Route path="/register" element={<Register />} />
+            <Route path="/register/requests" element={<RestaurantMyRequestsPage />} />
+          </Route>
           <Route element={<AdminRouteGuard />}>
             <Route path="/admin/restaurant-requests" element={<RestaurantRequestPage />} />
             <Route path="/admin/board" element={<AdminBoardPage />} />
