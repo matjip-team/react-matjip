@@ -44,6 +44,13 @@ export default function MainLayout() {
               커뮤니티
             </span>
 
+             <span
+              className={location.pathname.startsWith("/blog") ? "active" : ""}
+              onClick={() => navigate("/blog")}
+            >
+              블로그
+            </span>
+
             <span
               className={location.pathname === "/ai" ? "active" : ""}
               onClick={() => navigate("/ai")}
