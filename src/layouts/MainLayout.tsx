@@ -118,21 +118,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
 
-<<<<<<< HEAD
-      <footer className="footer">
-        Copyright © MATJIB
-      </footer>
-
-      <Snackbar
-        open={Boolean(toast)}
-        autoHideDuration={1500}
-        message={toast}
-        onClose={() => setToast("")}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      />
-=======
       <footer className="footer">Copyright © MATJIB</footer>
->>>>>>> c5896886aa3c9ffdb768d2807222c1dae6ce40de
     </div>
   );
 }
