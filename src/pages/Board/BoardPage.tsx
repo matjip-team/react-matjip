@@ -203,7 +203,7 @@ export default function BoardPage() {
         {/* 제목 / 글쓰기 */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
           <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
-            자유게시판
+            커뮤니티
           </Box>
 
           <Button
