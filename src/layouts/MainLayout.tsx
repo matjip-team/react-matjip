@@ -1,8 +1,9 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Avatar, Badge, Tooltip } from "@mui/material";
+import { Avatar, Badge, Snackbar, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
+import { useState } from "react";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -10,9 +11,20 @@ export default function MainLayout() {
   const isHome = location.pathname === "/";
 
   const { user, logout } = useAuth();
+  const [toast, setToast] = useState("");
+
+  const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
 
   const myHandleClick = () => {
     navigate("/auth/mypage");
+  };
+
+  const handleMyRequestClick = () => {
+    if (!user) {
+      setToast("로그인이 필요합니다.");
+      return;
+    }
+    navigate("/register/requests");
   };
 
   return (
@@ -63,6 +75,21 @@ export default function MainLayout() {
             >
               맛집 등록
             </span>
+            <span
+              className={location.pathname === "/register/requests" ? "active" : ""}
+              onClick={handleMyRequestClick}
+            >
+              내 신청내역
+            </span>
+
+            {isAdmin && (
+              <span
+                className={location.pathname === "/admin/restaurant-requests" ? "active" : ""}
+                onClick={() => navigate("/admin/restaurant-requests")}
+              >
+                신청 접수
+              </span>
+            )}
           </nav>
 
           {user ? (
@@ -126,6 +153,13 @@ export default function MainLayout() {
       </main>
 
       <footer className="footer">Copyright © MATJIB</footer>
+      <Snackbar
+        open={Boolean(toast)}
+        autoHideDuration={1500}
+        message={toast}
+        onClose={() => setToast("")}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </div>
   );
 }
