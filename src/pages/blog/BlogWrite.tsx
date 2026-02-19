@@ -1,156 +1,436 @@
-import { useEffect, useState } from "react";
-import { useFormError } from "../common/utils/useFormError.ts"; //폼 에러 처리 공통 훅
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Alert,
   Box,
   Button,
-  Paper,
+  ButtonGroup,
+  Card,
+  CardContent,
   TextField,
   Typography,
 } from "@mui/material";
-import type { ApiResponse } from "../common/types/api.ts";
-import CustomizedDialogs from "../common/component/dialog.tsx";
-import axios from "../common/axios.ts"; //axios 인스턴스 공통
-import { useAuth } from "@/pages/common/context/useAuth.ts"; //로그인 사용자정보 공통
-import { unwrapData } from "../common/utils/helperUtil.ts";
+import { ThemeProvider } from "@mui/material/styles";
+import ReactQuill, { Quill } from "react-quill-new";
+import QuillTableBetter from "quill-table-better";
+import "react-quill-new/dist/quill.snow.css";
+import "quill-table-better/dist/quill-table-better.css";
 
-export interface TestResponse {
-  email: string;
-  nickname: string;
-  bio?: string;
-}
+import hljs from 'highlight.js';
+import "highlight.js/styles/atom-one-dark.css";
+import axios from "../common/axios";
+import { blogTheme } from "./theme/blogTheme";
+import { uploadBlogImage } from "./api/blogImageUpload";
+import { registerBlogQuillModules } from "./quillSetup";
+
+registerBlogQuillModules(Quill);
 
 export default function BlogWrite() {
-  const { user } = useAuth(); //로그인 사용자정보 공통
 
-  console.log("BlogWrite user:", user);
+  const navigate = useNavigate();
+  const MAIN_COLOR = "#ff6b00";
+  const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
 
-  /**
-   * 공통 포함 시작 ======================================
-   */
-  // 1. 폼 에러 처리 훅
-  const {
-    globalError,
-    fieldErrors,
-    setFieldErrors,
-    handleApiError,
-    resetErrors,
-  } = useFormError<TestResponse>();
+  const categories = [
+    { key: "후기", label: "후기" },
+    { key: "공지", label: "공지" },
+  ];
 
-  // 성공 다이얼로그
-  const [modal, setModal] = useState({
-    open: false,
-    title: "",
-    message: "",
-  });
+  const [category, setCategory] = useState("후기");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailFileName, setThumbnailFileName] = useState("");
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
 
-  // 2. 폼 변경 처리 공통
-  const handleChange =
-    (key: keyof TestResponse) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [key]: e.target.value }));
-      setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
-    };
+  const quillRef = useRef<ReactQuill | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
 
-  /**
-   * 공통 포함 끝 ====================================================
-   */
-
-  const EMPTY_FORM: TestResponse = {
-    email: "",
-    nickname: "",
-    bio: "",
+  const extractPlainText = (html: string) => {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent?.trim() ?? "";
   };
 
-  const [form, setForm] = useState<TestResponse>({
-    ...EMPTY_FORM,
-  });
+  const hasMediaContent = (html: string) => /<(img|video|iframe)\b/i.test(html);
 
-  // 데이터 가지고 오기
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get<ApiResponse<TestResponse>>(
-          "/api/mypage/profile",
-        );
+  const insertMediaToEditor = useCallback((fileUrl: string, fileType: string) => {
+    const quill = quillRef.current?.getEditor();
+    if (!quill) return;
 
-        const rtn = unwrapData(res.data);
-        setForm((prev) => ({ ...prev, ...rtn }));
-      } catch (err) {
-        handleApiError(err);
-      }
-    };
+    const range = quill.getSelection(true);
+    const index = range ? range.index : quill.getLength();
 
-    fetchProfile();
+    if (fileType.startsWith("video/")) {
+      quill.insertEmbed(index, "video", fileUrl, "user");
+      quill.setSelection(index + 1);
+      return;
+    }
+
+    quill.insertEmbed(index, "image", fileUrl, "user");
+    quill.setSelection(index + 1);
   }, []);
 
-  // 폼 제출 처리
+  const handleMediaUpload = useCallback(
+    async (file: File) => {
+      try {
+        setIsUploadingMedia(true);
+        const fileUrl = await uploadBlogImage(file);
+        insertMediaToEditor(fileUrl, file.type || "");
+      } catch (error: any) {
+        console.error(error);
+        const status = error?.response?.status;
+        const uploadStep = error?.uploadStep;
+
+        if (uploadStep === "presign" && (status === 401 || status === 403)) {
+          alert("로그인이 필요합니다.");
+        } else if (uploadStep === "s3-put" && status === 403) {
+          alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
+        } else {
+          alert("파일 업로드에 실패했습니다. 다시 시도해 주세요.");
+        }
+      } finally {
+        setIsUploadingMedia(false);
+      }
+    },
+    [insertMediaToEditor],
+  );
+
+  const handleToolbarMedia = useCallback(() => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*,video/*");
+    input.click();
+
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        void handleMediaUpload(file);
+      }
+    };
+  }, [handleMediaUpload]);
+
+  const quillModules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+        [{ header: 1 }, { header: 2 }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image", "video", "code-block", "formula"],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+        [{ indent: "-1" }, { indent: "+1" }],
+        [{ direction: "rtl" }],
+        [{ size: ["small", false, "large", "huge"] }],
+        [{ color: [] }, { background: [] }],
+        [{ font: [] }],
+        [{ align: [] }],
+        ["table-better"],
+        ['clean'],
+         [{ 'direction': 'rtl' }],  
+         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+         [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+         [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+      ],
+        handlers: {
+          image: handleToolbarMedia,
+        },
+      },
+      table: false,
+    "table-better": {
+      language: "en_US",
+      menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+      toolbarTable: true,
+    },
+    keyboard: {
+      bindings: QuillTableBetter.keyboardBindings,
+    },
+    imageResize: {
+      parchment: Quill.import('parchment'),
+      modules: ['Resize', 'DisplaySize', 'Toolbar']
+    },
+    syntax: { hljs },
+    }),
+    [handleToolbarMedia],
+  );
+
+  const handleThumbnailPick = () => {
+    thumbnailInputRef.current?.click();
+  };
+
+  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("썸네일은 이미지 파일만 업로드할 수 있습니다.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_THUMBNAIL_SIZE) {
+      alert("썸네일 파일 크기는 10MB 이하만 가능합니다.");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      setThumbnailUploading(true);
+      const url = await uploadBlogImage(file);
+      setThumbnailUrl(url);
+      setThumbnailFileName(file.name);
+    } catch (error: any) {
+      console.error(error);
+      const status = error?.response?.status;
+      const uploadStep = error?.uploadStep;
+
+      if (uploadStep === "presign" && (status === 401 || status === 403)) {
+        alert("로그인이 필요합니다.");
+      } else if (uploadStep === "s3-put" && status === 403) {
+        alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
+      } else {
+        alert("썸네일 업로드에 실패했습니다. 다시 시도해 주세요.");
+      }
+    } finally {
+      setThumbnailUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 에러 초기화
-    resetErrors(); // <== 폼에러 초기화 공통
 
-    // 로직 처리
+    const editor = quillRef.current?.getEditor();
+    const delta = editor?.getContents() ?? null;
+    const html = content;
+    const text = extractPlainText(content);
+    const hasMedia = hasMediaContent(content);
+
+    if (!title.trim()) {
+      setErrors({ title: ["제목을 입력하십시오."] });
+      return;
+    }
+
+    if (title.trim().length < 2) {
+      setErrors({ title: ["제목은 최소 2자 이상 입력해 주십시오."] });
+      return;
+    }
+
+    if (!text && !hasMedia) {
+      setErrors({ content: ["내용을 입력해 주세요."] });
+      return;
+    }
+
+    if (thumbnailUploading) {
+      alert("썸네일 업로드가 끝난 뒤 등록해 주세요.");
+      return;
+    }
+
     try {
-      const response = await axios.put<ApiResponse<TestResponse>>(
-        "/api/mypage/profile",
-        form,
-      );
+      await axios.post("/api/blogs", {
+        title,
+        content: html,
+        contentHtml: html,
+        contentDelta: delta ? JSON.stringify(delta) : null,
+        boardType: category === "공지" ? "NOTICE" : "REVIEW",
+        imageUrl: thumbnailUrl || null,
+      });
 
-      unwrapData(response.data);
-      //성공 했을때 처리 공통
-      if (response.data?.success) {
-        setModal({
-          open: true,
-          title: "성공!",
-          message: response.data.message || "",
+      navigate("/blog");
+    } catch (error: any) {
+      const res = error?.response?.data;
+
+      if (res?.code === "VALIDATION_ERROR") {
+        const fieldErrors: Record<string, string[]> = {};
+
+        res.fields.forEach((f: any) => {
+          fieldErrors[f.field] = f.messages;
         });
+
+        setErrors(fieldErrors);
       } else {
-        throw new Error(response.data?.error?.message || "");
+        alert("글 등록에 실패했습니다.");
       }
-    } catch (err) {
-      // HTTP 400/500 등 에러 처리
-      handleApiError(err); // <== 공통 훅으로 처리
     }
   };
 
   return (
-    <>
-      <Paper sx={{ p: 3, maxWidth: 500, mx: "auto", mt: 4 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Typography variant="h6">테스트 샘플</Typography>
-          {/* 글로벌 오류 메세지 표시 공통 */}
-          {globalError && <Alert severity="error">{globalError}</Alert>}
+    <ThemeProvider theme={blogTheme}>
+      <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
+        <Card>
+          <CardContent>
+            <Typography
+              variant="h5"
+              sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}
+            >
+              글 작성
+            </Typography>
 
-          <TextField label="이메일" value={form.email} disabled fullWidth />
+            <Box component="form" onSubmit={handleSubmit}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
 
-          <TextField
-            label="닉네임"
-            value={form.nickname}
-            onChange={handleChange("nickname")}
-            error={!!fieldErrors.nickname}
-            helperText={fieldErrors.nickname}
-            required
-          />
-          <TextField
-            label="자기소개"
-            value={form.bio || ""}
-            onChange={handleChange("bio")}
-            error={!!fieldErrors.bio}
-            helperText={fieldErrors.bio}
-            required
-          />
-          <Button variant="contained" onClick={handleSubmit}>
-            저장
-          </Button>
-        </Box>
-      </Paper>
-      {/* 공통 다이얼로그 */}
-      <CustomizedDialogs
-        open={modal.open}
-        onClose={() => setModal({ ...modal, open: false })}
-        title={modal.title}
-        message={modal.message}
-      />
-    </>
+                <ButtonGroup size="small">
+                  {categories.map((c) => (
+                    <Button
+                      key={c.key}
+                      variant={category === c.key ? "contained" : "outlined"}
+                      sx={{
+                        bgcolor: category === c.key ? MAIN_COLOR : "#fff",
+                        color: category === c.key ? "#fff" : MAIN_COLOR,
+                        borderColor: MAIN_COLOR,
+                        "&:hover": {
+                          bgcolor: MAIN_COLOR,
+                          color: "#fff",
+                        },
+                      }}
+                      onClick={() => setCategory(c.key)}
+                    >
+                      {c.label}
+                    </Button>
+                  ))}
+                </ButtonGroup>
+              </Box>
+
+              <TextField
+                fullWidth
+                placeholder="제목을 입력하세요"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setErrors((prev) => ({ ...prev, title: [] }));
+                }}
+                error={!!errors.title}
+                helperText={errors.title?.[0]}
+                sx={{ mb: 3 }}
+              />
+
+              <Box sx={{ mb: 3, p: 1.5, border: "1px solid #eee", borderRadius: 1 }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>썸네일 이미지</Typography>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleThumbnailPick}
+                    disabled={thumbnailUploading}
+                    sx={{ color: MAIN_COLOR, borderColor: MAIN_COLOR }}
+                  >
+                    {thumbnailUploading ? "업로드 중..." : "썸네일 업로드"}
+                  </Button>
+
+                  {thumbnailUrl && (
+                    <Button
+                      variant="text"
+                      color="error"
+                      onClick={() => {
+                        setThumbnailUrl("");
+                        setThumbnailFileName("");
+                      }}
+                    >
+                      썸네일 제거
+                    </Button>
+                  )}
+
+                  <Typography sx={{ fontSize: 13, color: "#666" }}>
+                    {thumbnailFileName || "선택된 썸네일 없음"}
+                  </Typography>
+                </Box>
+
+                {thumbnailUrl && (
+                  <Box
+                    component="img"
+                    src={thumbnailUrl}
+                    alt="썸네일 미리보기"
+                    sx={{
+                      width: 220,
+                      height: 130,
+                      objectFit: "cover",
+                      borderRadius: 1,
+                      border: "1px solid #ddd",
+                    }}
+                  />
+                )}
+
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleThumbnailChange}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  mb: 2,
+                  "& .ql-toolbar.ql-snow": {
+                    borderRadius: "4px 4px 0 0",
+                  },
+                  "& .ql-container.ql-snow": {
+                    minHeight: 360,
+                    borderRadius: "0 0 4px 4px",
+                  },
+                  "& .ql-editor": {
+                    minHeight: 320,
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                  },
+                }}
+              >
+                <ReactQuill
+                  ref={quillRef}
+                  theme="snow"
+                  value={content}
+                  onChange={(value) => {
+                    setContent(value);
+                    setErrors((prev) => ({ ...prev, content: [] }));
+                  }}
+                  modules={quillModules}
+                />
+
+                {errors.content && (
+                  <Typography color="error" sx={{ mt: 1 }}>
+                    {errors.content[0]}
+                  </Typography>
+                )}
+
+                {isUploadingMedia && (
+                  <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
+                    파일 업로드 중입니다...
+                  </Typography>
+                )}
+              </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  sx={{
+                    mr: 1,
+                    color: MAIN_COLOR,
+                    borderColor: MAIN_COLOR,
+                  }}
+                  onClick={() => navigate("/blog")}
+                >
+                  취소
+                </Button>
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{
+                    bgcolor: MAIN_COLOR,
+                    "&:hover": { bgcolor: MAIN_COLOR },
+                  }}
+                >
+                  등록
+                </Button>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </ThemeProvider>
   );
 }
