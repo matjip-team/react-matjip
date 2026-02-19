@@ -1,5 +1,6 @@
 import { Box, Button, Container, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { logout } from "./api/authApi";
 
 const MyPage = () => {
   const navigate = useNavigate();

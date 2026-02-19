@@ -1,4 +1,6 @@
+// 게시글 목록 페이지
 import { useEffect, useState } from "react";
+// 자유게시판 목록 페이지
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -20,188 +22,170 @@ import {
   IconButton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import axios from "../common/axios";
-import { useAuth } from "../common/context/useAuth";
 import { ThemeProvider } from "@mui/material/styles";
 import { boardTheme } from "./theme/boardTheme";
 
-type CategoryType = "ALL" | "NOTICE" | "REVIEW";
+// 타입 정의
+
+type CategoryType = "ALL" | "공지" | "후기";
 
 interface Board {
   id: number;
   title: string;
+  // 타입 정의
   content?: string;
-  contentHtml?: string;
-  contentDelta?: unknown;
   boardType: "NOTICE" | "REVIEW";
   authorNickname: string;
   createdAt?: string;
   viewCount: number;
   recommendCount: number;
   commentCount: number;
-  hasImage?: boolean;
-  hasVideo?: boolean;
-  imageUrl?: string | null;
-  videoUrl?: string | null;
-  mediaType?: string | null;
-  mediaUrls?: string[] | null;
 }
 
-const toBoolean = (value: unknown): boolean =>
-  value === true || value === "true" || value === 1 || value === "1";
-
-const normalizeBoard = (board: any): Board => ({
-  ...board,
-  hasImage: toBoolean(board?.hasImage),
-  hasVideo: toBoolean(board?.hasVideo),
-});
-
-const parseDelta = (rawDelta: unknown) => {
-  if (!rawDelta) return null;
-  if (typeof rawDelta === "object") return rawDelta as any;
-  if (typeof rawDelta !== "string") return null;
-  try {
-    return JSON.parse(rawDelta);
-  } catch {
-    return null;
-  }
-};
-
-const hasEmbedInDelta = (rawDelta: unknown, embedType: "image" | "video") => {
-  const delta = parseDelta(rawDelta) as any;
-  const ops = Array.isArray(delta?.ops) ? delta.ops : [];
-  return ops.some((op: any) => typeof op?.insert === "object" && op.insert?.[embedType]);
-};
-
-const getPostHtml = (post: Board) => post.contentHtml ?? post.content ?? "";
+// 메인 컴포넌트
 
 export default function BoardPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const MAIN_COLOR = "#ff6b00";
 
+  // 메인 컴포넌트
+  // 상태
   const [posts, setPosts] = useState<Board[]>([]);
   const [category, setCategory] = useState<CategoryType>("ALL");
+
   const [keyword, setKeyword] = useState("");
+    // 상태
   const [appliedKeyword, setAppliedKeyword] = useState("");
+
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [toast, setToast] = useState("");
   const [searchType, setSearchType] = useState("TITLE_CONTENT");
-  const [appliedSearchType, setAppliedSearchType] = useState("TITLE_CONTENT");
+  const [appliedSearchType, setAppliedSearchType] = useState("TITLE_CONTENT"); // 실제 검색용
+
+  // 글쓴이 컨텍스트 메뉴
   const [authorAnchor, setAuthorAnchor] = useState<null | HTMLElement>(null);
-  const [selectedAuthor, setSelectedAuthor] = useState("");
+  const [selectedAuthor, setSelectedAuthor] = useState<string>("");
+
+    // 게시글 목록 조회
+    // 글쓴이 메뉴
 
   useEffect(() => {
     const fetchBoards = async () => {
       const res = await axios.get("/api/boards", {
+    // 게시글 목록 조회
         params: {
           page,
           size,
-          type: category === "ALL" ? null : category,
+          type:
+            category === "ALL"
+              ? null
+              : category === "공지"
+              ? "NOTICE"
+              : "REVIEW",
           keyword: appliedKeyword,
           searchType: appliedSearchType,
         },
       });
 
       const data = res.data.data;
-      const notices = (data.notices ?? []).filter(Boolean).map(normalizeBoard);
-      const contents = (data.contents ?? []).filter(Boolean).map(normalizeBoard);
+
+      const notices = (data.notices ?? []).filter(Boolean);
+      const contents = (data.contents ?? []).filter(Boolean);
 
       if (category === "ALL") {
         setPosts([...notices, ...contents]);
-      } else if (category === "NOTICE") {
+      } else if (category === "공지") {
         setPosts(notices);
       } else {
         setPosts(contents);
       }
 
-      const computedTotalPages = Math.ceil((data.totalElements ?? 0) / (data.size ?? size));
+      const computedTotalPages = Math.ceil(
+        (data.totalElements ?? 0) / (data.size ?? size)
+      );
+
       setTotalPages(Math.max(1, computedTotalPages));
     };
 
     fetchBoards();
   }, [page, category, appliedKeyword, size, appliedSearchType]);
 
-  const getBoardType = (post?: Board) => post?.boardType ?? "";
+    // 헬퍼 함수
 
+  // 글 타입 반환
+  const getBoardType = (post?: Board) => post?.boardType ?? "";
+    // 헬퍼 함수
+
+  // 글 타입 레이블 변환
   const getBoardLabel = (post: Board) => {
     if (post.boardType === "NOTICE") return "공지";
     if (post.boardType === "REVIEW") return "후기";
     return "-";
   };
 
-  const hasImageContent = (post: Board) => {
-    if (post.hasImage) return true;
-    const content = getPostHtml(post);
-    return (
-      /<img[\s>]/i.test(content) ||
-      hasEmbedInDelta(post.contentDelta, "image") ||
-      Boolean(post.imageUrl?.trim()) ||
-      /image/i.test(post.mediaType ?? "") ||
-      (Array.isArray(post.mediaUrls) &&
-        post.mediaUrls.some((url) => /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(url)))
-    );
-  };
-
-  const hasVideoContent = (post: Board) => {
-    if (post.hasVideo) return true;
-    const content = getPostHtml(post);
-    return (
-      /<(video|iframe)[\s>]/i.test(content) ||
-      hasEmbedInDelta(post.contentDelta, "video") ||
-      Boolean(post.videoUrl?.trim()) ||
-      /video/i.test(post.mediaType ?? "") ||
-      (Array.isArray(post.mediaUrls) &&
-        post.mediaUrls.some((url) => /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url)))
-    );
-  };
-
+  // 검색 실행
   const handleSearch = () => {
     if (!keyword.trim()) {
       setToast("검색어를 입력해주세요.");
       return;
     }
+
     setPage(0);
     setAppliedKeyword(keyword);
     setAppliedSearchType(searchType);
   };
 
-  const openAuthorMenu = (e: React.MouseEvent<HTMLElement>, author: string) => {
+    // 글쓴이 메뉴
+
+  // 글쓴이 메뉴 오픈
+    // 글쓴이 메뉴
+  const openAuthorMenu = (
+    e: React.MouseEvent<HTMLElement>,
+    author: string
+  ) => {
     setAuthorAnchor(e.currentTarget as HTMLElement);
     setSelectedAuthor(author);
   };
 
-  const closeAuthorMenu = () => setAuthorAnchor(null);
-
-  const handleWriteClick = () => {
-    if (!user) {
-      setToast("로그인이 필요합니다.");
-      return;
-    }
-    navigate("/board/write");
+  // 글쓴이 메뉴 닫기
+  const closeAuthorMenu = () => {
+    setAuthorAnchor(null);
   };
 
+    // 렌더
+
+    // 렌더
   return (
     <ThemeProvider theme={boardTheme}>
       <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
+
+        {/* 제목 / 글쓰기 */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>자유게시판</Box>
-          <Button variant="contained" sx={{ bgcolor: MAIN_COLOR }} onClick={handleWriteClick}>
+          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
+            자유게시판
+          </Box>
+
+          <Button
+            variant="contained"
+            sx={{ bgcolor: MAIN_COLOR }}
+            onClick={() => navigate("/board/write")}
+          >
             새글쓰기
           </Button>
         </Box>
 
+        {/* 검색 */}
         <Box sx={{ display: "flex", gap: 1, mb: 4 }}>
           <Select
             size="small"
             value={searchType}
-            onChange={(e) => setSearchType(String(e.target.value))}
-            sx={{ width: 120 }}
+            onChange={(e) => {
+              setSearchType(e.target.value)
+            }}
+            sx={{width: 120}}
           >
             <MenuItem value="TITLE_CONTENT">제목+내용</MenuItem>
             <MenuItem value="TITLE">제목</MenuItem>
@@ -218,7 +202,7 @@ export default function BoardPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSearch();
             }}
-            sx={{ width: 300 }}
+            sx={{width: 300}}
           />
 
           <IconButton
@@ -233,29 +217,26 @@ export default function BoardPage() {
           </IconButton>
         </Box>
 
+        {/* 카테고리 */}
         <Box sx={{ display: "flex", gap: 0.5, mb: 1, alignItems: "center" }}>
-          {[
-            { key: "ALL" as const, label: "전체글" },
-            { key: "NOTICE" as const, label: "공지" },
-            { key: "REVIEW" as const, label: "후기" },
-          ].map((c) => (
+          {["ALL", "공지", "후기"].map((c) => (
             <Button
-              key={c.key}
+              key={c}
               size="small"
-              variant={category === c.key ? "contained" : "outlined"}
+              variant={category === c ? "contained" : "outlined"}
               sx={{
-                bgcolor: category === c.key ? MAIN_COLOR : "#fff",
-                color: category === c.key ? "#fff" : MAIN_COLOR,
+                bgcolor: category === c ? MAIN_COLOR : "#fff",
+                color: category === c ? "#fff" : MAIN_COLOR,
                 borderColor: MAIN_COLOR,
               }}
               onClick={() => {
-                setCategory(c.key);
+                setCategory(c as CategoryType);
                 setPage(0);
                 setKeyword("");
-                setAppliedKeyword("");
+  setAppliedKeyword("");
               }}
             >
-              {c.label}
+              {c === "ALL" ? "전체글" : c}
             </Button>
           ))}
 
@@ -267,7 +248,7 @@ export default function BoardPage() {
                 setSize(Number(e.target.value));
                 setPage(0);
               }}
-              sx={{ width: 90 }}
+              sx={{width: 90}}
             >
               <MenuItem value={10}>10개</MenuItem>
               <MenuItem value={30}>30개</MenuItem>
@@ -277,29 +258,18 @@ export default function BoardPage() {
           </Box>
         </Box>
 
+        {/* 테이블 */}
         <TableContainer component={Paper}>
           <Table sx={{ tableLayout: "fixed" }}>
             <TableHead>
               <TableRow sx={{ borderBottom: "2px solid #ff6b00" }}>
-                <TableCell align="center" sx={{ width: 30 }}>
-                  번호
-                </TableCell>
-                <TableCell align="center" sx={{ width: 90 }}>
-                  말머리
-                </TableCell>
+                <TableCell align="center" sx={{ width: 30 }}>번호</TableCell>
+                <TableCell align="center" sx={{ width: 50 }}>말머리</TableCell>
                 <TableCell align="center">제목</TableCell>
-                <TableCell align="center" sx={{ width: 130 }}>
-                  글쓴이
-                </TableCell>
-                <TableCell align="center" sx={{ width: 100 }}>
-                  작성일
-                </TableCell>
-                <TableCell align="center" sx={{ width: 40 }}>
-                  조회
-                </TableCell>
-                <TableCell align="center" sx={{ width: 40 }}>
-                  추천
-                </TableCell>
+                <TableCell align="center" sx={{ width: 130 }}>글쓴이</TableCell>
+                <TableCell align="center" sx={{ width: 80 }}>작성일</TableCell>
+                <TableCell align="center" sx={{ width: 40 }}>조회</TableCell>
+                <TableCell align="center" sx={{ width: 40 }}>추천</TableCell>
               </TableRow>
             </TableHead>
 
@@ -313,9 +283,6 @@ export default function BoardPage() {
               ) : (
                 posts.map((post) => {
                   const type = getBoardType(post);
-                  const showImageIcon = hasImageContent(post);
-                  const showVideoIcon = hasVideoContent(post);
-                  const showDefaultBubble = !showImageIcon && !showVideoIcon;
 
                   return (
                     <TableRow key={post.id} hover>
@@ -335,7 +302,7 @@ export default function BoardPage() {
                       <TableCell
                         align="left"
                         sx={{
-                          pl: 4,
+                          pl: 10,
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -345,36 +312,13 @@ export default function BoardPage() {
                         <Box
                           component="span"
                           onClick={() => navigate(`/board/${post.id}`)}
-                          sx={{
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.75,
-                            maxWidth: "100%",
-                            "&:hover": { textDecoration: "underline" },
-                          }}
+                          sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
                         >
-                          {showDefaultBubble && (
-                            <ChatBubbleOutlineIcon sx={{ fontSize: 16, color: "#9e9e9e" }} />
-                          )}
-                          {showImageIcon && (
-                            <ImageOutlinedIcon sx={{ fontSize: 16, color: "#2e7d32" }} />
-                          )}
-                          {showVideoIcon && (
-                            <VideocamOutlinedIcon sx={{ fontSize: 16, color: "#1565c0" }} />
-                          )}
-                          <Box
-                            component="span"
-                            sx={{
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {post.title}
-                          </Box>
+                          {post.title}
                           {post.commentCount > 0 && (
-                            <span style={{ color: "#999", marginLeft: 4 }}>[{post.commentCount}]</span>
+                            <span style={{ color: "#999", marginLeft: 4 }}>
+                              [{post.commentCount}]
+                            </span>
                           )}
                         </Box>
                       </TableCell>
@@ -390,8 +334,11 @@ export default function BoardPage() {
                       </TableCell>
 
                       <TableCell align="center">
-                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString("ko-KR") : "-"}
+                        {post.createdAt
+                          ? new Date(post.createdAt).toLocaleDateString("ko-KR")
+                          : "-"}
                       </TableCell>
+
                       <TableCell align="center">{post.viewCount}</TableCell>
                       <TableCell align="center">{post.recommendCount}</TableCell>
                     </TableRow>
@@ -402,12 +349,16 @@ export default function BoardPage() {
           </Table>
         </TableContainer>
 
+        {/* 글쓴이 메뉴 */}
         <Menu anchorEl={authorAnchor} open={Boolean(authorAnchor)} onClose={closeAuthorMenu}>
           <MenuItem onClick={() => alert(`${selectedAuthor} 글 보기`)}>글</MenuItem>
           <MenuItem onClick={() => alert(`${selectedAuthor} 댓글 보기`)}>댓글</MenuItem>
-          <MenuItem onClick={() => alert(`${selectedAuthor} 작성글 검색`)}>작성글 검색</MenuItem>
+          <MenuItem onClick={() => alert(`${selectedAuthor} 작성글 검색`)}>
+            작성글 검색
+          </MenuItem>
         </Menu>
 
+        {/* 페이지네이션 */}
         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
           <Pagination
             count={posts.length === 0 ? 1 : totalPages}
@@ -417,7 +368,6 @@ export default function BoardPage() {
           />
         </Box>
       </Box>
-
       <Snackbar
         open={Boolean(toast)}
         autoHideDuration={1500}

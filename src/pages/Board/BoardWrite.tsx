@@ -4,9 +4,9 @@ import {
   Box,
   Button,
   ButtonGroup,
+  TextField,
   Card,
   CardContent,
-  TextField,
   Typography,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
@@ -29,7 +29,7 @@ export default function BoardWrite() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const quillRef = useRef<ReactQuill | null>(null);
 
@@ -39,63 +39,52 @@ export default function BoardWrite() {
     return div.textContent?.trim() ?? "";
   };
 
-  const hasMediaContent = (html: string) => /<(img|video|iframe)\b/i.test(html);
-
-  const insertMediaToEditor = useCallback((fileUrl: string, fileType: string) => {
+  const insertImageToEditor = useCallback((fileUrl: string) => {
     const quill = quillRef.current?.getEditor();
     if (!quill) return;
 
     const range = quill.getSelection(true);
     const index = range ? range.index : quill.getLength();
 
-    if (fileType.startsWith("video/")) {
-      quill.insertEmbed(index, "video", fileUrl, "user");
-      quill.setSelection(index + 1);
-      return;
-    }
-
     quill.insertEmbed(index, "image", fileUrl, "user");
     quill.setSelection(index + 1);
   }, []);
 
-  const handleMediaUpload = useCallback(
+  const handleImageUpload = useCallback(
     async (file: File) => {
       try {
-        setIsUploadingMedia(true);
+        setIsUploadingImage(true);
         const fileUrl = await uploadBoardImage(file);
-        insertMediaToEditor(fileUrl, file.type || "");
+        insertImageToEditor(fileUrl);
       } catch (error: any) {
         console.error(error);
         const status = error?.response?.status;
-        const uploadStep = error?.uploadStep;
 
-        if (uploadStep === "presign" && (status === 401 || status === 403)) {
+        if (status === 401 || status === 403) {
           alert("로그인이 필요합니다.");
-        } else if (uploadStep === "s3-put" && status === 403) {
-          alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
         } else {
-          alert("파일 업로드에 실패했습니다. 다시 시도해 주세요.");
+          alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
         }
       } finally {
-        setIsUploadingMedia(false);
+        setIsUploadingImage(false);
       }
     },
-    [insertMediaToEditor],
+    [insertImageToEditor],
   );
 
-  const handleToolbarMedia = useCallback(() => {
+  const handleToolbarImage = useCallback(() => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
-    input.setAttribute("accept", "image/*,video/*");
+    input.setAttribute("accept", "image/*");
     input.click();
 
     input.onchange = () => {
       const file = input.files?.[0];
       if (file) {
-        void handleMediaUpload(file);
+        void handleImageUpload(file);
       }
     };
-  }, [handleMediaUpload]);
+  }, [handleImageUpload]);
 
   const quillModules = useMemo(
     () => ({
@@ -108,21 +97,18 @@ export default function BoardWrite() {
           ["clean"],
         ],
         handlers: {
-          image: handleToolbarMedia,
+          image: handleToolbarImage,
         },
       },
     }),
-    [handleToolbarMedia],
+    [handleToolbarImage],
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const editor = quillRef.current?.getEditor();
-    const delta = editor?.getContents() ?? null;
     const html = content;
     const text = extractPlainText(content);
-    const hasMedia = hasMediaContent(content);
 
     if (!title.trim()) {
       setErrors({ title: ["제목을 입력하십시오."] });
@@ -134,7 +120,7 @@ export default function BoardWrite() {
       return;
     }
 
-    if (!text && !hasMedia) {
+    if (!text) {
       setErrors({ content: ["내용을 입력해 주세요."] });
       return;
     }
@@ -143,8 +129,6 @@ export default function BoardWrite() {
       await axios.post("/api/boards", {
         title,
         content: html,
-        contentHtml: html,
-        contentDelta: delta ? JSON.stringify(delta) : null,
         boardType: category === "공지" ? "NOTICE" : "REVIEW",
       });
 
@@ -236,9 +220,9 @@ export default function BoardWrite() {
                   </Typography>
                 )}
 
-                {isUploadingMedia && (
+                {isUploadingImage && (
                   <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
-                    파일 업로드 중입니다...
+                    이미지 업로드 중입니다...
                   </Typography>
                 )}
               </Box>

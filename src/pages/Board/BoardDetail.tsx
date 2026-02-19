@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../common/axios";
 import { Box, Button, Typography, Paper, Divider, Snackbar, TextField, CircularProgress } from "@mui/material";
 import { useAuth } from "../../pages/common/context/useAuth";
 import { formatDateTime } from "../common/utils/helperUtil";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 
 export interface User {
   role: string;
@@ -38,38 +36,9 @@ export default function BoardDetail() {
   // 로딩 상태
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const quillRef = useRef<ReactQuill | null>(null);
-
-  const quillReadOnlyModules = useMemo(
-    () => ({
-      toolbar: false,
-    }),
-    [],
-  );
-
-  const parseContentDelta = (rawDelta: unknown) => {
-    if (!rawDelta) return null;
-    if (typeof rawDelta === "object") return rawDelta;
-    if (typeof rawDelta !== "string") return null;
-    try {
-      return JSON.parse(rawDelta);
-    } catch {
-      return null;
-    }
-  };
-
-  const requireLogin = () => {
-    if (!user) {
-      setToast("로그인이 필요합니다.");
-      return false;
-    }
-    return true;
-  };
     // 액션 핸들러
 
   const handleRecommend = async () => {
-    if (!requireLogin()) return;
-
     try {
       // 서버 토글
       await axios.post(`/api/boards/${id}/recommendations`);
@@ -143,8 +112,6 @@ export default function BoardDetail() {
 
   // 새 댓글 등록
   const submitComment = async () => {
-    if (!requireLogin()) return;
-
     if (!newComment.trim()) {
       setToast("댓글을 입력해주세요.");
       return;
@@ -175,8 +142,6 @@ export default function BoardDetail() {
 
   // 대댓글 등록
   const submitReply = async (parentId: number, content: string) => {
-    if (!requireLogin()) return;
-
     if (!content.trim()) {
       setToast("답글을 입력해주세요.");
       return;
@@ -209,8 +174,6 @@ export default function BoardDetail() {
 
   // 댓글 수정
   const updateComment = async (commentId: number) => {
-    if (!requireLogin()) return;
-
     if (!editingText.trim()) {
       setToast("내용을 입력해주세요.");
       return;
@@ -242,8 +205,6 @@ export default function BoardDetail() {
 
   // 댓글 삭제
   const deleteComment = async (commentId: number) => {
-    if (!requireLogin()) return;
-
     if (!confirm("댓글을 삭제할까요?")) return;
 
     try {
@@ -333,25 +294,8 @@ export default function BoardDetail() {
   // 컴포넌트 마운트 시 게시글과 댓글 조회
   useEffect(() => {
     fetchPost();
-  }, [id]);
-
-  useEffect(() => {
     fetchComments();
   }, [id, sortType]);
-
-  useEffect(() => {
-    if (!post) return;
-    const editor = quillRef.current?.getEditor();
-    if (!editor) return;
-    const delta = parseContentDelta(post.contentDelta);
-    if (delta) {
-      editor.setContents(delta as any);
-      return;
-    }
-    const html = post.contentHtml || post.content || "";
-    editor.setContents([]);
-    editor.clipboard.dangerouslyPasteHTML(html);
-  }, [post]);
 
   if (!post) {
     return <Box sx={{ textAlign: "center", mt: 10 }}>로딩중...</Box>;
@@ -413,36 +357,10 @@ export default function BoardDetail() {
             fontSize: 15,
             lineHeight: 1.7,
             minHeight: 200,
-            "& .ql-toolbar.ql-snow": {
-              display: "none",
-            },
-            "& .ql-container.ql-snow": {
-              border: "none",
-            },
-            "& .ql-editor": {
-              padding: 0,
-            },
-            "& .ql-editor img": {
-              maxWidth: "100%",
-              height: "auto",
-            },
-            "& .ql-editor iframe, & .ql-editor video": {
-              maxWidth: "100%",
-            },
-            "& .ql-editor table": {
-              width: "100%",
-              borderCollapse: "collapse",
-              margin: "12px 0",
-            },
-            "& .ql-editor td, & .ql-editor th": {
-              border: "1px solid #d9d9d9",
-              padding: "8px 10px",
-              verticalAlign: "top",
-            },
+            "& img": { maxWidth: "100%" },
           }}
-        >
-          <ReactQuill ref={quillRef} theme="snow" readOnly modules={quillReadOnlyModules} />
-        </Box>
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
 
         <Divider sx={{ my: 3 }} />
 
@@ -656,7 +574,6 @@ export default function BoardDetail() {
                       ml: 1,
                     }}
                     onClick={() => {
-                      if (!requireLogin()) return;
                       setReplyTo(c.id);
                       setReplyText("");
                     }}
