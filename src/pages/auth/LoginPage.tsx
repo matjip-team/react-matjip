@@ -19,9 +19,9 @@ import type { User } from "../common/types/user";
 export type LoginForm = LoginRequest;
 
 /** 로그인/me API는 roles 배열을 줄 수 있음 → User 타입의 role로 정규화 */
-function toUser(data: { id: number; email: string; name: string; nickname: string; role?: string; roles?: string[] }): User {
+function toUser(data: { id: number; email: string; name: string; nickname: string; role?: string; roles?: string[]; profileImageUrl?: string }): User {
   const role = data.role ?? (Array.isArray(data.roles) ? data.roles[0] : undefined) ?? "ROLE_USER";
-  return { id: data.id, email: data.email, name: data.name, nickname: data.nickname, role };
+  return { id: data.id, email: data.email, name: data.name, nickname: data.nickname, role, profileImageUrl: data.profileImageUrl };
 }
 
 const LoginPage = () => {
