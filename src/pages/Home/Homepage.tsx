@@ -109,7 +109,7 @@ export default function HomePage() {
       alert("로그인이 필요합니다.");
       navigate("/auth/login");
       return;
-    }
+    } 
 
     const target = stores.find((s) => s.id === storeId);
     if (!target) return;
