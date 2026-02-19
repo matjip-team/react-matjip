@@ -1,9 +1,10 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Badge, Snackbar, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -12,8 +13,20 @@ export default function MainLayout() {
 
   const { user, logout } = useAuth();
   const [toast, setToast] = useState("");
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target as Node)) {
+        setAdminMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const myHandleClick = () => {
     navigate("/auth/mypage");
@@ -83,12 +96,70 @@ export default function MainLayout() {
             </span>
 
             {isAdmin && (
-              <span
-                className={location.pathname === "/admin/restaurant-requests" ? "active" : ""}
-                onClick={() => navigate("/admin/restaurant-requests")}
-              >
-                신청 접수
-              </span>
+              <div className="nav-dropdown" ref={adminMenuRef}>
+                <span
+                  className={
+                    location.pathname.startsWith("/admin")
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() => setAdminMenuOpen((prev) => !prev)}
+                >
+                  관리자 페이지
+                  <ExpandMoreIcon
+                    sx={{
+                      fontSize: 18,
+                      verticalAlign: "middle",
+                      ml: 0.5,
+                      transform: adminMenuOpen ? "rotate(180deg)" : "none",
+                      transition: "transform 0.2s",
+                    }}
+                  />
+                </span>
+                {adminMenuOpen && (
+                  <div className="nav-submenu">
+                    <span
+                      className={
+                        location.pathname === "/admin/restaurant-requests"
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() => {
+                        navigate("/admin/restaurant-requests");
+                        setAdminMenuOpen(false);
+                      }}
+                    >
+                      신청 접수
+                    </span>
+                    <span
+                      className={
+                        location.pathname === "/admin/board"
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() => {
+                        navigate("/admin/board");
+                        setAdminMenuOpen(false);
+                      }}
+                    >
+                      커뮤니티 관리
+                    </span>
+                    <span
+                      className={
+                        location.pathname === "/admin/blog"
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() => {
+                        navigate("/admin/blog");
+                        setAdminMenuOpen(false);
+                      }}
+                    >
+                      블로그 관리
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
           </nav>
 

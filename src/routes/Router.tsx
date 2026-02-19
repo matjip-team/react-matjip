@@ -21,6 +21,11 @@ import Restaurant from "../pages/restaurant/Restaurant";
 import Sample3 from "../pages/Sample3";
 import Register from "../pages/register/RegisterPage.tsx";
 import RestaurantRequestPage from "../pages/admin/RestaurantRequestPage";
+import AdminBoardPage from "../pages/admin/board/AdminBoardPage";
+import AdminBlogPage from "../pages/admin/blog/AdminBlogPage";
+import AdminBlogWrite from "../pages/admin/blog/AdminBlogWrite";
+import AdminBlogDetail from "../pages/admin/blog/AdminBlogDetail";
+import AdminBlogEdit from "../pages/admin/blog/AdminBlogEdit";
 import RestaurantMyRequestsPage from "../pages/register/RestaurantMyRequestsPage";
 
 export default function Router() {
@@ -52,6 +57,11 @@ export default function Router() {
           <Route path="/register" element={<Register />} />
           <Route path="/register/requests" element={<RestaurantMyRequestsPage />} />
           <Route path="/admin/restaurant-requests" element={<RestaurantRequestPage />} />
+          <Route path="/admin/board" element={<AdminBoardPage />} />
+          <Route path="/admin/blog" element={<AdminBlogPage />} />
+          <Route path="/admin/blog/write" element={<AdminBlogWrite />} />
+          <Route path="/admin/blog/edit/:id" element={<AdminBlogEdit />} />
+          <Route path="/admin/blog/:id" element={<AdminBlogDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>

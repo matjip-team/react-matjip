@@ -14,15 +14,15 @@ import ReactQuill, { Quill } from "react-quill-new";
 import QuillTableBetter from "quill-table-better";
 import "react-quill-new/dist/quill.snow.css";
 import "quill-table-better/dist/quill-table-better.css";
-
-import hljs from 'highlight.js';
+import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css";
-import axios from "../common/axios";
+import axios from "../../common/axios";
 import { blogTheme } from "./theme/blogTheme";
-import { uploadBlogImage } from "./api/blogImageUpload";
-import { registerBlogQuillModules } from "./quillSetup";
+import { uploadAdminBlogImage } from "./api/adminBlogImageUpload";
+import { registerAdminBlogQuillModules } from "./quillSetup";
+import { ADMIN_BLOG_API } from "./api/adminBlogApi";
 
-registerBlogQuillModules(Quill);
+registerAdminBlogQuillModules(Quill);
 
 interface HttpErrorLike {
   response?: {
@@ -42,8 +42,7 @@ interface ValidationErrorResponse {
   fields?: ValidationErrorField[];
 }
 
-export default function BlogWrite() {
-
+export default function AdminBlogWrite() {
   const navigate = useNavigate();
   const MAIN_COLOR = "#ff6b00";
   const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
@@ -76,16 +75,13 @@ export default function BlogWrite() {
   const insertMediaToEditor = useCallback((fileUrl: string, fileType: string) => {
     const quill = quillRef.current?.getEditor();
     if (!quill) return;
-
     const range = quill.getSelection(true);
     const index = range ? range.index : quill.getLength();
-
     if (fileType.startsWith("video/")) {
       quill.insertEmbed(index, "video", fileUrl, "user");
       quill.setSelection(index + 1);
       return;
     }
-
     quill.insertEmbed(index, "image", fileUrl, "user");
     quill.setSelection(index + 1);
   }, []);
@@ -94,13 +90,12 @@ export default function BlogWrite() {
     async (file: File) => {
       try {
         setIsUploadingMedia(true);
-        const fileUrl = await uploadBlogImage(file);
+        const fileUrl = await uploadAdminBlogImage(file);
         insertMediaToEditor(fileUrl, file.type || "");
       } catch (error: unknown) {
         console.error(error);
         const status = (error as HttpErrorLike)?.response?.status;
         const uploadStep = (error as HttpErrorLike)?.uploadStep;
-
         if (uploadStep === "presign" && (status === 401 || status === 403)) {
           alert("로그인이 필요합니다.");
         } else if (uploadStep === "s3-put" && status === 403) {
@@ -120,12 +115,9 @@ export default function BlogWrite() {
     input.setAttribute("type", "file");
     input.setAttribute("accept", "image/*,video/*");
     input.click();
-
     input.onchange = () => {
       const file = input.files?.[0];
-      if (file) {
-        void handleMediaUpload(file);
-      }
+      if (file) void handleMediaUpload(file);
     };
   }, [handleMediaUpload]);
 
@@ -133,84 +125,67 @@ export default function BlogWrite() {
     () => ({
       toolbar: {
         container: [
-        [{ header: 1 }, { header: 2 }],
-        ["bold", "italic", "underline", "strike"],
-        ["link", "image", "video", "code-block", "formula"],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
-        [{ indent: "-1" }, { indent: "+1" }],
-        [{ direction: "rtl" }],
-        [{ size: ["small", false, "large", "huge"] }],
-        [{ color: [] }, { background: [] }],
-        [{ font: [] }],
-        [{ align: [] }],
-        ["table-better"],
-        ['clean'],
-         [{ 'direction': 'rtl' }],  
-         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-         [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
-         [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
-      ],
-        handlers: {
-          image: handleToolbarMedia,
-        },
+          [{ header: 1 }, { header: 2 }],
+          ["bold", "italic", "underline", "strike"],
+          ["link", "image", "video", "code-block", "formula"],
+          [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
+          [{ indent: "-1" }, { indent: "+1" }],
+          [{ direction: "rtl" }],
+          [{ size: ["small", false, "large", "huge"] }],
+          [{ color: [] }, { background: [] }],
+          [{ font: [] }],
+          [{ align: [] }],
+          ["table-better"],
+          ["clean"],
+          [{ direction: "rtl" }],
+          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ size: ["small", false, "large", "huge"] }],
+          [{ script: "sub" }, { script: "super" }],
+        ],
+        handlers: { image: handleToolbarMedia },
       },
       table: false,
-    "table-better": {
-      language: "en_US",
-      menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
-      toolbarTable: true,
-    },
-    keyboard: {
-      bindings: QuillTableBetter.keyboardBindings,
-    },
-    imageResize: {
-      parchment: Quill.import('parchment'),
-      modules: ['Resize', 'DisplaySize', 'Toolbar']
-    },
-    syntax: { hljs },
+      "table-better": {
+        language: "en_US",
+        menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+        toolbarTable: true,
+      },
+      keyboard: { bindings: QuillTableBetter.keyboardBindings },
+      imageResize: {
+        parchment: Quill.import("parchment"),
+        modules: ["Resize", "DisplaySize", "Toolbar"],
+      },
+      syntax: { hljs },
     }),
     [handleToolbarMedia],
   );
 
-  const handleThumbnailPick = () => {
-    thumbnailInputRef.current?.click();
-  };
+  const handleThumbnailPick = () => thumbnailInputRef.current?.click();
 
   const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     if (!file.type.startsWith("image/")) {
       alert("썸네일은 이미지 파일만 업로드할 수 있습니다.");
       e.target.value = "";
       return;
     }
-
     if (file.size > MAX_THUMBNAIL_SIZE) {
       alert("썸네일 파일 크기는 10MB 이하만 가능합니다.");
       e.target.value = "";
       return;
     }
-
     try {
       setThumbnailUploading(true);
-      const url = await uploadBlogImage(file);
+      const url = await uploadAdminBlogImage(file);
       setThumbnailUrl(url);
       setThumbnailFileName(file.name);
     } catch (error: unknown) {
       console.error(error);
-      const status = (error as HttpErrorLike)?.response?.status;
       const uploadStep = (error as HttpErrorLike)?.uploadStep;
-
-      if (uploadStep === "presign" && (status === 401 || status === 403)) {
-        alert("로그인이 필요합니다.");
-      } else if (uploadStep === "s3-put" && status === 403) {
-        alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
-      } else {
-        alert("썸네일 업로드에 실패했습니다. 다시 시도해 주세요.");
-      }
+      if (uploadStep === "presign") alert("로그인이 필요합니다.");
+      else if (uploadStep === "s3-put") alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
+      else alert("썸네일 업로드에 실패했습니다.");
     } finally {
       setThumbnailUploading(false);
       e.target.value = "";
@@ -219,7 +194,6 @@ export default function BlogWrite() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const editor = quillRef.current?.getEditor();
     const delta = editor?.getContents() ?? null;
     const html = content;
@@ -230,24 +204,21 @@ export default function BlogWrite() {
       setErrors({ title: ["제목을 입력하십시오."] });
       return;
     }
-
     if (title.trim().length < 2) {
       setErrors({ title: ["제목은 최소 2자 이상 입력해 주십시오."] });
       return;
     }
-
     if (!text && !hasMedia) {
       setErrors({ content: ["내용을 입력해 주세요."] });
       return;
     }
-
     if (thumbnailUploading) {
       alert("썸네일 업로드가 끝난 뒤 등록해 주세요.");
       return;
     }
 
     try {
-      await axios.post("/api/blogs", {
+      await axios.post(ADMIN_BLOG_API, {
         title,
         content: html,
         contentHtml: html,
@@ -255,18 +226,14 @@ export default function BlogWrite() {
         blogType: category === "공지" ? "NOTICE" : "REVIEW",
         imageUrl: thumbnailUrl || null,
       });
-
-      navigate("/blog");
+      navigate("/admin/blog");
     } catch (error: unknown) {
       const res = (error as HttpErrorLike)?.response?.data;
-
       if (res?.code === "VALIDATION_ERROR") {
         const fieldErrors: Record<string, string[]> = {};
-
         (res.fields ?? []).forEach((f) => {
           fieldErrors[f.field] = f.messages;
         });
-
         setErrors(fieldErrors);
       } else {
         alert("글 등록에 실패했습니다.");
@@ -279,17 +246,12 @@ export default function BlogWrite() {
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Card>
           <CardContent>
-            <Typography
-              variant="h5"
-              sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}
-            >
-              글 작성
+            <Typography variant="h5" sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}>
+              글 작성 (관리자)
             </Typography>
-
             <Box component="form" onSubmit={handleSubmit}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
-
                 <ButtonGroup size="small">
                   {categories.map((c) => (
                     <Button
@@ -299,10 +261,7 @@ export default function BlogWrite() {
                         bgcolor: category === c.key ? MAIN_COLOR : "#fff",
                         color: category === c.key ? "#fff" : MAIN_COLOR,
                         borderColor: MAIN_COLOR,
-                        "&:hover": {
-                          bgcolor: MAIN_COLOR,
-                          color: "#fff",
-                        },
+                        "&:hover": { bgcolor: MAIN_COLOR, color: "#fff" },
                       }}
                       onClick={() => setCategory(c.key)}
                     >
@@ -311,7 +270,6 @@ export default function BlogWrite() {
                   ))}
                 </ButtonGroup>
               </Box>
-
               <TextField
                 fullWidth
                 placeholder="제목을 입력하세요"
@@ -324,10 +282,8 @@ export default function BlogWrite() {
                 helperText={errors.title?.[0]}
                 sx={{ mb: 3 }}
               />
-
               <Box sx={{ mb: 3, p: 1.5, border: "1px solid #eee", borderRadius: 1 }}>
                 <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>썸네일 이미지</Typography>
-
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
                   <Button
                     variant="outlined"
@@ -337,7 +293,6 @@ export default function BlogWrite() {
                   >
                     {thumbnailUploading ? "업로드 중..." : "썸네일 업로드"}
                   </Button>
-
                   {thumbnailUrl && (
                     <Button
                       variant="text"
@@ -350,12 +305,10 @@ export default function BlogWrite() {
                       썸네일 제거
                     </Button>
                   )}
-
                   <Typography sx={{ fontSize: 13, color: "#666" }}>
                     {thumbnailFileName || "선택된 썸네일 없음"}
                   </Typography>
                 </Box>
-
                 {thumbnailUrl && (
                   <Box
                     component="img"
@@ -370,7 +323,6 @@ export default function BlogWrite() {
                     }}
                   />
                 )}
-
                 <input
                   ref={thumbnailInputRef}
                   type="file"
@@ -379,22 +331,12 @@ export default function BlogWrite() {
                   onChange={handleThumbnailChange}
                 />
               </Box>
-
               <Box
                 sx={{
                   mb: 2,
-                  "& .ql-toolbar.ql-snow": {
-                    borderRadius: "4px 4px 0 0",
-                  },
-                  "& .ql-container.ql-snow": {
-                    minHeight: 360,
-                    borderRadius: "0 0 4px 4px",
-                  },
-                  "& .ql-editor": {
-                    minHeight: 320,
-                    fontSize: 15,
-                    lineHeight: 1.6,
-                  },
+                  "& .ql-toolbar.ql-snow": { borderRadius: "4px 4px 0 0" },
+                  "& .ql-container.ql-snow": { minHeight: 360, borderRadius: "0 0 4px 4px" },
+                  "& .ql-editor": { minHeight: 320, fontSize: 15, lineHeight: 1.6 },
                 }}
               >
                 <ReactQuill
@@ -407,41 +349,26 @@ export default function BlogWrite() {
                   }}
                   modules={quillModules}
                 />
-
                 {errors.content && (
                   <Typography color="error" sx={{ mt: 1 }}>
                     {errors.content[0]}
                   </Typography>
                 )}
-
                 {isUploadingMedia && (
                   <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
                     파일 업로드 중입니다...
                   </Typography>
                 )}
               </Box>
-
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                 <Button
                   variant="outlined"
-                  sx={{
-                    mr: 1,
-                    color: MAIN_COLOR,
-                    borderColor: MAIN_COLOR,
-                  }}
-                  onClick={() => navigate("/blog")}
+                  sx={{ mr: 1, color: MAIN_COLOR, borderColor: MAIN_COLOR }}
+                  onClick={() => navigate("/admin/blog")}
                 >
                   취소
                 </Button>
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  sx={{
-                    bgcolor: MAIN_COLOR,
-                    "&:hover": { bgcolor: MAIN_COLOR },
-                  }}
-                >
+                <Button type="submit" variant="contained" sx={{ bgcolor: MAIN_COLOR, "&:hover": { bgcolor: MAIN_COLOR } }}>
                   등록
                 </Button>
               </Box>

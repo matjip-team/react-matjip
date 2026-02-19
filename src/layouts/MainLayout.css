@@ -258,3 +258,60 @@ html, body, #root {
   height: 2px;
   background: #ff6b00;
 }
+
+/* ===== 관리자 드롭다운 서브메뉴 ===== */
+.nav-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-dropdown > span {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  min-width: 160px;
+  padding: 8px 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-submenu span {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.nav-submenu span:hover {
+  background: #f3f4f6;
+}
+
+.nav-submenu span.active {
+  background: #fff7ed;
+  color: #ff6b00;
+}
+
+/* 서브메뉴 항목의 active 밑줄 제거 (선택 상태는 배경색으로만 표시) */
+.nav-submenu span.active::after {
+  display: none;
+}

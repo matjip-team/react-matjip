@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
@@ -190,7 +190,7 @@ export default function BlogEdit() {
       const data = res.data.data;
       const html = data.contentHtml ?? data.content ?? "";
       setTitle(data.title ?? "");
-      setCategory(data.boardType === "NOTICE" ? "공지" : "후기");
+      setCategory(data.blogType === "NOTICE" ? "공지" : "후기");
       setContent("");
       setPendingHtml(html);
       setPendingDelta(parseContentDelta(data.contentDelta));
@@ -314,7 +314,7 @@ export default function BlogEdit() {
         content: html,
         contentHtml: html,
         contentDelta: delta ? JSON.stringify(delta) : null,
-        boardType: category === "공지" ? "NOTICE" : "REVIEW",
+        blogType: category === "공지" ? "NOTICE" : "REVIEW",
         imageUrl: thumbnailUrl || null,
       });
 

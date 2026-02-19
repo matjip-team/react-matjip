@@ -20,10 +20,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
-import axios from "../common/axios";
-import { useAuth } from "../common/context/useAuth";
+import axios from "../../common/axios";
+import { useAuth } from "../../common/context/useAuth";
 import { ThemeProvider } from "@mui/material/styles";
 import { blogTheme } from "./theme/blogTheme";
+import { ADMIN_BLOG_API } from "./api/adminBlogApi";
 
 type CategoryType = "ALL" | "NOTICE" | "REVIEW";
 
@@ -96,7 +97,7 @@ const hasEmbedInDelta = (rawDelta: unknown, embedType: "image" | "video") => {
 
 const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
 
-export default function BlogPage() {
+export default function AdminBlogListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const MAIN_COLOR = "#ff6b00";
@@ -116,7 +117,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     const fetchBlogs = async () => {
-      const res = await axios.get("/api/blogs", {
+      const res = await axios.get(ADMIN_BLOG_API, {
         params: {
           page,
           size,
@@ -211,14 +212,14 @@ export default function BlogPage() {
       setToast("로그인이 필요합니다.");
       return;
     }
-    navigate("/blog/write");
+    navigate("/admin/blog/write");
   };
 
   return (
     <ThemeProvider theme={blogTheme}>
       <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>블로그</Box>
+          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>블로그 관리</Box>
           <Button variant="contained" sx={{ bgcolor: MAIN_COLOR }} onClick={handleWriteClick}>
             새글쓰기
           </Button>
@@ -330,7 +331,7 @@ export default function BlogPage() {
                 <Card
                   key={post.id}
                   variant="outlined"
-                  onClick={() => navigate(`/blog/${post.id}`)}
+                  onClick={() => navigate(`/admin/blog/${post.id}`)}
                   sx={{
                     borderColor: "#ececec",
                     cursor: "pointer",
@@ -476,4 +477,3 @@ export default function BlogPage() {
     </ThemeProvider>
   );
 }
-
