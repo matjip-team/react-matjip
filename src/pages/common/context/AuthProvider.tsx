@@ -22,13 +22,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 새로고침 시 서버에서 유저 정보 가져오기
+  // 새로고침 시 서버에서 유저 정보 가져오기 (roles → role 정규화)
+  const toUser = (data: { id: number; email: string; name: string; nickname: string; role?: string; roles?: string[] }): User => {
+    const role = data.role ?? (Array.isArray(data.roles) ? data.roles[0] : undefined) ?? "ROLE_USER";
+    return { id: data.id, email: data.email, name: data.name, nickname: data.nickname, role };
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get<ApiResponse<User>>("/api/users/me");
+        const res = await axios.get<ApiResponse<User & { roles?: string[] }>>("/api/users/me");
         if (res.data.success && res.data.data) {
-          setUser(res.data.data);
+          setUser(toUser(res.data.data));
         } else {
           setUser(null);
         }

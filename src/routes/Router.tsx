@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
+import { AdminRouteGuard } from "./AdminRouteGuard";
 
 import Homepage from "../pages/home/Homepage";
 import BoardPage from "../pages/board/BoardPage";
@@ -56,12 +57,14 @@ export default function Router() {
           <Route path="/sample3" element={<Sample3 />} />
           <Route path="/register" element={<Register />} />
           <Route path="/register/requests" element={<RestaurantMyRequestsPage />} />
-          <Route path="/admin/restaurant-requests" element={<RestaurantRequestPage />} />
-          <Route path="/admin/board" element={<AdminBoardPage />} />
-          <Route path="/admin/blog" element={<AdminBlogPage />} />
-          <Route path="/admin/blog/write" element={<AdminBlogWrite />} />
-          <Route path="/admin/blog/edit/:id" element={<AdminBlogEdit />} />
-          <Route path="/admin/blog/:id" element={<AdminBlogDetail />} />
+          <Route element={<AdminRouteGuard />}>
+            <Route path="/admin/restaurant-requests" element={<RestaurantRequestPage />} />
+            <Route path="/admin/board" element={<AdminBoardPage />} />
+            <Route path="/admin/blog" element={<AdminBlogPage />} />
+            <Route path="/admin/blog/write" element={<AdminBlogWrite />} />
+            <Route path="/admin/blog/edit/:id" element={<AdminBlogEdit />} />
+            <Route path="/admin/blog/:id" element={<AdminBlogDetail />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
