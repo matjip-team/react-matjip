@@ -14,13 +14,47 @@ registerBlogQuillModules(Quill);
 export interface User {
   role: string;
 }
+
+interface BlogCommentNode {
+  id: number;
+  authorId?: number;
+  userId?: number;
+  authorNickname?: string;
+  content: string;
+  deleted?: boolean;
+  createdAt?: string;
+  children?: BlogCommentNode[];
+}
+
+interface BlogPostDetail {
+  id: number;
+  boardType: "NOTICE" | "REVIEW" | string;
+  title: string;
+  content: string;
+  contentHtml?: string;
+  contentDelta?: unknown;
+  authorNickname?: string;
+  createdAt?: string;
+  viewCount: number;
+  recommendCount: number;
+  commentCount: number;
+  recommended?: boolean;
+  imageUrl?: string;
+  authorId?: number;
+}
+
+interface HttpErrorLike {
+  response?: {
+    status?: number;
+  };
+}
 // 게시글 상세 페이지
 
 export default function BlogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<BlogPostDetail | null>(null);
   const [toast, setToast] = useState("");
   const [recommended, setRecommended] = useState(false);
 
@@ -31,7 +65,7 @@ export default function BlogDetail() {
   
 
     // 댓글/대댓글 상태
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<BlogCommentNode[]>([]);
   const [sortType, setSortType] = useState<"created" | "latest">("latest");
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -88,8 +122,8 @@ export default function BlogDetail() {
       setRecommended(data.recommended);
 
       setToast(data.recommended ? "추천되었습니다 👍" : "추천이 취소되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -166,8 +200,8 @@ export default function BlogDetail() {
       await fetchComments();
       await fetchPost();
       setToast("댓글이 등록되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -200,8 +234,8 @@ export default function BlogDetail() {
       await fetchComments();
       await fetchPost();
       setToast("답글이 등록되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -233,8 +267,8 @@ export default function BlogDetail() {
       await fetchComments();
       await fetchPost();
       setToast("댓글이 수정되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -258,8 +292,8 @@ export default function BlogDetail() {
       await fetchComments();
       await fetchPost();
       setToast("댓글이 삭제되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -355,7 +389,7 @@ export default function BlogDetail() {
       if (length > 0) {
         editor.deleteText(0, length, Quill.sources.SILENT);
       }
-      editor.updateContents(delta as any, Quill.sources.API);
+      editor.updateContents(delta as never, Quill.sources.API);
       return;
     }
     const html = post.contentHtml || post.content || "";
@@ -407,10 +441,10 @@ export default function BlogDetail() {
         <Divider sx={{ my: 1 }} />
 
         {/* 이미지 */}
-        {false && post.imageUrl && (
+        {false && post?.imageUrl && (
           <Box sx={{ my: 3, textAlign: "center" }}>
             <img
-              src={post.imageUrl}
+              src={post?.imageUrl}
               alt="첨부"
               style={{ maxWidth: "100%", maxHeight: 400 }}
             />
@@ -728,7 +762,7 @@ export default function BlogDetail() {
                     {/* 대댓글 목록 */}
                   {Array.isArray(c.children) && c.children.length > 0 && (
                     <Box sx={{ mt: 1, ml: 4 }}>
-                      {c.children.map((r: any) => (
+                      {c.children.map((r) => (
                         <Box
                           key={r.id}
                           sx={{

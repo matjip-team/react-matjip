@@ -10,6 +10,12 @@ interface PresignedUploadResponse {
   data?: PresignedUploadPayload;
 }
 
+type UploadStep = "presign" | "s3-put";
+
+interface UploadMarkedError {
+  uploadStep?: UploadStep;
+}
+
 const PRESIGNED_URL_ENDPOINT = "/api/boards/images/presigned-url";
 
 const unwrapResponse = (payload: unknown): PresignedUploadPayload => {
@@ -32,8 +38,8 @@ export const uploadBoardImage = async (file: File): Promise<string> => {
       fileName: file.name,
       contentType,
     });
-  } catch (error: any) {
-    error.uploadStep = "presign";
+  } catch (error: unknown) {
+    (error as UploadMarkedError).uploadStep = "presign";
     throw error;
   }
 
@@ -45,8 +51,8 @@ export const uploadBoardImage = async (file: File): Promise<string> => {
         "Content-Type": contentType,
       },
     });
-  } catch (error: any) {
-    error.uploadStep = "s3-put";
+  } catch (error: unknown) {
+    (error as UploadMarkedError).uploadStep = "s3-put";
     throw error;
   }
 

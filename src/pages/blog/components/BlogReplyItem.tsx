@@ -1,16 +1,22 @@
-// 대댓글 렌더링 컴포넌트
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { formatDateTime } from "../../common/utils/helperUtil";
 
+export interface BlogReplyNode {
+  id: number;
+  authorId?: number;
+  authorNickname?: string;
+  content: string;
+  deleted?: boolean;
+  createdAt?: string;
+}
+
 interface BlogReplyItemProps {
-  reply: any; // 대댓글 객체
-  currentUserId?: number; // 현재 로그인 사용자 ID
-  postAuthorId: number; // 게시글 작성자 ID
+  reply: BlogReplyNode;
+  currentUserId?: number;
+  postAuthorId: number;
   editingId: number | null;
   editingText: string;
   MAIN_COLOR: string;
-  
-  // 핸들러 함수들
   onEditClick: (id: number, content: string) => void;
   onDeleteClick: (id: number) => void;
   onEditingTextChange: (text: string) => void;
@@ -43,10 +49,8 @@ export const BlogReplyItem = ({
         alignItems: "flex-start",
       }}
     >
-      {/* ↳ 표시 (대댓글 시작) */}
       <Typography sx={{ fontSize: 13, color: "#999", mt: 0.2 }}>↳</Typography>
 
-      {/* 답글 박스 */}
       <Box
         sx={{
           flex: 1,
@@ -65,7 +69,6 @@ export const BlogReplyItem = ({
             width: "100%",
           }}
         >
-          {/* 작성자 */}
           <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
             {r.authorNickname ?? "익명"}
           </Typography>

@@ -8,13 +8,45 @@ import { formatDateTime } from "../common/utils/helperUtil";
 export interface User {
   role: string;
 }
+
+interface CommentNode {
+  id: number;
+  authorId?: number;
+  userId?: number;
+  authorNickname?: string;
+  content: string;
+  deleted?: boolean;
+  createdAt?: string;
+  children?: CommentNode[];
+}
+
+interface BoardPostDetail {
+  id: number;
+  boardType: "NOTICE" | "REVIEW" | string;
+  title: string;
+  content: string;
+  authorNickname?: string;
+  createdAt?: string;
+  viewCount: number;
+  recommendCount: number;
+  commentCount: number;
+  recommended?: boolean;
+  imageUrl?: string;
+  authorId?: number;
+}
+
+interface HttpErrorLike {
+  response?: {
+    status?: number;
+  };
+}
 // 게시글 상세 페이지
 
 export default function BoardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<BoardPostDetail | null>(null);
   const [toast, setToast] = useState("");
   const [recommended, setRecommended] = useState(false);
 
@@ -25,7 +57,7 @@ export default function BoardDetail() {
   
 
     // 댓글/대댓글 상태
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<CommentNode[]>([]);
   const [sortType, setSortType] = useState<"created" | "latest">("latest");
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -51,8 +83,8 @@ export default function BoardDetail() {
       setRecommended(data.recommended);
 
       setToast(data.recommended ? "추천되었습니다 👍" : "추천이 취소되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -127,8 +159,8 @@ export default function BoardDetail() {
       await fetchComments();
       await fetchPost();
       setToast("댓글이 등록되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -159,8 +191,8 @@ export default function BoardDetail() {
       await fetchComments();
       await fetchPost();
       setToast("답글이 등록되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -190,8 +222,8 @@ export default function BoardDetail() {
       await fetchComments();
       await fetchPost();
       setToast("댓글이 수정되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -213,8 +245,8 @@ export default function BoardDetail() {
       await fetchComments();
       await fetchPost();
       setToast("댓글이 삭제되었습니다.");
-    } catch (e: any) {
-      const status = e?.response?.status;
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -341,10 +373,10 @@ export default function BoardDetail() {
         <Divider sx={{ my: 1 }} />
 
         {/* 이미지 */}
-        {false && post.imageUrl && (
+        {false && post?.imageUrl && (
           <Box sx={{ my: 3, textAlign: "center" }}>
             <img
-              src={post.imageUrl}
+              src={post?.imageUrl}
               alt="첨부"
               style={{ maxWidth: "100%", maxHeight: 400 }}
             />
@@ -635,7 +667,7 @@ export default function BoardDetail() {
                     {/* 대댓글 목록 */}
                   {Array.isArray(c.children) && c.children.length > 0 && (
                     <Box sx={{ mt: 1, ml: 4 }}>
-                      {c.children.map((r: any) => (
+                      {c.children.map((r) => (
                         <Box
                           key={r.id}
                           sx={{

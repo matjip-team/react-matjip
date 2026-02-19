@@ -47,30 +47,51 @@ interface BlogPost {
   mediaUrls?: string[] | null;
 }
 
+interface DeltaInsertObject {
+  image?: unknown;
+  video?: unknown;
+}
+
+interface DeltaOp {
+  insert?: string | DeltaInsertObject;
+}
+
+interface DeltaLike {
+  ops?: DeltaOp[];
+}
+
+interface BlogLikePayload extends Omit<BlogPost, "hasImage" | "hasVideo"> {
+  hasImage?: unknown;
+  hasVideo?: unknown;
+}
+
 const toBoolean = (value: unknown): boolean =>
   value === true || value === "true" || value === 1 || value === "1";
 
-const normalizeBlog = (board: any): BlogPost => ({
+const normalizeBlog = (board: BlogLikePayload): BlogPost => ({
   ...board,
   hasImage: toBoolean(board?.hasImage),
   hasVideo: toBoolean(board?.hasVideo),
 });
 
-const parseDelta = (rawDelta: unknown) => {
+const parseDelta = (rawDelta: unknown): DeltaLike | null => {
   if (!rawDelta) return null;
-  if (typeof rawDelta === "object") return rawDelta as any;
+  if (typeof rawDelta === "object") return rawDelta as DeltaLike;
   if (typeof rawDelta !== "string") return null;
   try {
-    return JSON.parse(rawDelta);
+    return JSON.parse(rawDelta) as DeltaLike;
   } catch {
     return null;
   }
 };
 
 const hasEmbedInDelta = (rawDelta: unknown, embedType: "image" | "video") => {
-  const delta = parseDelta(rawDelta) as any;
+  const delta = parseDelta(rawDelta);
   const ops = Array.isArray(delta?.ops) ? delta.ops : [];
-  return ops.some((op: any) => typeof op?.insert === "object" && op.insert?.[embedType]);
+  return ops.some((op) => {
+    if (typeof op?.insert !== "object" || op.insert === null) return false;
+    return Boolean((op.insert as DeltaInsertObject)?.[embedType]);
+  });
 };
 
 const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
@@ -320,21 +341,33 @@ export default function BlogPage() {
                   }}
                 >
                   <CardContent sx={{ py: 1.6, px: 2 }}>
-                    {thumbnailUrl && (
-                      <Box
-                        component="img"
-                        src={thumbnailUrl}
-                        alt="블로그 썸네일"
-                        sx={{
-                          width: "100%",
-                          height: 160,
-                          objectFit: "cover",
-                          borderRadius: 1,
-                          border: "1px solid #efefef",
-                          mb: 1.1,
-                        }}
-                      />
-                    )}
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: 160,
+                        borderRadius: 1,
+                        border: "1px solid #efefef",
+                        mb: 1.1,
+                        overflow: "hidden",
+                        bgcolor: "#fafafa",
+                      }}
+                    >
+                      {thumbnailUrl ? (
+                        <Box
+                          component="img"
+                          src={thumbnailUrl}
+                          alt="블로그 썸네일"
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      ) : (
+                        <Box sx={{ width: "100%", height: "100%" }} />
+                      )}
+                    </Box>
 
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.9 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

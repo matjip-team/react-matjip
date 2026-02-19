@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -29,6 +29,12 @@ const STATUS_META: Record<
   CANCELLED: { label: "철회", color: "default" },
 };
 
+interface HttpErrorLike {
+  response?: {
+    status?: number;
+  };
+}
+
 export default function RestaurantMyRequestsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -45,14 +51,14 @@ export default function RestaurantMyRequestsPage() {
       setLoading(true);
       const data = await getMyRestaurantRequests();
       setItems(data);
-    } catch (error: any) {
-      const status = error?.response?.status;
+    } catch (error: unknown) {
+      const status = (error as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
-        setToast("로그인이 필요합니다.");
+        setToast("濡쒓렇?몄씠 ?꾩슂?⑸땲??");
       } else if (status === 404) {
-        setToast("내 신청내역 API가 아직 연결되지 않았습니다.");
+        setToast("???좎껌?댁뿭 API媛 ?꾩쭅 ?곌껐?섏? ?딆븯?듬땲??");
       } else {
-        setToast("신청내역 조회에 실패했습니다.");
+        setToast("?좎껌?댁뿭 議고쉶???ㅽ뙣?덉뒿?덈떎.");
       }
     } finally {
       setLoading(false);
@@ -64,22 +70,22 @@ export default function RestaurantMyRequestsPage() {
   }, [fetchMyRequests]);
 
   const handleCancel = async (requestId: number) => {
-    const shouldCancel = window.confirm("해당 신청을 철회하시겠습니까?");
+    const shouldCancel = window.confirm("?대떦 ?좎껌??泥좏쉶?섏떆寃좎뒿?덇퉴?");
     if (!shouldCancel) return;
 
     try {
       setProcessingId(requestId);
       await cancelRestaurantRequest(requestId);
-      setToast("신청을 철회했습니다.");
+      setToast("?좎껌??泥좏쉶?덉뒿?덈떎.");
       await fetchMyRequests();
-    } catch (error: any) {
-      const status = error?.response?.status;
+    } catch (error: unknown) {
+      const status = (error as HttpErrorLike)?.response?.status;
       if (status === 400) {
-        setToast("대기 상태 신청만 철회할 수 있습니다.");
+        setToast("?湲??곹깭 ?좎껌留?泥좏쉶?????덉뒿?덈떎.");
       } else if (status === 401 || status === 403) {
-        setToast("로그인이 필요합니다.");
+        setToast("濡쒓렇?몄씠 ?꾩슂?⑸땲??");
       } else {
-        setToast("신청 철회에 실패했습니다.");
+        setToast("?좎껌 泥좏쉶???ㅽ뙣?덉뒿?덈떎.");
       }
     } finally {
       setProcessingId(null);
@@ -90,14 +96,14 @@ export default function RestaurantMyRequestsPage() {
     return (
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
-          로그인해야 신청내역을 확인할 수 있습니다.
+          濡쒓렇?명빐???좎껌?댁뿭???뺤씤?????덉뒿?덈떎.
         </Alert>
         <Stack direction="row" spacing={1}>
           <Button variant="contained" onClick={() => navigate("/auth/login")}>
-            로그인 하러가기
+            濡쒓렇???섎윭媛湲?
           </Button>
           <Button variant="outlined" onClick={() => navigate("/")}>
-            홈
+            ??
           </Button>
         </Stack>
       </Box>
@@ -115,19 +121,19 @@ export default function RestaurantMyRequestsPage() {
       >
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            내 맛집 등록 신청내역
+            ??留쏆쭛 ?깅줉 ?좎껌?댁뿭
           </Typography>
         </Box>
       </Stack>
 
       {loading && (
         <Typography sx={{ color: "#666", mb: 2 }}>
-          신청내역 불러오는 중...
+          ?좎껌?댁뿭 遺덈윭?ㅻ뒗 以?..
         </Typography>
       )}
 
       {!loading && items.length === 0 && (
-        <Alert severity="info">등록된 신청내역이 없습니다.</Alert>
+        <Alert severity="info">?깅줉???좎껌?댁뿭???놁뒿?덈떎.</Alert>
       )}
 
       <Stack spacing={2}>
@@ -157,7 +163,7 @@ export default function RestaurantMyRequestsPage() {
                   </Stack>
                   <Typography sx={{ color: "#666" }}>{item.address}</Typography>
                   <Typography sx={{ color: "#999", mt: 0.5, fontSize: 13 }}>
-                    신청일: {new Date(item.createdAt).toLocaleString()}
+                    ?좎껌?? {new Date(item.createdAt).toLocaleString()}
                   </Typography>
                 </Box>
 
@@ -168,7 +174,7 @@ export default function RestaurantMyRequestsPage() {
                     disabled={processingId === item.id}
                     onClick={() => void handleCancel(item.id)}
                   >
-                    신청 철회
+                    ?좎껌 泥좏쉶
                   </Button>
                 )}
               </Stack>
@@ -187,3 +193,4 @@ export default function RestaurantMyRequestsPage() {
     </Box>
   );
 }
+

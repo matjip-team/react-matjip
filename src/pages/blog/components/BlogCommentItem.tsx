@@ -1,23 +1,29 @@
-// 부모 댓글 렌더링 컴포넌트
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { formatDateTime } from "../../common/utils/helperUtil";
 
+export interface BlogCommentNode {
+  id: number;
+  authorId?: number;
+  authorNickname?: string;
+  content: string;
+  deleted?: boolean;
+  createdAt?: string;
+}
+
 interface BlogCommentItemProps {
-  comment: any; // 댓글 객체
-  currentUserId?: number; // 현재 로그인 사용자 ID
-  postAuthorId: number; // 게시글 작성자 ID
+  comment: BlogCommentNode;
+  currentUserId?: number;
+  postAuthorId: number;
   editingId: number | null;
   editingText: string;
   MAIN_COLOR: string;
-  
-  // 핸들러 함수들
   onEditClick: (id: number, content: string) => void;
   onDeleteClick: (id: number) => void;
   onEditingTextChange: (text: string) => void;
   onSaveEdit: (id: number) => void;
   onCancelEdit: () => void;
   onReplyClick: (id: number) => void;
-  onRenderChildren?: (comment: any) => React.ReactNode;
+  onRenderChildren?: (comment: BlogCommentNode) => React.ReactNode;
 }
 
 export const BlogCommentItem = ({
@@ -39,9 +45,7 @@ export const BlogCommentItem = ({
 
   return (
     <Box sx={{ py: 1.2 }}>
-      {/* 부모 댓글 */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {/* 작성자 */}
         <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
           {c.authorNickname ?? "익명"}
         </Typography>
@@ -124,7 +128,6 @@ export const BlogCommentItem = ({
               )}
             </Box>
 
-            {/* 작성시간 */}
             <Typography sx={{ fontSize: 12, color: "#999" }}>
               {c.createdAt ? formatDateTime(c.createdAt) : "-"}
             </Typography>
@@ -132,7 +135,6 @@ export const BlogCommentItem = ({
         )}
       </Box>
 
-      {/* 답글 달기 버튼 */}
       {!c.deleted && (
         <Typography
           sx={{
@@ -149,7 +151,6 @@ export const BlogCommentItem = ({
         </Typography>
       )}
 
-      {/* 자식 댓글 렌더 */}
       {onRenderChildren && onRenderChildren(c)}
     </Box>
   );

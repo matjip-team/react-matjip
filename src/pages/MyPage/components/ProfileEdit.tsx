@@ -19,6 +19,13 @@ interface Props {
   data: ProfileResponse;
 }
 
+interface HttpErrorLike {
+  response?: {
+    status?: number;
+  };
+  uploadStep?: "presign" | "s3-put";
+}
+
 const EMPTY_FORM: ProfileResponseForm = {
   email: "",
   nickname: "",
@@ -78,9 +85,9 @@ export default function ProfileEdit({ data }: Props) {
       const fileUrl = await uploadProfileImage(file);
       setForm((prev) => ({ ...prev, profileImageUrl: fileUrl }));
       setPreviewUrl(fileUrl);
-    } catch (error: any) {
-      const status = error?.response?.status;
-      const uploadStep = error?.uploadStep;
+    } catch (error: unknown) {
+      const status = (error as HttpErrorLike)?.response?.status;
+      const uploadStep = (error as HttpErrorLike)?.uploadStep;
 
       if (uploadStep === "presign" && (status === 401 || status === 403)) {
         alert("로그인이 필요합니다.");

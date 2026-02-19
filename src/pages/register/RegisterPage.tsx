@@ -35,6 +35,12 @@ type PlaceItem = {
   lng: number;
 };
 
+interface HttpErrorLike {
+  response?: {
+    status?: number;
+  };
+}
+
 const initialForm: FormState = {
   name: "",
   address: "",
@@ -204,8 +210,8 @@ export default function RegisterPage() {
       }));
       setLicenseFileName(file.name);
       setToast("사업자등록증 파일 업로드가 완료되었습니다.");
-    } catch (error: any) {
-      const status = error?.response?.status;
+    } catch (error: unknown) {
+      const status = (error as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -272,8 +278,8 @@ export default function RegisterPage() {
       setSelectedPlaceId(null);
       setLicenseFileName("");
       navigate("/register/requests");
-    } catch (error: any) {
-      const status = error?.response?.status;
+    } catch (error: unknown) {
+      const status = (error as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else if (status === 404 || status === 405) {

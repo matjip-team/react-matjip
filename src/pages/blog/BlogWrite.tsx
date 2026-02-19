@@ -24,6 +24,24 @@ import { registerBlogQuillModules } from "./quillSetup";
 
 registerBlogQuillModules(Quill);
 
+interface HttpErrorLike {
+  response?: {
+    status?: number;
+    data?: ValidationErrorResponse;
+  };
+  uploadStep?: "presign" | "s3-put";
+}
+
+interface ValidationErrorField {
+  field: string;
+  messages: string[];
+}
+
+interface ValidationErrorResponse {
+  code?: string;
+  fields?: ValidationErrorField[];
+}
+
 export default function BlogWrite() {
 
   const navigate = useNavigate();
@@ -78,10 +96,10 @@ export default function BlogWrite() {
         setIsUploadingMedia(true);
         const fileUrl = await uploadBlogImage(file);
         insertMediaToEditor(fileUrl, file.type || "");
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(error);
-        const status = error?.response?.status;
-        const uploadStep = error?.uploadStep;
+        const status = (error as HttpErrorLike)?.response?.status;
+        const uploadStep = (error as HttpErrorLike)?.uploadStep;
 
         if (uploadStep === "presign" && (status === 401 || status === 403)) {
           alert("로그인이 필요합니다.");
@@ -181,10 +199,10 @@ export default function BlogWrite() {
       const url = await uploadBlogImage(file);
       setThumbnailUrl(url);
       setThumbnailFileName(file.name);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      const status = error?.response?.status;
-      const uploadStep = error?.uploadStep;
+      const status = (error as HttpErrorLike)?.response?.status;
+      const uploadStep = (error as HttpErrorLike)?.uploadStep;
 
       if (uploadStep === "presign" && (status === 401 || status === 403)) {
         alert("로그인이 필요합니다.");
@@ -239,13 +257,13 @@ export default function BlogWrite() {
       });
 
       navigate("/blog");
-    } catch (error: any) {
-      const res = error?.response?.data;
+    } catch (error: unknown) {
+      const res = (error as HttpErrorLike)?.response?.data;
 
       if (res?.code === "VALIDATION_ERROR") {
         const fieldErrors: Record<string, string[]> = {};
 
-        res.fields.forEach((f: any) => {
+        (res.fields ?? []).forEach((f) => {
           fieldErrors[f.field] = f.messages;
         });
 

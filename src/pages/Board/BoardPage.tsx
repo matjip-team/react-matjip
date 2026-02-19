@@ -22,6 +22,9 @@ import {
   IconButton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import SmartDisplayOutlinedIcon from "@mui/icons-material/SmartDisplayOutlined";
 import axios from "../common/axios";
 import { ThemeProvider } from "@mui/material/styles";
 import { boardTheme } from "./theme/boardTheme";
@@ -41,6 +44,8 @@ interface Board {
   viewCount: number;
   recommendCount: number;
   commentCount: number;
+  hasImage?: boolean;
+  hasVideo?: boolean;
 }
 
 // 메인 컴포넌트
@@ -127,6 +132,39 @@ export default function BoardPage() {
   };
 
   // 검색 실행
+  const getTitleIcons = (post: Board) => {
+    if (post.hasImage && post.hasVideo) {
+      return (
+        <Box component="span" sx={{ display: "inline-flex", gap: 0.4, mr: 0.8 }}>
+          <ImageOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", color: "#2e7d32" }} />
+          <SmartDisplayOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", color: "#d32f2f" }} />
+        </Box>
+      );
+    }
+
+    if (post.hasImage) {
+      return (
+        <ImageOutlinedIcon
+          sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#2e7d32" }}
+        />
+      );
+    }
+
+    if (post.hasVideo) {
+      return (
+        <SmartDisplayOutlinedIcon
+          sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#d32f2f" }}
+        />
+      );
+    }
+
+    return (
+      <ChatBubbleOutlineIcon
+        sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#9e9e9e" }}
+      />
+    );
+  };
+
   const handleSearch = () => {
     if (!keyword.trim()) {
       setToast("검색어를 입력해주세요.");
@@ -314,6 +352,7 @@ export default function BoardPage() {
                           onClick={() => navigate(`/board/${post.id}`)}
                           sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
                         >
+                          {getTitleIcons(post)}
                           {post.title}
                           {post.commentCount > 0 && (
                             <span style={{ color: "#999", marginLeft: 4 }}>
