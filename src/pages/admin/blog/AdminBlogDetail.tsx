@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "../common/axios";
+import axios from "../../common/axios";
 import { Box, Button, Typography, Paper, Divider, Snackbar, TextField, CircularProgress } from "@mui/material";
-import { useAuth } from "../../pages/common/context/useAuth";
-import { formatDateTime } from "../common/utils/helperUtil";
+import { useAuth } from "../../common/context/useAuth";
+import { formatDateTime } from "../../common/utils/helperUtil";
 import ReactQuill, { Quill } from "react-quill-new";
 import "react-quill-new/dist/quill.bubble.css";
 import "quill-table-better/dist/quill-table-better.css";
-import { registerBlogQuillModules } from "./quillSetup";
+import { registerAdminBlogQuillModules } from "./quillSetup";
+import { ADMIN_BLOG_API } from "./api/adminBlogApi";
 
-registerBlogQuillModules(Quill);
+registerAdminBlogQuillModules(Quill);
 
 export interface User {
   role: string;
@@ -50,7 +51,7 @@ interface HttpErrorLike {
 }
 // 게시글 상세 페이지
 
-export default function BlogDetail() {
+export default function AdminBlogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -112,10 +113,10 @@ export default function BlogDetail() {
 
     try {
       // 서버 토글
-      await axios.post(`/api/blogs/${id}/recommendations`);
+      await axios.post(`${ADMIN_BLOG_API}/${id}/recommendations`);
 
       // ✅ 서버가 계산한 최신값으로 다시 덮어쓰기
-      const res = await axios.get(`/api/blogs/${id}`);
+      const res = await axios.get(`${ADMIN_BLOG_API}/${id}`);
       const data = res.data.data;
 
       setPost(data);
@@ -146,9 +147,9 @@ export default function BlogDetail() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
     try {
-      await axios.delete(`/api/blogs/${id}`);
+      await axios.delete(`${ADMIN_BLOG_API}/${id}`);
       alert("삭제되었습니다.");
-      navigate("/blog");
+      navigate("/admin/blog");
     } catch {
       alert("삭제 권한이 없습니다.");
     }
@@ -160,7 +161,7 @@ export default function BlogDetail() {
   const fetchComments = async () => {
     try {
       setLoadingComments(true);
-      const res = await axios.get(`/api/blogs/${id}/comments`, {
+      const res = await axios.get(`${ADMIN_BLOG_API}/${id}/comments`, {
         params: {
           sort: sortType,
         },
@@ -192,7 +193,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/blogs/${id}/comments`, {
+      await axios.post(`${ADMIN_BLOG_API}/${id}/comments`, {
         content: newComment,
       });
 
@@ -224,7 +225,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/blogs/${id}/comments`, {
+      await axios.post(`${ADMIN_BLOG_API}/${id}/comments`, {
         content: content,
         parentId: parentId,
       });
@@ -258,7 +259,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.put(`/api/blogs/${id}/comments/${commentId}`, {
+      await axios.put(`${ADMIN_BLOG_API}/${id}/comments/${commentId}`, {
         content: editingText,
       });
 
@@ -288,7 +289,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.delete(`/api/blogs/${id}/comments/${commentId}`);
+      await axios.delete(`${ADMIN_BLOG_API}/${id}/comments/${commentId}`);
       await fetchComments();
       await fetchPost();
       setToast("댓글이 삭제되었습니다.");
@@ -306,7 +307,7 @@ export default function BlogDetail() {
 
   // 게시글 상세 조회
   const fetchPost = async () => {
-    const res = await axios.get(`/api/blogs/${id}`);
+    const res = await axios.get(`${ADMIN_BLOG_API}/${id}`);
     setPost(res.data.data);
     setRecommended(res.data.data.recommended);
   };
@@ -913,7 +914,7 @@ export default function BlogDetail() {
                   height: 32, 
                   fontSize: 12, 
                 }}
-                onClick={() => navigate(`/blog/edit/${id}`)}
+                onClick={() => navigate(`/admin/blog/edit/${id}`)}
               >
                 수정
               </Button>
@@ -937,7 +938,7 @@ export default function BlogDetail() {
               height: 32, 
               fontSize: 12, 
             }}
-            onClick={() => navigate("/blog")}
+            onClick={() => navigate("/admin/blog")}
           >
             목록으로
           </Button>

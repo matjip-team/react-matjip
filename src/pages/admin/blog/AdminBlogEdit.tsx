@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Button,
@@ -14,15 +14,15 @@ import ReactQuill, { Quill } from "react-quill-new";
 import QuillTableBetter from "quill-table-better";
 import "react-quill-new/dist/quill.snow.css";
 import "quill-table-better/dist/quill-table-better.css";
-
-import hljs from 'highlight.js';
+import hljs from "highlight.js";
 import "highlight.js/styles/atom-one-dark.css";
-import axios from "../common/axios";
+import axios from "../../common/axios";
 import { blogTheme } from "./theme/blogTheme";
-import { uploadBlogImage } from "./api/blogImageUpload";
-import { registerBlogQuillModules } from "./quillSetup";
+import { uploadAdminBlogImage } from "./api/adminBlogImageUpload";
+import { registerAdminBlogQuillModules } from "./quillSetup";
+import { ADMIN_BLOG_API } from "./api/adminBlogApi";
 
-registerBlogQuillModules(Quill);
+registerAdminBlogQuillModules(Quill);
 
 interface HttpErrorLike {
   response?: {
@@ -42,8 +42,8 @@ interface ValidationErrorResponse {
   fields?: ValidationErrorField[];
 }
 
-export default function BlogWrite() {
-
+export default function AdminBlogEdit() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const MAIN_COLOR = "#ff6b00";
   const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
@@ -56,6 +56,8 @@ export default function BlogWrite() {
   const [category, setCategory] = useState("후기");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [pendingDelta, setPendingDelta] = useState<unknown>(null);
+  const [pendingHtml, setPendingHtml] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -64,6 +66,7 @@ export default function BlogWrite() {
 
   const quillRef = useRef<ReactQuill | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
+  const isHydratingRef = useRef(false);
 
   const extractPlainText = (html: string) => {
     const div = document.createElement("div");
@@ -72,6 +75,17 @@ export default function BlogWrite() {
   };
 
   const hasMediaContent = (html: string) => /<(img|video|iframe)\b/i.test(html);
+
+  const parseContentDelta = (rawDelta: unknown) => {
+    if (!rawDelta) return null;
+    if (typeof rawDelta === "object") return rawDelta;
+    if (typeof rawDelta !== "string") return null;
+    try {
+      return JSON.parse(rawDelta);
+    } catch {
+      return null;
+    }
+  };
 
   const insertMediaToEditor = useCallback((fileUrl: string, fileType: string) => {
     const quill = quillRef.current?.getEditor();
@@ -94,7 +108,7 @@ export default function BlogWrite() {
     async (file: File) => {
       try {
         setIsUploadingMedia(true);
-        const fileUrl = await uploadBlogImage(file);
+        const fileUrl = await uploadAdminBlogImage(file);
         insertMediaToEditor(fileUrl, file.type || "");
       } catch (error: unknown) {
         console.error(error);
@@ -133,44 +147,59 @@ export default function BlogWrite() {
     () => ({
       toolbar: {
         container: [
-        [{ header: 1 }, { header: 2 }],
-        ["bold", "italic", "underline", "strike"],
-        ["link", "image", "video", "code-block", "formula"],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
-        [{ indent: "-1" }, { indent: "+1" }],
-        [{ direction: "rtl" }],
-        [{ size: ["small", false, "large", "huge"] }],
-        [{ color: [] }, { background: [] }],
-        [{ font: [] }],
-        [{ align: [] }],
-        ["table-better"],
-        ['clean'],
-         [{ 'direction': 'rtl' }],  
-         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-         [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
-         [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
-      ],
+          [{ header: 1 }, { header: 2 }],
+          ["bold", "italic", "underline", "strike"],
+          ["link", "image", "video", "code-block", "formula"],
+          [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
+          [{ indent: "-1" }, { indent: "+1" }],
+          [{ direction: "rtl" }],
+          [{ size: ["small", false, "large", "huge"] }],
+          [{ color: [] }, { background: [] }],
+          [{ font: [] }],
+          [{ align: [] }],
+          ["table-better"],
+          ["clean"],
+          [{ direction: "rtl" }],
+          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ size: ["small", false, "large", "huge"] }],
+          [{ script: "sub" }, { script: "super" }],
+        ],
         handlers: {
           image: handleToolbarMedia,
         },
       },
       table: false,
-    "table-better": {
-      language: "en_US",
-      menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
-      toolbarTable: true,
-    },
-    keyboard: {
-      bindings: QuillTableBetter.keyboardBindings,
-    },
-    imageResize: {
-      parchment: Quill.import('parchment'),
-      modules: ['Resize', 'DisplaySize', 'Toolbar']
-    },
-    syntax: { hljs },
+      "table-better": {
+        language: "en_US",
+        menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+        toolbarTable: true,
+      },
+      keyboard: {
+        bindings: QuillTableBetter.keyboardBindings,
+      },
+      imageResize: {
+        parchment: Quill.import("parchment"),
+        modules: ["Resize", "DisplaySize", "Toolbar"],
+      },
+      syntax: { hljs },
     }),
     [handleToolbarMedia],
   );
+
+  useEffect(() => {
+    axios.get(`${ADMIN_BLOG_API}/${id}`).then((res) => {
+      const data = res.data.data;
+      const html = data.contentHtml ?? data.content ?? "";
+      setTitle(data.title ?? "");
+      setCategory(data.blogType === "NOTICE" ? "공지" : "후기");
+      setContent("");
+      setPendingHtml(html);
+      setPendingDelta(parseContentDelta(data.contentDelta));
+      const existingImageUrl = data.imageUrl ?? "";
+      setThumbnailUrl(existingImageUrl);
+      setThumbnailFileName(existingImageUrl ? "현재 썸네일" : "");
+    });
+  }, [id]);
 
   const handleThumbnailPick = () => {
     thumbnailInputRef.current?.click();
@@ -196,7 +225,7 @@ export default function BlogWrite() {
 
     try {
       setThumbnailUploading(true);
-      const url = await uploadBlogImage(file);
+      const url = await uploadAdminBlogImage(file);
       setThumbnailUrl(url);
       setThumbnailFileName(file.name);
     } catch (error: unknown) {
@@ -217,14 +246,48 @@ export default function BlogWrite() {
     }
   };
 
+  useEffect(() => {
+    if (!pendingHtml && !pendingDelta) return;
+    const intervalId = window.setInterval(() => {
+      const editor = quillRef.current?.getEditor();
+      if (!editor) return;
+      const tableModule = editor.getModule("table-better");
+      if (!tableModule) return;
+
+      isHydratingRef.current = true;
+
+      const length = editor.getLength();
+      if (length > 0) {
+        editor.deleteText(0, length, Quill.sources.SILENT);
+      }
+
+      if (pendingDelta) {
+        editor.updateContents(pendingDelta as never, Quill.sources.API);
+      } else {
+        const deltaFromHtml = editor.clipboard.convert({ html: pendingHtml });
+        editor.updateContents(deltaFromHtml, Quill.sources.API);
+      }
+
+      setContent(editor.root.innerHTML);
+      setPendingDelta(null);
+      setPendingHtml("");
+      window.setTimeout(() => {
+        isHydratingRef.current = false;
+      }, 0);
+      window.clearInterval(intervalId);
+    }, 50);
+
+    return () => window.clearInterval(intervalId);
+  }, [pendingDelta, pendingHtml]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const editor = quillRef.current?.getEditor();
     const delta = editor?.getContents() ?? null;
-    const html = content;
-    const text = extractPlainText(content);
-    const hasMedia = hasMediaContent(content);
+    const html = editor?.root?.innerHTML ?? content;
+    const text = extractPlainText(html);
+    const hasMedia = hasMediaContent(html);
 
     if (!title.trim()) {
       setErrors({ title: ["제목을 입력하십시오."] });
@@ -242,12 +305,12 @@ export default function BlogWrite() {
     }
 
     if (thumbnailUploading) {
-      alert("썸네일 업로드가 끝난 뒤 등록해 주세요.");
+      alert("썸네일 업로드가 끝난 뒤 저장해 주세요.");
       return;
     }
 
     try {
-      await axios.post("/api/blogs", {
+      await axios.put(`${ADMIN_BLOG_API}/${id}`, {
         title,
         content: html,
         contentHtml: html,
@@ -256,20 +319,17 @@ export default function BlogWrite() {
         imageUrl: thumbnailUrl || null,
       });
 
-      navigate("/blog");
+      navigate(`/admin/blog/${id}`);
     } catch (error: unknown) {
       const res = (error as HttpErrorLike)?.response?.data;
-
       if (res?.code === "VALIDATION_ERROR") {
         const fieldErrors: Record<string, string[]> = {};
-
         (res.fields ?? []).forEach((f) => {
           fieldErrors[f.field] = f.messages;
         });
-
         setErrors(fieldErrors);
       } else {
-        alert("글 등록에 실패했습니다.");
+        alert("글 수정에 실패했습니다.");
       }
     }
   };
@@ -283,7 +343,7 @@ export default function BlogWrite() {
               variant="h5"
               sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}
             >
-              글 작성
+              글 수정
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
@@ -299,10 +359,6 @@ export default function BlogWrite() {
                         bgcolor: category === c.key ? MAIN_COLOR : "#fff",
                         color: category === c.key ? "#fff" : MAIN_COLOR,
                         borderColor: MAIN_COLOR,
-                        "&:hover": {
-                          bgcolor: MAIN_COLOR,
-                          color: "#fff",
-                        },
                       }}
                       onClick={() => setCategory(c.key)}
                     >
@@ -398,10 +454,14 @@ export default function BlogWrite() {
                 }}
               >
                 <ReactQuill
+                  key={id}
                   ref={quillRef}
                   theme="snow"
-                  value={content}
-                  onChange={(value) => {
+                  defaultValue=""
+                  onChange={(value, _delta, source) => {
+                    if (isHydratingRef.current && source !== "user") {
+                      return;
+                    }
                     setContent(value);
                     setErrors((prev) => ({ ...prev, content: [] }));
                   }}
@@ -421,28 +481,17 @@ export default function BlogWrite() {
                 )}
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button
                   variant="outlined"
-                  sx={{
-                    mr: 1,
-                    color: MAIN_COLOR,
-                    borderColor: MAIN_COLOR,
-                  }}
-                  onClick={() => navigate("/blog")}
+                  sx={{ mr: 1, color: MAIN_COLOR, borderColor: MAIN_COLOR }}
+                  onClick={() => navigate("/admin/blog")}
                 >
                   취소
                 </Button>
 
-                <Button
-                  type="submit"
-                  variant="contained"
-                  sx={{
-                    bgcolor: MAIN_COLOR,
-                    "&:hover": { bgcolor: MAIN_COLOR },
-                  }}
-                >
-                  등록
+                <Button type="submit" variant="contained" sx={{ bgcolor: MAIN_COLOR }}>
+                  저장
                 </Button>
               </Box>
             </Box>
