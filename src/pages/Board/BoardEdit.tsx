@@ -30,7 +30,7 @@ export default function BoardEdit() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
   const quillRef = useRef<ReactQuill | null>(null);
 
@@ -40,23 +40,31 @@ export default function BoardEdit() {
     return div.textContent?.trim() ?? "";
   };
 
-  const insertImageToEditor = useCallback((fileUrl: string) => {
+  const hasMediaContent = (html: string) => /<(img|video|iframe)\b/i.test(html);
+
+  const insertMediaToEditor = useCallback((fileUrl: string, fileType: string) => {
     const quill = quillRef.current?.getEditor();
     if (!quill) return;
 
     const range = quill.getSelection(true);
     const index = range ? range.index : quill.getLength();
 
+    if (fileType.startsWith("video/")) {
+      quill.insertEmbed(index, "video", fileUrl, "user");
+      quill.setSelection(index + 1);
+      return;
+    }
+
     quill.insertEmbed(index, "image", fileUrl, "user");
     quill.setSelection(index + 1);
   }, []);
 
-  const handleImageUpload = useCallback(
+  const handleMediaUpload = useCallback(
     async (file: File) => {
       try {
-        setIsUploadingImage(true);
+        setIsUploadingMedia(true);
         const fileUrl = await uploadBoardImage(file);
-        insertImageToEditor(fileUrl);
+        insertMediaToEditor(fileUrl, file.type || "");
       } catch (error: any) {
         console.error(error);
         const status = error?.response?.status;
@@ -67,28 +75,28 @@ export default function BoardEdit() {
         } else if (uploadStep === "s3-put" && status === 403) {
           alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
         } else {
-          alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+          alert("파일 업로드에 실패했습니다. 다시 시도해 주세요.");
         }
       } finally {
-        setIsUploadingImage(false);
+        setIsUploadingMedia(false);
       }
     },
-    [insertImageToEditor],
+    [insertMediaToEditor],
   );
 
-  const handleToolbarImage = useCallback(() => {
+  const handleToolbarMedia = useCallback(() => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
-    input.setAttribute("accept", "image/*");
+    input.setAttribute("accept", "image/*,video/*");
     input.click();
 
     input.onchange = () => {
       const file = input.files?.[0];
       if (file) {
-        void handleImageUpload(file);
+        void handleMediaUpload(file);
       }
     };
-  }, [handleImageUpload]);
+  }, [handleMediaUpload]);
 
   const quillModules = useMemo(
     () => ({
@@ -101,11 +109,11 @@ export default function BoardEdit() {
           ["clean"],
         ],
         handlers: {
-          image: handleToolbarImage,
+          image: handleToolbarMedia,
         },
       },
     }),
-    [handleToolbarImage],
+    [handleToolbarMedia],
   );
 
   useEffect(() => {
@@ -113,15 +121,18 @@ export default function BoardEdit() {
       const data = res.data.data;
       setTitle(data.title ?? "");
       setCategory(data.boardType === "NOTICE" ? "공지" : "후기");
-      setContent(data.content ?? "");
+      setContent(data.contentHtml ?? data.content ?? "");
     });
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const editor = quillRef.current?.getEditor();
+    const delta = editor?.getContents() ?? null;
     const html = content;
     const text = extractPlainText(content);
+    const hasMedia = hasMediaContent(content);
 
     if (!title.trim()) {
       setErrors({ title: ["제목을 입력하십시오."] });
@@ -133,7 +144,7 @@ export default function BoardEdit() {
       return;
     }
 
-    if (!text) {
+    if (!text && !hasMedia) {
       setErrors({ content: ["내용을 입력해 주세요."] });
       return;
     }
@@ -142,6 +153,8 @@ export default function BoardEdit() {
       await axios.put(`/api/boards/${id}`, {
         title,
         content: html,
+        contentHtml: html,
+        contentDelta: delta ? JSON.stringify(delta) : null,
         boardType: category === "공지" ? "NOTICE" : "REVIEW",
       });
 
@@ -226,9 +239,9 @@ export default function BoardEdit() {
                   </Typography>
                 )}
 
-                {isUploadingImage && (
+                {isUploadingMedia && (
                   <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
-                    이미지 업로드 중입니다...
+                    파일 업로드 중입니다...
                   </Typography>
                 )}
               </Box>

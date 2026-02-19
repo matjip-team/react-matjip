@@ -1,0 +1,31 @@
+/* :root {
+  --form-font-size: 12px;
+  --form-line-height: 1.45;
+  --form-control-height: 44px;
+}
+
+input,
+textarea,
+select {
+  font-size: var(--form-font-size);
+  line-height: var(--form-line-height);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea {
+  min-height: var(--form-control-height);
+  box-sizing: border-box;
+}
+
+.MuiInputBase-input {
+  font-size: var(--form-font-size);
+  line-height: var(--form-line-height);
+}
+
+.MuiInputBase-root:not(.MuiInputBase-multiline) {
+  min-height: var(--form-control-height);
+}
+
+.MuiInputBase-root.MuiInputBase-multiline .MuiInputBase-input {
+  min-height: calc(var(--form-control-height) * 2);
+} */

@@ -2,7 +2,7 @@ export interface ProfileRequest {
   nickname: string;
   password?: string;
   bio?: string;
-  profileImage?: File;
+  profileImageUrl?: string;
 }
 
 export interface ProfileResponse {
