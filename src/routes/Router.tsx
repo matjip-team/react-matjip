@@ -52,16 +52,24 @@ export default function Router() {
           <Route path="/auth/signup" element={<SignupPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/me" element={<Me />} />
-          <Route path="/auth/mypage" element={<MyPage />} />
           <Route path="/sample" element={<Sample2 />} />
           <Route path="/restaurant/:id" element={<Restaurant />} />
           <Route path="/sample3" element={<Sample3 />} />
+          {/* ROLE_USER, ROLE_ADMIN만 접근 가능 */}
           <Route element={<AuthRouteGuard />}>
             <Route path="/register" element={<Register />} />
-            <Route path="/register/requests" element={<RestaurantMyRequestsPage />} />
+            <Route
+              path="/register/requests"
+              element={<RestaurantMyRequestsPage />}
+            />
+            <Route path="/auth/mypage" element={<MyPage />} />
           </Route>
+          {/* ROLE_ADMIN만 접근 가능 */}
           <Route element={<AdminRouteGuard />}>
-            <Route path="/admin/restaurant-requests" element={<RestaurantRequestPage />} />
+            <Route
+              path="/admin/restaurant-requests"
+              element={<RestaurantRequestPage />}
+            />
             <Route path="/admin/board" element={<AdminBoardPage />} />
             <Route path="/admin/blog" element={<AdminBlogPage />} />
             <Route path="/admin/blog/write" element={<AdminBlogWrite />} />

@@ -8,7 +8,13 @@ export const blogTheme = createTheme({
       },
       styleOverrides: {
         root: {
-          textTransform: "none", 
+          "& .MuiInputBase-input": {
+            fontSize: "20px",
+          },
+          "& .MuiInputLabel-root": {
+            fontSize: "12px",
+          },
+          textTransform: "none",
           "&:focus": {
             outline: "none",
           },
@@ -21,4 +27,3 @@ export const blogTheme = createTheme({
     },
   },
 });
-
