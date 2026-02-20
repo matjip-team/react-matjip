@@ -14,6 +14,7 @@ import { useState } from "react";
 import { updateProfile } from "../api/mypageApi";
 import { uploadProfileImage } from "../api/profileImageUpload";
 import CustomizedDialogs from "../../common/component/dialog";
+import ImageViewerDialog from "../../common/component/ImageViewerDialog";
 import { useFormError } from "../../common/utils/useFormError";
 import { API_BASE_URL } from "../../common/config/config";
 
@@ -24,6 +25,8 @@ interface ProfileResponseForm extends ProfileResponse {
 
 interface Props {
   data: ProfileResponse;
+  onBack?: () => void;
+  onSaved?: () => void;
 }
 
 interface HttpErrorLike {
@@ -49,7 +52,7 @@ const toPreviewUrl = (url?: string) => {
   return `${API_BASE_URL}/images/${url}`;
 };
 
-export default function ProfileEdit({ data }: Props) {
+export default function ProfileEdit({ data, onBack, onSaved }: Props) {
   const {
     globalError,
     fieldErrors,
@@ -66,6 +69,7 @@ export default function ProfileEdit({ data }: Props) {
     title: "",
     message: "",
   });
+  const [imageViewerOpen, setImageViewerOpen] = React.useState(false);
 
   React.useEffect(() => {
     setForm((prev) => ({
@@ -178,9 +182,24 @@ export default function ProfileEdit({ data }: Props) {
           <Typography variant="h6">회원 정보 수정</Typography>
           {globalError && <Alert severity="error">{globalError}</Alert>}
 
-          <AvatarUpload
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <AvatarUpload
+              imageUrl={previewUrl}
+              onChange={(file) => void handleFileChange(file)}
+            />
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setImageViewerOpen(true)}
+            >
+              사진보기
+            </Button>
+          </Box>
+          <ImageViewerDialog
+            open={imageViewerOpen}
+            onClose={() => setImageViewerOpen(false)}
             imageUrl={previewUrl}
-            onChange={(file) => void handleFileChange(file)}
+            alt="프로필 사진"
           />
 
           <TextField
@@ -243,14 +262,24 @@ export default function ProfileEdit({ data }: Props) {
             </Typography>
           )}
 
-          <Button variant="contained" type="submit" disabled={imageUploading}>
-            저장
-          </Button>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            {onBack && (
+              <Button variant="outlined" onClick={onBack}>
+                취소
+              </Button>
+            )}
+            <Button variant="contained" type="submit" disabled={imageUploading}>
+              저장
+            </Button>
+          </Box>
         </Box>
 
         <CustomizedDialogs
           open={modal.open}
-          onClose={() => setModal({ ...modal, open: false })}
+          onClose={() => {
+            setModal({ ...modal, open: false });
+            onSaved?.();
+          }}
           title={modal.title}
           message={modal.message}
         />

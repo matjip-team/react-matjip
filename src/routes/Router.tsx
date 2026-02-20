@@ -28,6 +28,9 @@ import AdminBlogPage from "../pages/admin/blog/AdminBlogPage";
 import AdminBlogWrite from "../pages/admin/blog/AdminBlogWrite";
 import AdminBlogDetail from "../pages/admin/blog/AdminBlogDetail";
 import AdminBlogEdit from "../pages/admin/blog/AdminBlogEdit";
+import AdminUserListPage from "../pages/admin/user/AdminUserListPage";
+import AdminUserDetail from "../pages/admin/user/AdminUserDetail";
+import AdminUserEdit from "../pages/admin/user/AdminUserEdit";
 import RestaurantMyRequestsPage from "../pages/register/RestaurantMyRequestsPage";
 import { AuthProvider } from "@/pages/common/context/AuthProvider.tsx";
 
@@ -77,6 +80,9 @@ export default function Router() {
               <Route path="/admin/blog/write" element={<AdminBlogWrite />} />
               <Route path="/admin/blog/edit/:id" element={<AdminBlogEdit />} />
               <Route path="/admin/blog/:id" element={<AdminBlogDetail />} />
+              <Route path="/admin/user" element={<AdminUserListPage />} />
+              <Route path="/admin/user/:id/edit" element={<AdminUserEdit />} />
+              <Route path="/admin/user/:id" element={<AdminUserDetail />} />
             </Route>
           </Route>
         </Routes>

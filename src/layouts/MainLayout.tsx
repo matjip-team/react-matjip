@@ -141,6 +141,17 @@ export default function MainLayout() {
                     >
                       블로그 관리
                     </span>
+                    <span
+                      className={
+                        location.pathname.startsWith("/admin/user") ? "active" : ""
+                      }
+                      onClick={() => {
+                        navigate("/admin/user");
+                        setAdminMenuOpen(false);
+                      }}
+                    >
+                      회원관리
+                    </span>
                   </div>
                 )}
               </div>

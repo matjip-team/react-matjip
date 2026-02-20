@@ -33,3 +33,6 @@ export const getLikes = (cursor: number, limit: number) => {
 export const deleteLike = (likeId: number) => {
   return axios.delete(`/api/mypage/likes/${likeId}`);
 };
+
+export const withdrawAccount = (password: string) =>
+  axios.post<ApiResponse<void>>("/api/mypage/withdraw", { password });
