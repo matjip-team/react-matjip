@@ -1,4 +1,4 @@
-/* ===== 전역 레이아웃  ===== */
+/* ===== 전역 레이아웃 기준 ===== */
 html, body, #root {
   width: 100%;
   min-height: 100vh;
@@ -234,27 +234,4 @@ html, body, #root {
   cursor: pointer;
   position: relative;
   text-decoration: none;   /* 기본 밑줄 제거 */
-}
-
-/* 방문/호버/클릭 시 색 고정 */
-.nav a:visited,
-.nav a:hover,
-.nav a:active {
-  color: #111827;
-}
-
-/* 활성 메뉴 */
-.nav a.active {
-  font-weight: 700;
-}
-
-/* 식신 느낌 밑줄 */
-.nav a.active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -22px;
-  width: 100%;
-  height: 2px;
-  background: #ff6b00;
 }
