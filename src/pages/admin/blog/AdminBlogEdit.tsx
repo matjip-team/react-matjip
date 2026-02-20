@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Button,
-  ButtonGroup,
+  // ButtonGroup,
   Card,
   CardContent,
   TextField,
@@ -45,13 +45,13 @@ interface ValidationErrorResponse {
 export default function AdminBlogEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const MAIN_COLOR = "#ff6b00";
+  const MAIN_COLOR = "#4F9FFA";
   const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
 
-  const categories = [
-    { key: "후기", label: "후기" },
-    { key: "공지", label: "공지" },
-  ];
+  // const categories = [
+  //   { key: "후기", label: "후기" },
+  //   { key: "공지", label: "공지" },
+  // ];
 
   const [category, setCategory] = useState("후기");
   const [title, setTitle] = useState("");
@@ -87,22 +87,25 @@ export default function AdminBlogEdit() {
     }
   };
 
-  const insertMediaToEditor = useCallback((fileUrl: string, fileType: string) => {
-    const quill = quillRef.current?.getEditor();
-    if (!quill) return;
+  const insertMediaToEditor = useCallback(
+    (fileUrl: string, fileType: string) => {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) return;
 
-    const range = quill.getSelection(true);
-    const index = range ? range.index : quill.getLength();
+      const range = quill.getSelection(true);
+      const index = range ? range.index : quill.getLength();
 
-    if (fileType.startsWith("video/")) {
-      quill.insertEmbed(index, "video", fileUrl, "user");
+      if (fileType.startsWith("video/")) {
+        quill.insertEmbed(index, "video", fileUrl, "user");
+        quill.setSelection(index + 1);
+        return;
+      }
+
+      quill.insertEmbed(index, "image", fileUrl, "user");
       quill.setSelection(index + 1);
-      return;
-    }
-
-    quill.insertEmbed(index, "image", fileUrl, "user");
-    quill.setSelection(index + 1);
-  }, []);
+    },
+    [],
+  );
 
   const handleMediaUpload = useCallback(
     async (file: File) => {
@@ -147,22 +150,19 @@ export default function AdminBlogEdit() {
     () => ({
       toolbar: {
         container: [
-          [{ header: 1 }, { header: 2 }],
+          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ font: [] }],
           ["bold", "italic", "underline", "strike"],
-          ["link", "image", "video", "code-block", "formula"],
           [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
           [{ indent: "-1" }, { indent: "+1" }],
-          [{ direction: "rtl" }],
-          [{ size: ["small", false, "large", "huge"] }],
-          [{ color: [] }, { background: [] }],
-          [{ font: [] }],
           [{ align: [] }],
+          [{ color: [] }, { background: [] }],
           ["table-better"],
-          ["clean"],
           [{ direction: "rtl" }],
-          [{ header: [1, 2, 3, 4, 5, 6, false] }],
-          [{ size: ["small", false, "large", "huge"] }],
-          [{ script: "sub" }, { script: "super" }],
+          //[{ script: "sub" }, { script: "super" }],
+          //["link", "image", "video", "code-block", "formula"],
+          ["link", "image", "video"],
+          ["clean"],
         ],
         handlers: {
           image: handleToolbarMedia,
@@ -171,7 +171,16 @@ export default function AdminBlogEdit() {
       table: false,
       "table-better": {
         language: "en_US",
-        menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+        menus: [
+          "column",
+          "row",
+          "merge",
+          "table",
+          "cell",
+          "wrap",
+          "copy",
+          "delete",
+        ],
         toolbarTable: true,
       },
       keyboard: {
@@ -205,7 +214,9 @@ export default function AdminBlogEdit() {
     thumbnailInputRef.current?.click();
   };
 
-  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
@@ -347,7 +358,7 @@ export default function AdminBlogEdit() {
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+              {/* <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
 
                 <ButtonGroup size="small">
@@ -366,7 +377,7 @@ export default function AdminBlogEdit() {
                     </Button>
                   ))}
                 </ButtonGroup>
-              </Box>
+              </Box> */}
 
               <TextField
                 fullWidth
@@ -381,10 +392,27 @@ export default function AdminBlogEdit() {
                 sx={{ mb: 3 }}
               />
 
-              <Box sx={{ mb: 3, p: 1.5, border: "1px solid #eee", borderRadius: 1 }}>
-                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>썸네일 이미지</Typography>
+              <Box
+                sx={{
+                  mb: 3,
+                  p: 1.5,
+                  border: "1px solid #eee",
+                  borderRadius: 1,
+                }}
+              >
+                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>
+                  썸네일 이미지
+                </Typography>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    mb: 1,
+                  }}
+                >
                   <Button
                     variant="outlined"
                     onClick={handleThumbnailPick}
@@ -490,7 +518,11 @@ export default function AdminBlogEdit() {
                   취소
                 </Button>
 
-                <Button type="submit" variant="contained" sx={{ bgcolor: MAIN_COLOR }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{ bgcolor: MAIN_COLOR }}
+                >
                   저장
                 </Button>
               </Box>

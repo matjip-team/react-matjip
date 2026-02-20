@@ -67,7 +67,7 @@ export default function BlogDetail() {
   const [toast, setToast] = useState("");
   const [recommended, setRecommended] = useState(false);
 
-  const MAIN_COLOR = "#ff6b00";
+  const MAIN_COLOR = "#4F9FFA";
 
   // 로그인사용자 정보  가져오기
   const { user } = useAuth();
@@ -146,22 +146,22 @@ export default function BlogDetail() {
     alert("링크가 복사되었습니다!");
   };
 
-  const handleReport = () => {
-    alert("신고 클릭!");
-  };
+  // const handleReport = () => {
+  //   alert("신고 클릭!");
+  // };
 
   // 게시글 삭제 함수
-  const handleDelete = async () => {
-    if (!window.confirm("정말 삭제하시겠습니까?")) return;
+  // const handleDelete = async () => {
+  //   if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
-    try {
-      await axios.delete(`/api/blogs/${id}`);
-      alert("삭제되었습니다.");
-      navigate("/blog");
-    } catch {
-      alert("삭제 권한이 없습니다.");
-    }
-  };
+  //   try {
+  //     await axios.delete(`/api/blogs/${id}`);
+  //     alert("삭제되었습니다.");
+  //     navigate("/blog");
+  //   } catch {
+  //     alert("삭제 권한이 없습니다.");
+  //   }
+  // };
 
   // 댓글 API 함수들
 
@@ -358,7 +358,7 @@ export default function BlogDetail() {
         🔗 공유
       </Typography>
 
-      <Typography
+      {/* <Typography
         sx={{
           cursor: "pointer",
           fontSize: 14,
@@ -371,7 +371,7 @@ export default function BlogDetail() {
         onClick={handleReport}
       >
         🚨 신고
-      </Typography>
+      </Typography> */}
     </Box>
   );
 
@@ -424,7 +424,7 @@ export default function BlogDetail() {
           }}
         >
           <span>
-            [{post.blogType === "NOTICE" ? "공지" : "후기"}] {post.title}
+            [{post.blogType === "NOTICE" ? "공지" : "소개"}] {post.title}
           </span>
 
           <Typography component="span" sx={{ fontSize: 15, color: "#888" }}>
@@ -969,7 +969,7 @@ export default function BlogDetail() {
 
         {/* 게시글 관련 버튼 */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-          {user &&
+          {/* {user &&
             (user.id === post.authorId || user.role === "ROLE_ADMIN") && (
               <>
                 <Button
@@ -993,7 +993,7 @@ export default function BlogDetail() {
                   삭제
                 </Button>
               </>
-            )}
+            )} */}
 
           <Button
             variant="contained"
