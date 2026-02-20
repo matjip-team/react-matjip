@@ -4,9 +4,11 @@ import CssBaseline from "@mui/material/CssBaseline";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Paper from "@mui/material/Paper";
-import RestoreIcon from "@mui/icons-material/Restore";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import ArchiveIcon from "@mui/icons-material/Archive";
+import PreviewIcon from "@mui/icons-material/Preview";
+import ContentPasteSearchIcon from "@mui/icons-material/ContentPasteSearch";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import ReviewList from "./components/ReviewsList";
 import LikeList from "./components/LikeList";
 import ProfileEdit from "./components/ProfileEdit";
@@ -15,6 +17,8 @@ import type { ProfileResponse } from "./types/profile";
 import { unwrapData } from "../common/utils/helperUtil";
 import { ThemeProvider } from "@mui/material/styles";
 import myPageTheme from "../common/theme/mypage";
+import RegisterPage from "../register/RegisterPage";
+import RestaurantMyRequestsPage from "../register/RestaurantMyRequestsPage";
 
 export default function MyPage() {
   const [value, setValue] = React.useState(0);
@@ -49,13 +53,13 @@ export default function MyPage() {
       case 0:
         return <LikeList />;
       case 1:
-        return (
-          <Box sx={{ pb: 7 }}>
-            <CssBaseline />
-            <ReviewList />
-          </Box>
-        );
+        return <ReviewList />;
+
       case 2:
+        return <RegisterPage />;
+      case 3:
+        return <RestaurantMyRequestsPage />;
+      case 4:
         if (!profile) return <div>loading...</div>;
         return <ProfileEdit data={profile} />;
       default:
@@ -88,14 +92,22 @@ export default function MyPage() {
             onChange={(_e, newValue) => setValue(newValue)}
             showLabels
           >
-            <BottomNavigationAction label="찜한식당" icon={<RestoreIcon />} />
+            <BottomNavigationAction label="찜한식당" icon={<FavoriteIcon />} />
             <BottomNavigationAction
               label="내가 쓴 리뷰"
-              icon={<FavoriteIcon />}
+              icon={<PreviewIcon />}
+            />
+            <BottomNavigationAction
+              label="맛집등록"
+              icon={<RestaurantIcon />}
+            />
+            <BottomNavigationAction
+              label="내 신청내역"
+              icon={<ContentPasteSearchIcon />}
             />
             <BottomNavigationAction
               label="내 정보 수정"
-              icon={<ArchiveIcon />}
+              icon={<AssignmentIndIcon />}
             />
           </BottomNavigation>
         </Paper>

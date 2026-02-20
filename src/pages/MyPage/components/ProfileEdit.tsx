@@ -1,5 +1,12 @@
 import * as React from "react";
-import { Box, TextField, Button, Typography, Paper, Alert } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  Alert,
+} from "@mui/material";
 
 import AvatarUpload from "./AvatarUpload";
 import { type ProfileResponse } from "../types/profile";
@@ -43,8 +50,13 @@ const toPreviewUrl = (url?: string) => {
 };
 
 export default function ProfileEdit({ data }: Props) {
-  const { globalError, fieldErrors, setFieldErrors, handleApiError, resetErrors } =
-    useFormError<ProfileResponseForm>();
+  const {
+    globalError,
+    fieldErrors,
+    setFieldErrors,
+    handleApiError,
+    resetErrors,
+  } = useFormError<ProfileResponseForm>();
 
   const [form, setForm] = useState<ProfileResponseForm>({ ...EMPTY_FORM });
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
@@ -146,7 +158,9 @@ export default function ProfileEdit({ data }: Props) {
           message: response.data.message || "프로필이 수정되었습니다.",
         });
       } else {
-        throw new Error(response.data?.error?.message || "프로필 수정에 실패했습니다.");
+        throw new Error(
+          response.data?.error?.message || "프로필 수정에 실패했습니다.",
+        );
       }
     } catch (err) {
       handleApiError(err);
@@ -164,9 +178,18 @@ export default function ProfileEdit({ data }: Props) {
           <Typography variant="h6">회원 정보 수정</Typography>
           {globalError && <Alert severity="error">{globalError}</Alert>}
 
-          <AvatarUpload imageUrl={previewUrl} onChange={(file) => void handleFileChange(file)} />
+          <AvatarUpload
+            imageUrl={previewUrl}
+            onChange={(file) => void handleFileChange(file)}
+          />
 
-          <TextField label="이메일" value={form.email} disabled fullWidth required />
+          <TextField
+            label="이메일"
+            value={form.email}
+            disabled
+            fullWidth
+            required
+          />
 
           <TextField
             label="비밀번호"
@@ -207,12 +230,17 @@ export default function ProfileEdit({ data }: Props) {
             rows={4}
           />
 
-          <Typography variant="caption" sx={{ alignSelf: "flex-end", color: "text.secondary" }}>
+          <Typography
+            variant="caption"
+            sx={{ alignSelf: "flex-end", color: "text.secondary" }}
+          >
             {form.bio?.length || 0} / 200
           </Typography>
 
           {imageUploading && (
-            <Typography sx={{ color: "#666", fontSize: 13 }}>프로필 이미지 업로드 중...</Typography>
+            <Typography sx={{ color: "#666", fontSize: 13 }}>
+              프로필 이미지 업로드 중...
+            </Typography>
           )}
 
           <Button variant="contained" type="submit" disabled={imageUploading}>
