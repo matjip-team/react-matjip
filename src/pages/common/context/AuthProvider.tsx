@@ -22,10 +22,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 새로고침 시 서버에서 유저 정보 가져오기 (roles → role 정규화)
-  const toUser = (data: { id: number; email: string; name: string; nickname: string; role?: string; roles?: string[] }): User => {
+  // 새로고침 시 서버에서 유저 정보 가져오기 (roles → role, profileImageUrl 정규화)
+  const toUser = (data: { id: number; email: string; name: string; nickname: string; role?: string; roles?: string[]; profileImageUrl?: string }): User => {
     const role = data.role ?? (Array.isArray(data.roles) ? data.roles[0] : undefined) ?? "ROLE_USER";
-    return { id: data.id, email: data.email, name: data.name, nickname: data.nickname, role };
+    return { id: data.id, email: data.email, name: data.name, nickname: data.nickname, role, profileImageUrl: data.profileImageUrl };
   };
 
   useEffect(() => {

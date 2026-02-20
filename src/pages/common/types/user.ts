@@ -4,4 +4,5 @@ export interface User {
   name: string;
   nickname: string;
   role: string;  // "ROLE_USER", "ROLE_ADMIN" 등
+  profileImageUrl?: string;
 }

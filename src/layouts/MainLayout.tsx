@@ -5,6 +5,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
 import { useState, useRef, useEffect } from "react";
+import { API_BASE_URL } from "../pages/common/config/config";
+
+const toAvatarUrl = (url?: string) => {
+  if (!url) return undefined;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${API_BASE_URL}/images/${url}`;
+};
 
 export default function MainLayout() {
   const location = useLocation();
@@ -20,7 +27,10 @@ export default function MainLayout() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target as Node)) {
+      if (
+        adminMenuRef.current &&
+        !adminMenuRef.current.contains(e.target as Node)
+      ) {
         setAdminMenuOpen(false);
       }
     };
@@ -61,7 +71,7 @@ export default function MainLayout() {
               커뮤니티
             </span>
 
-             <span
+            <span
               className={location.pathname.startsWith("/blog") ? "active" : ""}
               onClick={() => navigate("/blog")}
             >
@@ -83,7 +93,9 @@ export default function MainLayout() {
                   맛집 등록
                 </span>
                 <span
-                  className={location.pathname === "/register/requests" ? "active" : ""}
+                  className={
+                    location.pathname === "/register/requests" ? "active" : ""
+                  }
                   onClick={() => navigate("/register/requests")}
                 >
                   내 신청내역
@@ -95,9 +107,7 @@ export default function MainLayout() {
               <div className="nav-dropdown" ref={adminMenuRef}>
                 <span
                   className={
-                    location.pathname.startsWith("/admin")
-                      ? "active"
-                      : ""
+                    location.pathname.startsWith("/admin") ? "active" : ""
                   }
                   onClick={() => setAdminMenuOpen((prev) => !prev)}
                 >
@@ -129,9 +139,7 @@ export default function MainLayout() {
                     </span>
                     <span
                       className={
-                        location.pathname === "/admin/board"
-                          ? "active"
-                          : ""
+                        location.pathname === "/admin/board" ? "active" : ""
                       }
                       onClick={() => {
                         navigate("/admin/board");
@@ -142,9 +150,7 @@ export default function MainLayout() {
                     </span>
                     <span
                       className={
-                        location.pathname === "/admin/blog"
-                          ? "active"
-                          : ""
+                        location.pathname === "/admin/blog" ? "active" : ""
                       }
                       onClick={() => {
                         navigate("/admin/blog");
@@ -163,11 +169,12 @@ export default function MainLayout() {
             <>
               <div
                 className="auth"
-                
                 style={{ display: "flex", alignItems: "center" }}
               >
                 <span>안녕하세요, {user?.name ?? ""}님</span>
-                <span onClick={logout} style={{ marginLeft: 10 }}>로그아웃</span>
+                <span onClick={logout} style={{ marginLeft: 10 }}>
+                  로그아웃
+                </span>
                 <Tooltip title="My 페이지 클릭">
                   <div
                     onClick={myHandleClick}
@@ -182,8 +189,11 @@ export default function MainLayout() {
                       color="primary"
                       overlap="circular"
                     >
-                      <Avatar>
-                        <PersonIcon />
+                      <Avatar
+                        src={toAvatarUrl(user?.profileImageUrl)}
+                        alt={user?.name}
+                      >
+                        {!user?.profileImageUrl && <PersonIcon />}
                       </Avatar>
                     </Badge>
                   </div>
