@@ -84,24 +84,6 @@ export default function MainLayout() {
             >
               AI 서비스
             </span>
-            {user && (
-              <>
-                <span
-                  className={location.pathname === "/register" ? "active" : ""}
-                  onClick={() => navigate("/register")}
-                >
-                  맛집 등록
-                </span>
-                <span
-                  className={
-                    location.pathname === "/register/requests" ? "active" : ""
-                  }
-                  onClick={() => navigate("/register/requests")}
-                >
-                  내 신청내역
-                </span>
-              </>
-            )}
 
             {isAdmin && (
               <div className="nav-dropdown" ref={adminMenuRef}>
