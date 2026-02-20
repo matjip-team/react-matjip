@@ -4,10 +4,12 @@ import type { User } from "../types/user";
 import { AuthContext } from "./authContext";
 import axios from "../../common/axios";
 import type { ApiResponse } from "../../common/types/api";
+import { useNavigate } from "react-router-dom";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const setUser = (user: User | null) => {
     setUserState(user);
@@ -17,21 +19,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await axios.post<ApiResponse<null>>("/api/auth/logout");
       setUser(null);
+      navigate("/auth/login");
     } catch (err) {
       console.error("Logout error:", err);
     }
   };
 
   // 새로고침 시 서버에서 유저 정보 가져오기 (roles → role, profileImageUrl 정규화)
-  const toUser = (data: { id: number; email: string; name: string; nickname: string; role?: string; roles?: string[]; profileImageUrl?: string }): User => {
-    const role = data.role ?? (Array.isArray(data.roles) ? data.roles[0] : undefined) ?? "ROLE_USER";
-    return { id: data.id, email: data.email, name: data.name, nickname: data.nickname, role, profileImageUrl: data.profileImageUrl };
+  const toUser = (data: {
+    id: number;
+    email: string;
+    name: string;
+    nickname: string;
+    role?: string;
+    roles?: string[];
+    profileImageUrl?: string;
+  }): User => {
+    const role =
+      data.role ??
+      (Array.isArray(data.roles) ? data.roles[0] : undefined) ??
+      "ROLE_USER";
+    return {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      nickname: data.nickname,
+      role,
+      profileImageUrl: data.profileImageUrl,
+    };
   };
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get<ApiResponse<User & { roles?: string[] }>>("/api/users/me");
+        const res =
+          await axios.get<ApiResponse<User & { roles?: string[] }>>(
+            "/api/users/me",
+          );
         if (res.data.success && res.data.data) {
           setUser(toUser(res.data.data));
         } else {
