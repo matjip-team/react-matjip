@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
+import { AdminRouteGuard } from "./AdminRouteGuard";
+import { AuthRouteGuard } from "./AuthRouteGuard";
 
 import Homepage from "../pages/home/Homepage";
 import BoardPage from "../pages/board/BoardPage";
@@ -21,6 +23,11 @@ import Restaurant from "../pages/restaurant/Restaurant";
 import Sample3 from "../pages/Sample3";
 import Register from "../pages/register/RegisterPage.tsx";
 import RestaurantRequestPage from "../pages/admin/RestaurantRequestPage";
+import AdminBoardPage from "../pages/admin/board/AdminBoardPage";
+import AdminBlogPage from "../pages/admin/blog/AdminBlogPage";
+import AdminBlogWrite from "../pages/admin/blog/AdminBlogWrite";
+import AdminBlogDetail from "../pages/admin/blog/AdminBlogDetail";
+import AdminBlogEdit from "../pages/admin/blog/AdminBlogEdit";
 import RestaurantMyRequestsPage from "../pages/register/RestaurantMyRequestsPage";
 
 export default function Router() {
@@ -45,13 +52,30 @@ export default function Router() {
           <Route path="/auth/signup" element={<SignupPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/me" element={<Me />} />
-          <Route path="/auth/mypage" element={<MyPage />} />
           <Route path="/sample" element={<Sample2 />} />
           <Route path="/restaurant/:id" element={<Restaurant />} />
           <Route path="/sample3" element={<Sample3 />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/register/requests" element={<RestaurantMyRequestsPage />} />
-          <Route path="/admin/restaurant-requests" element={<RestaurantRequestPage />} />
+          {/* ROLE_USER, ROLE_ADMIN만 접근 가능 */}
+          <Route element={<AuthRouteGuard />}>
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/register/requests"
+              element={<RestaurantMyRequestsPage />}
+            />
+            <Route path="/auth/mypage" element={<MyPage />} />
+          </Route>
+          {/* ROLE_ADMIN만 접근 가능 */}
+          <Route element={<AdminRouteGuard />}>
+            <Route
+              path="/admin/restaurant-requests"
+              element={<RestaurantRequestPage />}
+            />
+            <Route path="/admin/board" element={<AdminBoardPage />} />
+            <Route path="/admin/blog" element={<AdminBlogPage />} />
+            <Route path="/admin/blog/write" element={<AdminBlogWrite />} />
+            <Route path="/admin/blog/edit/:id" element={<AdminBlogEdit />} />
+            <Route path="/admin/blog/:id" element={<AdminBlogDetail />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

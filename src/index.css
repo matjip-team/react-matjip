@@ -1,0 +1,21 @@
+html {
+    font-size: 12px;
+    /* 기본 16px → 18px */
+}
+
+.MuiOutlinedInput-input {
+    padding: 10px 14px;
+    /* 글자 세로 정렬 맞추기 */
+}
+
+/* .MuiFilledInput-root {
+    height: 44px;
+}
+
+.MuiInput-root {
+    height: 44px;
+}
+
+.MuiOutlinedInput-root {
+    height: 44px;
+} */

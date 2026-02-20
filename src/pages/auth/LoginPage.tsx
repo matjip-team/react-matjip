@@ -14,8 +14,15 @@ import type { LoginRequest } from "./api/types";
 import type { FieldErrors } from "../common/types/api";
 import { handleApiError } from "../common/utils/handleApiError";
 import { useAuth } from "../common/context/useAuth";
+import type { User } from "../common/types/user";
 
 export type LoginForm = LoginRequest;
+
+/** 로그인/me API는 roles 배열을 줄 수 있음 → User 타입의 role로 정규화 */
+function toUser(data: { id: number; email: string; name: string; nickname: string; role?: string; roles?: string[]; profileImageUrl?: string }): User {
+  const role = data.role ?? (Array.isArray(data.roles) ? data.roles[0] : undefined) ?? "ROLE_USER";
+  return { id: data.id, email: data.email, name: data.name, nickname: data.nickname, role, profileImageUrl: data.profileImageUrl };
+}
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -49,11 +56,11 @@ const LoginPage = () => {
       });
 
       if (response.data?.success) {
-        // 로그인 성공 시 홈으로 이동
-        const user = response.data.data;
-        if (user) {
-          setUser(user); // ⭐ 전역 로그인 상태 저장
-          navigate("/");  
+        // 로그인 성공 시 홈으로 이동 (roles → role 정규화로 관리자 메뉴 즉시 반영)
+        const data = response.data.data;
+        if (data) {
+          setUser(toUser(data));
+          navigate("/");
         } else {
           throw new Error("로그인 오류 발생");
         }

@@ -20,10 +20,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
-import axios from "../common/axios";
-import { useAuth } from "../common/context/useAuth";
+import axios from "../../common/axios";
+import { useAuth } from "../../common/context/useAuth";
 import { ThemeProvider } from "@mui/material/styles";
 import { blogTheme } from "./theme/blogTheme";
+import { ADMIN_BLOG_API } from "./api/adminBlogApi";
 
 type CategoryType = "ALL" | "NOTICE" | "REVIEW";
 
@@ -96,7 +97,7 @@ const hasEmbedInDelta = (rawDelta: unknown, embedType: "image" | "video") => {
 
 const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
 
-export default function BlogPage() {
+export default function AdminBlogListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const MAIN_COLOR = "#ff6b00";
@@ -116,7 +117,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     const fetchBlogs = async () => {
-      const res = await axios.get("/api/blogs", {
+      const res = await axios.get(ADMIN_BLOG_API, {
         params: {
           page,
           size,
@@ -138,9 +139,7 @@ export default function BlogPage() {
         setPosts(contents);
       }
 
-      const computedTotalPages = Math.ceil(
-        (data.totalElements ?? 0) / (data.size ?? size),
-      );
+      const computedTotalPages = Math.ceil((data.totalElements ?? 0) / (data.size ?? size));
       setTotalPages(Math.max(1, computedTotalPages));
     };
 
@@ -164,9 +163,7 @@ export default function BlogPage() {
       Boolean(post.imageUrl?.trim()) ||
       /image/i.test(post.mediaType ?? "") ||
       (Array.isArray(post.mediaUrls) &&
-        post.mediaUrls.some((url) =>
-          /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(url),
-        ))
+        post.mediaUrls.some((url) => /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(url)))
     );
   };
 
@@ -179,9 +176,7 @@ export default function BlogPage() {
       Boolean(post.videoUrl?.trim()) ||
       /video/i.test(post.mediaType ?? "") ||
       (Array.isArray(post.mediaUrls) &&
-        post.mediaUrls.some((url) =>
-          /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url),
-        ))
+        post.mediaUrls.some((url) => /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url)))
     );
   };
 
@@ -217,21 +212,15 @@ export default function BlogPage() {
       setToast("로그인이 필요합니다.");
       return;
     }
-    navigate("/blog/write");
+    navigate("/admin/blog/write");
   };
 
   return (
     <ThemeProvider theme={blogTheme}>
       <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
-            블로그
-          </Box>
-          <Button
-            variant="contained"
-            sx={{ bgcolor: MAIN_COLOR }}
-            onClick={handleWriteClick}
-          >
+          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>블로그 관리</Box>
+          <Button variant="contained" sx={{ bgcolor: MAIN_COLOR }} onClick={handleWriteClick}>
             새글쓰기
           </Button>
         </Box>
@@ -318,9 +307,7 @@ export default function BlogPage() {
         </Box>
 
         {posts.length === 0 ? (
-          <Paper sx={{ py: 6, textAlign: "center", color: "#888" }}>
-            게시글이 없습니다.
-          </Paper>
+          <Paper sx={{ py: 6, textAlign: "center", color: "#888" }}>게시글이 없습니다.</Paper>
         ) : (
           <Box
             sx={{
@@ -344,7 +331,7 @@ export default function BlogPage() {
                 <Card
                   key={post.id}
                   variant="outlined"
-                  onClick={() => navigate(`/blog/${post.id}`)}
+                  onClick={() => navigate(`/admin/blog/${post.id}`)}
                   sx={{
                     borderColor: "#ececec",
                     cursor: "pointer",
@@ -383,17 +370,8 @@ export default function BlogPage() {
                       )}
                     </Box>
 
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 0.9,
-                      }}
-                    >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.9 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Chip
                           label={getBlogLabel(post)}
                           size="small"
@@ -402,15 +380,11 @@ export default function BlogPage() {
                             color: "#fff",
                           }}
                         />
-                        <Typography sx={{ fontSize: 12, color: "#999" }}>
-                          #{post.id}
-                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: "#999" }}>#{post.id}</Typography>
                       </Box>
 
                       <Typography sx={{ fontSize: 12, color: "#999" }}>
-                        {post.createdAt
-                          ? new Date(post.createdAt).toLocaleDateString("ko-KR")
-                          : "-"}
+                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString("ko-KR") : "-"}
                       </Typography>
                     </Box>
 
@@ -424,19 +398,13 @@ export default function BlogPage() {
                       }}
                     >
                       {showDefaultBubble && (
-                        <ChatBubbleOutlineIcon
-                          sx={{ fontSize: 18, color: "#9e9e9e" }}
-                        />
+                        <ChatBubbleOutlineIcon sx={{ fontSize: 18, color: "#9e9e9e" }} />
                       )}
                       {showImageIcon && (
-                        <ImageOutlinedIcon
-                          sx={{ fontSize: 18, color: "#2e7d32" }}
-                        />
+                        <ImageOutlinedIcon sx={{ fontSize: 18, color: "#2e7d32" }} />
                       )}
                       {showVideoIcon && (
-                        <VideocamOutlinedIcon
-                          sx={{ fontSize: 18, color: "#1565c0" }}
-                        />
+                        <VideocamOutlinedIcon sx={{ fontSize: 18, color: "#1565c0" }} />
                       )}
 
                       <Typography
@@ -459,21 +427,10 @@ export default function BlogPage() {
                       )}
                     </Box>
 
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <Box
                         component="span"
-                        sx={{
-                          fontSize: 13,
-                          color: "#666",
-                          cursor: "pointer",
-                          "&:hover": { textDecoration: "underline" },
-                        }}
+                        sx={{ fontSize: 13, color: "#666", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
                         onClick={(e) => {
                           e.stopPropagation();
                           openAuthorMenu(e, post.authorNickname);
@@ -482,20 +439,9 @@ export default function BlogPage() {
                         {post.authorNickname}
                       </Box>
 
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1.4,
-                          color: "#777",
-                          fontSize: 13,
-                        }}
-                      >
-                        <Typography sx={{ fontSize: 13 }}>
-                          조회 {post.viewCount}
-                        </Typography>
-                        <Typography sx={{ fontSize: 13 }}>
-                          추천 {post.recommendCount}
-                        </Typography>
+                      <Box sx={{ display: "flex", gap: 1.4, color: "#777", fontSize: 13 }}>
+                        <Typography sx={{ fontSize: 13 }}>조회 {post.viewCount}</Typography>
+                        <Typography sx={{ fontSize: 13 }}>추천 {post.recommendCount}</Typography>
                       </Box>
                     </Box>
                   </CardContent>
@@ -505,20 +451,10 @@ export default function BlogPage() {
           </Box>
         )}
 
-        <Menu
-          anchorEl={authorAnchor}
-          open={Boolean(authorAnchor)}
-          onClose={closeAuthorMenu}
-        >
-          <MenuItem onClick={() => alert(`${selectedAuthor} 글 보기`)}>
-            글
-          </MenuItem>
-          <MenuItem onClick={() => alert(`${selectedAuthor} 댓글 보기`)}>
-            댓글
-          </MenuItem>
-          <MenuItem onClick={() => alert(`${selectedAuthor} 작성글 검색`)}>
-            작성글 검색
-          </MenuItem>
+        <Menu anchorEl={authorAnchor} open={Boolean(authorAnchor)} onClose={closeAuthorMenu}>
+          <MenuItem onClick={() => alert(`${selectedAuthor} 글 보기`)}>글</MenuItem>
+          <MenuItem onClick={() => alert(`${selectedAuthor} 댓글 보기`)}>댓글</MenuItem>
+          <MenuItem onClick={() => alert(`${selectedAuthor} 작성글 검색`)}>작성글 검색</MenuItem>
         </Menu>
 
         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
