@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Divider,
   Snackbar,
   Stack,
@@ -23,7 +24,7 @@ type FormState = {
   longitude: string;
   phone: string;
   description: string;
-  categories: string;
+  categories: string[];
   businessLicenseFileKey: string;
 };
 
@@ -48,9 +49,19 @@ const initialForm: FormState = {
   longitude: "",
   phone: "",
   description: "",
-  categories: "",
+  categories: [],
   businessLicenseFileKey: "",
 };
+
+const CATEGORY_OPTIONS = [
+  "한식",
+  "양식",
+  "고기/구이",
+  "씨푸드",
+  "일중/세계음식",
+  "비건",
+  "카페/디저트",
+];
 
 const ACCEPTED_LICENSE_TYPES = [
   "application/pdf",
@@ -85,15 +96,6 @@ export default function RegisterPage() {
   const markerRef = useRef<kakao.maps.Marker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const categoryNames = useMemo(
-    () =>
-      form.categories
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean),
-    [form.categories],
-  );
-
   useEffect(() => {
     if (!window.kakao || !window.kakao.maps) {
       return;
@@ -117,6 +119,23 @@ export default function RegisterPage() {
     (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
     };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const phoneWithHyphen = e.target.value.replace(/[^0-9-]/g, "").slice(0, 13);
+    setForm((prev) => ({ ...prev, phone: phoneWithHyphen }));
+  };
+
+  const toggleCategory = (category: string) => {
+    setForm((prev) => {
+      const exists = prev.categories.includes(category);
+      return {
+        ...prev,
+        categories: exists
+          ? prev.categories.filter((value) => value !== category)
+          : [...prev.categories, category],
+      };
+    });
+  };
 
   const moveMapToPlace = (place: PlaceItem) => {
     const map = mapRef.current;
@@ -236,6 +255,7 @@ export default function RegisterPage() {
     if (!form.name.trim()) return "가게명을 입력해 주세요.";
     if (!form.address.trim()) return "주소를 선택해 주세요.";
     if (!form.latitude || !form.longitude) return "주소 검색 후 위치를 선택해 주세요.";
+    if (form.categories.length === 0) return "카테고리를 1개 이상 선택해 주세요.";
     if (!form.businessLicenseFileKey.trim()) return "사업자등록증 파일을 업로드해 주세요.";
 
     const lat = Number(form.latitude);
@@ -278,7 +298,7 @@ export default function RegisterPage() {
         phone: form.phone.trim() || null,
         description: form.description.trim() || null,
         businessLicenseFileKey: form.businessLicenseFileKey,
-        categoryNames,
+        categoryNames: form.categories,
       });
 
       setToast("등록 요청이 접수되었습니다. 관리자 확인 후 노출됩니다.");
@@ -461,19 +481,36 @@ export default function RegisterPage() {
               <TextField
                 label="전화번호"
                 value={form.phone}
-                onChange={handleChange("phone")}
+                onChange={handlePhoneChange}
                 fullWidth
-                placeholder="예) 02-123-4567"
+                placeholder="숫자와 - 입력 (예: 02-123-4567)"
+                inputProps={{ inputMode: "tel", pattern: "[0-9-]*", maxLength: 13 }}
+                helperText="숫자와 하이픈(-)만 입력 가능합니다."
               />
 
-              <TextField
-                label="카테고리"
-                value={form.categories}
-                onChange={handleChange("categories")}
-                fullWidth
-                placeholder="예) 한식, 고깃집, 회장국"
-                helperText="쉼표(,)로 구분하여 입력하세요."
-              />
+              <Stack spacing={1}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>카테고리</Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {CATEGORY_OPTIONS.map((category) => {
+                    const selected = form.categories.includes(category);
+                    return (
+                      <Chip
+                        key={category}
+                        clickable
+                        label={category}
+                        onClick={() => toggleCategory(category)}
+                        sx={{
+                          borderRadius: 1.2,
+                          fontWeight: 600,
+                          bgcolor: selected ? ACCENT : "#fff",
+                          color: selected ? "#fff" : "#444",
+                          border: `1px solid ${selected ? ACCENT : "#ddd"}`,
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+              </Stack>
 
               <TextField
                 label="설명"

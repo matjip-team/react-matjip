@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+ï»¿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -22,12 +23,21 @@ type RestaurantRequestItem = {
   createdAt: string;
 };
 
+const STATUS_META: Record<
+  RestaurantRequestItem["approvalStatus"],
+  { label: string; color: "warning" | "success" | "error" }
+> = {
+  PENDING: { label: "ìŠ¹ì¸ ëŒ€ê¸°", color: "warning" },
+  APPROVED: { label: "ìŠ¹ì¸ ì™„ë£Œ", color: "success" },
+  REJECTED: { label: "ë°˜ë ¤", color: "error" },
+};
+
 export default function RestaurantRequestPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<RestaurantRequestItem[]>([]);
   const [toast, setToast] = useState("");
-  const [processingId, setProcessingId] = useState<number | null>(null);
 
   const isAdmin = useMemo(() => {
     const role = user?.role ?? "";
@@ -35,9 +45,7 @@ export default function RestaurantRequestPage() {
   }, [user]);
 
   const fetchRequests = useCallback(async () => {
-    if (!isAdmin) {
-      return;
-    }
+    if (!isAdmin) return;
 
     try {
       setLoading(true);
@@ -47,7 +55,7 @@ export default function RestaurantRequestPage() {
       setItems(res.data?.data ?? []);
     } catch (error) {
       console.error(error);
-      setToast("½ÅÃ» ¸ñ·Ï Á¶È¸¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+      setToast("ì‹ ì²­ ëª©ë¡ ì¡°íšŒì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.");
     } finally {
       setLoading(false);
     }
@@ -62,34 +70,20 @@ export default function RestaurantRequestPage() {
       const res = await axios.get(`/api/admin/restaurants/${id}/license-view-url`);
       const viewUrl = res.data?.data;
       if (!viewUrl) {
-        setToast("¼­·ù º¸±â URL ¹ß±Ş¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+        setToast("ì„œë¥˜ ë³´ê¸° URL ë°œê¸‰ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.");
         return;
       }
       window.open(viewUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error(error);
-      setToast("¼­·ù º¸±â URL ¹ß±Ş¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
-    }
-  };
-
-  const handleDecision = async (id: number, status: "APPROVED" | "REJECTED") => {
-    try {
-      setProcessingId(id);
-      await axios.patch(`/api/admin/restaurants/${id}/approval`, { status });
-      setToast(status === "APPROVED" ? "½ÂÀÎ Ã³¸®µÇ¾ú½À´Ï´Ù." : "¹İ·Á Ã³¸®µÇ¾ú½À´Ï´Ù.");
-      await fetchRequests();
-    } catch (error) {
-      console.error(error);
-      setToast("Ã³¸®¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
-    } finally {
-      setProcessingId(null);
+      setToast("ì„œë¥˜ ë³´ê¸° URL ë°œê¸‰ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.");
     }
   };
 
   if (!user) {
     return (
       <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
-        <Alert severity="warning">·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.</Alert>
+        <Alert severity="warning">ë¡œê·¸ì¸ì´ í•„ìš”í•©ë‹ˆë‹¤.</Alert>
       </Box>
     );
   }
@@ -97,7 +91,7 @@ export default function RestaurantRequestPage() {
   if (!isAdmin) {
     return (
       <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
-        <Alert severity="error">°ü¸®ÀÚ¸¸ Á¢±Ù °¡´ÉÇÕ´Ï´Ù.</Alert>
+        <Alert severity="error">ê´€ë¦¬ìë§Œ ì ‘ê·¼ ê°€ëŠ¥í•©ë‹ˆë‹¤.</Alert>
       </Box>
     );
   }
@@ -105,16 +99,12 @@ export default function RestaurantRequestPage() {
   return (
     <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-        ¸ÀÁı µî·Ï ½ÅÃ» Á¢¼ö
+        ë§›ì§‘ ë“±ë¡ ì‹ ì²­ ì ‘ìˆ˜
       </Typography>
 
-      {loading && (
-        <Typography sx={{ color: "#666", mb: 2 }}>¸ñ·Ï ºÒ·¯¿À´Â Áß...</Typography>
-      )}
+      {loading && <Typography sx={{ color: "#666", mb: 2 }}>ëª©ë¡ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘...</Typography>}
 
-      {!loading && items.length === 0 && (
-        <Alert severity="info">½ÂÀÎ ´ë±â ½ÅÃ»ÀÌ ¾ø½À´Ï´Ù.</Alert>
-      )}
+      {!loading && items.length === 0 && <Alert severity="info">ìŠ¹ì¸ ëŒ€ê¸° ì‹ ì²­ì´ ì—†ìŠµë‹ˆë‹¤.</Alert>}
 
       <Stack spacing={2}>
         {items.map((item) => (
@@ -122,44 +112,35 @@ export default function RestaurantRequestPage() {
             <CardContent>
               <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
                 <Box>
-                  <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{item.name}</Typography>
-                  <Typography sx={{ color: "#666", mt: 0.5 }}>{item.address}</Typography>
-                  <Typography sx={{ color: "#999", mt: 0.5, fontSize: 13 }}>
-                    ½ÅÃ»ÀÏ: {new Date(item.createdAt).toLocaleString()}
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                    <Chip size="small" label={item.approvalStatus} color="warning" />
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
+                    <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{item.name}</Typography>
                     <Chip
                       size="small"
-                      label={item.hasBusinessLicenseFile ? "¼­·ù Ã·ºÎµÊ" : "¼­·ù ¾øÀ½"}
-                      color={item.hasBusinessLicenseFile ? "success" : "default"}
+                      label={STATUS_META[item.approvalStatus].label}
+                      color={STATUS_META[item.approvalStatus].color}
                     />
                   </Stack>
+
+                  <Typography sx={{ color: "#666" }}>{item.address}</Typography>
+                  <Typography sx={{ color: "#999", mt: 0.5, fontSize: 13 }}>
+                    ì‹ ì²­ì¼: {new Date(item.createdAt).toLocaleString()}
+                  </Typography>
                 </Box>
 
                 <Stack direction={{ xs: "row", md: "column" }} spacing={1}>
                   <Button
                     variant="outlined"
-                    disabled={!item.hasBusinessLicenseFile || processingId === item.id}
+                    onClick={() => navigate(`/admin/restaurant-requests/${item.id}`)}
+                  >
+                    ìƒì„¸ë³´ê¸°
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    disabled={!item.hasBusinessLicenseFile}
                     onClick={() => void handleViewLicense(item.id)}
                   >
-                    ¼­·ù º¸±â
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    disabled={processingId === item.id}
-                    onClick={() => void handleDecision(item.id, "APPROVED")}
-                  >
-                    ½ÂÀÎ
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    disabled={processingId === item.id}
-                    onClick={() => void handleDecision(item.id, "REJECTED")}
-                  >
-                    ¹İ·Á
+                    ì„œë¥˜ ë³´ê¸°
                   </Button>
                 </Stack>
               </Stack>

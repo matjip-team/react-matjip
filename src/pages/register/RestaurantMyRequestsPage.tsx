@@ -24,7 +24,7 @@ const STATUS_META: Record<
   { label: string; color: "warning" | "success" | "error" | "default" }
 > = {
   PENDING: { label: "확인 대기", color: "warning" },
-  APPROVED: { label: "확인 완료", color: "success" },
+  APPROVED: { label: "승인 완료", color: "success" },
   REJECTED: { label: "반려", color: "error" },
   CANCELLED: { label: "철회", color: "default" },
 };
@@ -45,7 +45,9 @@ export default function RestaurantMyRequestsPage() {
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const fetchMyRequests = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       setLoading(true);
@@ -71,7 +73,9 @@ export default function RestaurantMyRequestsPage() {
 
   const handleCancel = async (requestId: number) => {
     const shouldCancel = window.confirm("해당 신청을 철회하시겠습니까?");
-    if (!shouldCancel) return;
+    if (!shouldCancel) {
+      return;
+    }
 
     try {
       setProcessingId(requestId);
@@ -96,7 +100,7 @@ export default function RestaurantMyRequestsPage() {
     return (
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
-          로그인해야 내 신청내역을 확인할 수 있습니다.
+          로그인 후 내 신청내역을 확인할 수 있습니다.
         </Alert>
         <Stack direction="row" spacing={1}>
           <Button variant="contained" onClick={() => navigate("/auth/login")}>
@@ -119,42 +123,23 @@ export default function RestaurantMyRequestsPage() {
         spacing={1}
         sx={{ mb: 2 }}
       >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            내 맛집 등록 신청내역
-          </Typography>
-        </Box>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          내 맛집 등록 신청내역
+        </Typography>
       </Stack>
 
-      {loading && (
-        <Typography sx={{ color: "#666", mb: 2 }}>
-          신청내역 불러오는 중...
-        </Typography>
-      )}
+      {loading && <Typography sx={{ color: "#666", mb: 2 }}>신청내역 불러오는 중...</Typography>}
 
-      {!loading && items.length === 0 && (
-        <Alert severity="info">등록된 신청내역이 없습니다.</Alert>
-      )}
+      {!loading && items.length === 0 && <Alert severity="info">등록한 신청내역이 없습니다.</Alert>}
 
       <Stack spacing={2}>
         {items.map((item) => (
           <Card key={item.id} sx={{ border: "1px solid #eee" }}>
             <CardContent>
-              <Stack
-                direction={{ xs: "column", md: "row" }}
-                justifyContent="space-between"
-                spacing={2}
-              >
+              <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
                 <Box>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    sx={{ mb: 0.6 }}
-                  >
-                    <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-                      {item.name}
-                    </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
+                    <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{item.name}</Typography>
                     <Chip
                       size="small"
                       label={STATUS_META[item.approvalStatus].label}
@@ -163,20 +148,29 @@ export default function RestaurantMyRequestsPage() {
                   </Stack>
                   <Typography sx={{ color: "#666" }}>{item.address}</Typography>
                   <Typography sx={{ color: "#999", mt: 0.5, fontSize: 13 }}>
-                    신청일 {new Date(item.createdAt).toLocaleString()}
+                    신청일: {new Date(item.createdAt).toLocaleString()}
                   </Typography>
                 </Box>
 
-                {item.approvalStatus === "PENDING" && (
+                <Stack direction={{ xs: "row", md: "column" }} spacing={1}>
                   <Button
-                    color="error"
                     variant="outlined"
-                    disabled={processingId === item.id}
-                    onClick={() => void handleCancel(item.id)}
+                    onClick={() => navigate(`/register/requests/${item.id}`)}
                   >
-                    신청 철회
+                    상세보기
                   </Button>
-                )}
+
+                  {item.approvalStatus === "PENDING" && (
+                    <Button
+                      color="error"
+                      variant="outlined"
+                      disabled={processingId === item.id}
+                      onClick={() => void handleCancel(item.id)}
+                    >
+                      신청 철회
+                    </Button>
+                  )}
+                </Stack>
               </Stack>
             </CardContent>
           </Card>

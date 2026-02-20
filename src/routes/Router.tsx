@@ -23,12 +23,14 @@ import Restaurant from "../pages/restaurant/Restaurant";
 import Sample3 from "../pages/Sample3";
 import Register from "../pages/register/RegisterPage.tsx";
 import RestaurantRequestPage from "../pages/admin/RestaurantRequestPage";
+import RestaurantRequestDetailPage from "../pages/admin/RestaurantRequestDetailPage";
 import AdminBoardPage from "../pages/admin/board/AdminBoardPage";
 import AdminBlogPage from "../pages/admin/blog/AdminBlogPage";
 import AdminBlogWrite from "../pages/admin/blog/AdminBlogWrite";
 import AdminBlogDetail from "../pages/admin/blog/AdminBlogDetail";
 import AdminBlogEdit from "../pages/admin/blog/AdminBlogEdit";
 import RestaurantMyRequestsPage from "../pages/register/RestaurantMyRequestsPage";
+import RestaurantMyRequestDetailPage from "../pages/register/RestaurantMyRequestDetailPage";
 
 export default function Router() {
   return (
@@ -59,9 +61,11 @@ export default function Router() {
           <Route element={<AuthRouteGuard />}>
             <Route path="/register" element={<Register />} />
             <Route path="/register/requests" element={<RestaurantMyRequestsPage />} />
+            <Route path="/register/requests/:id" element={<RestaurantMyRequestDetailPage />} />
           </Route>
           <Route element={<AdminRouteGuard />}>
             <Route path="/admin/restaurant-requests" element={<RestaurantRequestPage />} />
+            <Route path="/admin/restaurant-requests/:id" element={<RestaurantRequestDetailPage />} />
             <Route path="/admin/board" element={<AdminBoardPage />} />
             <Route path="/admin/blog" element={<AdminBlogPage />} />
             <Route path="/admin/blog/write" element={<AdminBlogWrite />} />
