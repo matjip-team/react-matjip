@@ -35,12 +35,14 @@ import AdminBlogDetail from "../pages/admin/blog/AdminBlogDetail";
 import AdminBlogEdit from "../pages/admin/blog/AdminBlogEdit";
 import MyRestaurantRequestListPage from "../pages/register/MyRestaurantRequestListPage";
 import MyRestaurantRequestDetailPage from "../pages/register/MyRestaurantRequestDetailPage";
+import { AuthProvider } from "../pages/common/context/AuthProvider";
 
 export default function Router() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<MainLayout />}>
+      <AuthProvider>
+        <Routes>
+          <Route element={<MainLayout />}>
           <Route path="/" element={<Homepage />} />
           <Route path="/board" element={<BoardPage />} />
           <Route path="/board/write" element={<BoardWrite />} />
@@ -94,8 +96,9 @@ export default function Router() {
             <Route path="/admin/blog/edit/:id" element={<AdminBlogEdit />} />
             <Route path="/admin/blog/:id" element={<AdminBlogDetail />} />
           </Route>
-        </Route>
-      </Routes>
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
