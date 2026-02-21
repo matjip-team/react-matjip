@@ -3,9 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Button,
-  // ButtonGroup,
-  Card,
-  CardContent,
+  Paper,
   TextField,
   Typography,
 } from "@mui/material";
@@ -45,7 +43,7 @@ interface ValidationErrorResponse {
 export default function AdminBlogEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const MAIN_COLOR = "#4F9FFA";
+  const ACCENT = "#ff6b00";
   const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
 
   // const categories = [
@@ -347,15 +345,42 @@ export default function AdminBlogEdit() {
 
   return (
     <ThemeProvider theme={blogTheme}>
-      <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
-        <Card>
-          <CardContent>
-            <Typography
-              variant="h5"
-              sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}
-            >
-              글 수정
-            </Typography>
+      <Box
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          py: 5,
+          px: { xs: 2, sm: 3 },
+        }}
+      >
+        {/* 페이지 타이틀 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            글 수정
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            블로그 글을 수정합니다
+          </Typography>
+        </Box>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fff",
+          }}
+        >
 
             <Box component="form" onSubmit={handleSubmit}>
               {/* <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
@@ -389,18 +414,37 @@ export default function AdminBlogEdit() {
                 }}
                 error={!!errors.title}
                 helperText={errors.title?.[0]}
-                sx={{ mb: 3 }}
+                sx={{
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: ACCENT,
+                      borderWidth: 2,
+                    },
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+                }}
               />
 
               <Box
                 sx={{
                   mb: 3,
-                  p: 1.5,
-                  border: "1px solid #eee",
-                  borderRadius: 1,
+                  p: 2,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.06)",
+                  bgcolor: "#f8fafc",
                 }}
               >
-                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    mb: 1.5,
+                    color: "#64748b",
+                  }}
+                >
                   썸네일 이미지
                 </Typography>
 
@@ -408,7 +452,7 @@ export default function AdminBlogEdit() {
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
+                    gap: 1.5,
                     flexWrap: "wrap",
                     mb: 1,
                   }}
@@ -417,7 +461,15 @@ export default function AdminBlogEdit() {
                     variant="outlined"
                     onClick={handleThumbnailPick}
                     disabled={thumbnailUploading}
-                    sx={{ color: MAIN_COLOR, borderColor: MAIN_COLOR }}
+                    sx={{
+                      color: ACCENT,
+                      borderColor: ACCENT,
+                      borderRadius: 1.5,
+                      "&:hover": {
+                        borderColor: "#e55f00",
+                        bgcolor: "rgba(255,107,0,0.04)",
+                      },
+                    }}
                   >
                     {thumbnailUploading ? "업로드 중..." : "썸네일 업로드"}
                   </Button>
@@ -435,7 +487,7 @@ export default function AdminBlogEdit() {
                     </Button>
                   )}
 
-                  <Typography sx={{ fontSize: 13, color: "#666" }}>
+                  <Typography sx={{ fontSize: 13, color: "#64748b" }}>
                     {thumbnailFileName || "선택된 썸네일 없음"}
                   </Typography>
                 </Box>
@@ -449,8 +501,9 @@ export default function AdminBlogEdit() {
                       width: 220,
                       height: 130,
                       objectFit: "cover",
-                      borderRadius: 1,
-                      border: "1px solid #ddd",
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: "rgba(0,0,0,0.06)",
                     }}
                   />
                 )}
@@ -509,10 +562,28 @@ export default function AdminBlogEdit() {
                 )}
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 1.5,
+                  mt: 3,
+                }}
+              >
                 <Button
                   variant="outlined"
-                  sx={{ mr: 1, color: MAIN_COLOR, borderColor: MAIN_COLOR }}
+                  sx={{
+                    borderRadius: 1.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderColor: "rgba(0,0,0,0.2)",
+                    color: "#64748b",
+                    "&:hover": {
+                      borderColor: ACCENT,
+                      color: ACCENT,
+                      bgcolor: "rgba(255,107,0,0.04)",
+                    },
+                  }}
                   onClick={() => navigate("/admin/blog")}
                 >
                   취소
@@ -521,14 +592,20 @@ export default function AdminBlogEdit() {
                 <Button
                   type="submit"
                   variant="contained"
-                  sx={{ bgcolor: MAIN_COLOR }}
+                  sx={{
+                    bgcolor: ACCENT,
+                    borderRadius: 1.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 2.5,
+                    "&:hover": { bgcolor: "#e55f00" },
+                  }}
                 >
                   저장
                 </Button>
               </Box>
             </Box>
-          </CardContent>
-        </Card>
+        </Paper>
       </Box>
     </ThemeProvider>
   );

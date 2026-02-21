@@ -61,94 +61,152 @@ export default function MainLayout() {
           </div>
 
           <nav className="nav">
-            <span
-              className={location.pathname === "/" ? "active" : ""}
-              onClick={() => navigate("/")}
+            <Tooltip
+              title="등록된 맛집 목록을 둘러보세요"
+              arrow
+              placement="bottom"
             >
-              맛집 소개
-            </span>
-            <span
-              className={location.pathname === "/map" ? "active" : ""}
-              onClick={() => navigate("/map")}
+              <span
+                className={location.pathname === "/" ? "active" : ""}
+                onClick={() => navigate("/")}
+              >
+                맛집 소개
+              </span>
+            </Tooltip>
+            <Tooltip
+              title="지도에서 맛집 위치를 확인하세요"
+              arrow
+              placement="bottom"
             >
-              맛집 지도
-            </span>
-            <span
-              className={location.pathname === "/board" ? "active" : ""}
-              onClick={() => navigate("/board")}
+              <span
+                className={location.pathname === "/map" ? "active" : ""}
+                onClick={() => navigate("/map")}
+              >
+                맛집 지도
+              </span>
+            </Tooltip>
+            <Tooltip
+              title="자유롭게 이야기를 나눠보세요"
+              arrow
+              placement="bottom"
             >
-              커뮤니티
-            </span>
-            <span
-              className={location.pathname.startsWith("/blog") ? "active" : ""}
-              onClick={() => navigate("/blog")}
+              <span
+                className={location.pathname === "/board" ? "active" : ""}
+                onClick={() => navigate("/board")}
+              >
+                커뮤니티
+              </span>
+            </Tooltip>
+            <Tooltip
+              title="맛집 관련 블로그 글을 읽어보세요"
+              arrow
+              placement="bottom"
             >
-              맛집 이야기
-            </span>
-            <span
-              className={location.pathname === "/ai" ? "active" : ""}
-              onClick={() => navigate("/ai")}
+              <span
+                className={
+                  location.pathname.startsWith("/blog") ? "active" : ""
+                }
+                onClick={() => navigate("/blog")}
+              >
+                맛집 이야기
+              </span>
+            </Tooltip>
+            <Tooltip
+              title="AI가 추천하는 맛집을 확인해보세요"
+              arrow
+              placement="bottom"
             >
-              AI 서비스
-            </span>
+              <span
+                className={location.pathname === "/ai" ? "active" : ""}
+                onClick={() => navigate("/ai")}
+              >
+                AI 서비스
+              </span>
+            </Tooltip>
             {isAdmin && (
               <div className="nav-dropdown" ref={adminMenuRef}>
-                <span
-                  className={
-                    location.pathname.startsWith("/admin") ? "active" : ""
-                  }
-                  onClick={() => setAdminMenuOpen((prev) => !prev)}
-                >
-                  관리자
-                  <ExpandMoreIcon
-                    sx={{
-                      fontSize: 18,
-                      verticalAlign: "middle",
-                      ml: 0.5,
-                      transform: adminMenuOpen ? "rotate(180deg)" : "none",
-                      transition: "transform 0.2s",
-                    }}
-                  />
-                </span>
+                <Tooltip title="관리자 전용 메뉴" arrow placement="bottom">
+                  <span
+                    className={
+                      location.pathname.startsWith("/admin") ? "active" : ""
+                    }
+                    onClick={() => setAdminMenuOpen((prev) => !prev)}
+                  >
+                    관리자
+                    <ExpandMoreIcon
+                      sx={{
+                        fontSize: 18,
+                        verticalAlign: "middle",
+                        ml: 0.5,
+                        transform: adminMenuOpen ? "rotate(180deg)" : "none",
+                        transition: "transform 0.2s",
+                      }}
+                    />
+                  </span>
+                </Tooltip>
                 {adminMenuOpen && (
                   <div className="nav-submenu">
-                    <span
-                      onClick={() => {
-                        navigate("/admin/restaurant-requests");
-                        setAdminMenuOpen(false);
-                      }}
+                    <Tooltip
+                      title="맛집 등록 신청을 검토합니다"
+                      arrow
+                      placement="right"
                     >
-                      신청 접수
-                    </span>
-                    <span
-                      onClick={() => {
-                        navigate("/admin/board");
-                        setAdminMenuOpen(false);
-                      }}
+                      <span
+                        onClick={() => {
+                          navigate("/admin/restaurant-requests");
+                          setAdminMenuOpen(false);
+                        }}
+                      >
+                        신청 접수
+                      </span>
+                    </Tooltip>
+                    <Tooltip
+                      title="커뮤니티 게시글을 관리합니다"
+                      arrow
+                      placement="right"
                     >
-                      커뮤니티 관리
-                    </span>
-                    <span
-                      onClick={() => {
-                        navigate("/admin/blog");
-                        setAdminMenuOpen(false);
-                      }}
+                      <span
+                        onClick={() => {
+                          navigate("/admin/board");
+                          setAdminMenuOpen(false);
+                        }}
+                      >
+                        커뮤니티 관리
+                      </span>
+                    </Tooltip>
+                    <Tooltip
+                      title="블로그 글을 관리합니다"
+                      arrow
+                      placement="right"
                     >
-                      블로그 관리
-                    </span>
-                    <span
-                      className={
-                        location.pathname.startsWith("/admin/user")
-                          ? "active"
-                          : ""
-                      }
-                      onClick={() => {
-                        navigate("/admin/user");
-                        setAdminMenuOpen(false);
-                      }}
+                      <span
+                        onClick={() => {
+                          navigate("/admin/blog");
+                          setAdminMenuOpen(false);
+                        }}
+                      >
+                        블로그 관리
+                      </span>
+                    </Tooltip>
+                    <Tooltip
+                      title="회원 정보를 관리합니다"
+                      arrow
+                      placement="right"
                     >
-                      회원관리
-                    </span>
+                      <span
+                        className={
+                          location.pathname.startsWith("/admin/user")
+                            ? "active"
+                            : ""
+                        }
+                        onClick={() => {
+                          navigate("/admin/user");
+                          setAdminMenuOpen(false);
+                        }}
+                      >
+                        회원관리
+                      </span>
+                    </Tooltip>
                   </div>
                 )}
               </div>

@@ -97,10 +97,11 @@ const hasEmbedInDelta = (rawDelta: unknown, embedType: "image" | "video") => {
 
 const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
 
+const ACCENT = "#ff6b00";
+
 export default function AdminBlogListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const MAIN_COLOR = "#4F9FFA";
 
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const category = "ALL";
@@ -224,56 +225,127 @@ export default function AdminBlogListPage() {
 
   return (
     <ThemeProvider theme={blogTheme}>
-      <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
-            블로그 관리
+      <Box
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          py: 5,
+          px: { xs: 2, sm: 3 },
+        }}
+      >
+        {/* 페이지 타이틀 */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: 2,
+            mb: 4,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: "#1a1a1a",
+                letterSpacing: "-0.02em",
+                mb: 0.5,
+              }}
+            >
+              블로그 관리
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+              블로그 글을 검색하고 관리할 수 있습니다
+            </Typography>
           </Box>
           <Button
             variant="contained"
-            sx={{ bgcolor: MAIN_COLOR }}
+            sx={{
+              bgcolor: ACCENT,
+              "&:hover": { bgcolor: "#e55f00" },
+              textTransform: "none",
+              fontWeight: 600,
+              px: 2.5,
+              borderRadius: 1.5,
+            }}
             onClick={handleWriteClick}
           >
             새글쓰기
           </Button>
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1, mb: 4 }}>
-          <Select
-            size="small"
-            value={searchType}
-            onChange={(e) => setSearchType(String(e.target.value))}
-            sx={{ width: 120 }}
-          >
-            <MenuItem value="TITLE_CONTENT">제목+내용</MenuItem>
-            <MenuItem value="TITLE">제목</MenuItem>
-            <MenuItem value="CONTENT">내용</MenuItem>
-            <MenuItem value="AUTHOR">글쓴이</MenuItem>
-            <MenuItem value="COMMENT">댓글</MenuItem>
-          </Select>
-
-          <TextField
-            size="small"
-            placeholder="검색어 입력"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSearch();
-            }}
-            sx={{ width: 300 }}
-          />
-
-          <IconButton
+        {/* 검색 영역 */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 4,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fafafa",
+          }}
+        >
+          <Box
             sx={{
-              bgcolor: MAIN_COLOR,
-              color: "#fff",
-              "&:hover": { bgcolor: MAIN_COLOR },
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1.5,
+              alignItems: "center",
             }}
-            onClick={handleSearch}
           >
-            <SearchIcon />
-          </IconButton>
-          <Box sx={{ marginLeft: "auto" }}>
+            <Select
+              size="small"
+              value={searchType}
+              onChange={(e) => setSearchType(String(e.target.value))}
+              sx={{
+                width: 120,
+                bgcolor: "#fff",
+                borderRadius: 1,
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(0,0,0,0.08)",
+                },
+              }}
+            >
+              <MenuItem value="TITLE_CONTENT">제목+내용</MenuItem>
+              <MenuItem value="TITLE">제목</MenuItem>
+              <MenuItem value="CONTENT">내용</MenuItem>
+              <MenuItem value="AUTHOR">글쓴이</MenuItem>
+              <MenuItem value="COMMENT">댓글</MenuItem>
+            </Select>
+
+            <TextField
+              size="small"
+              placeholder="검색어 입력"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
+              }}
+              sx={{
+                width: { xs: "100%", sm: 280 },
+                flex: "1 1 200px",
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "#fff",
+                  borderRadius: 1,
+                },
+              }}
+            />
+
+            <IconButton
+              sx={{
+                bgcolor: ACCENT,
+                color: "#fff",
+                "&:hover": { bgcolor: "#e55f00", transform: "scale(1.02)" },
+                transition: "all 0.2s",
+              }}
+              onClick={handleSearch}
+            >
+              <SearchIcon />
+            </IconButton>
+
             <Select
               size="small"
               value={size}
@@ -281,7 +353,12 @@ export default function AdminBlogListPage() {
                 setSize(Number(e.target.value));
                 setPage(0);
               }}
-              sx={{ width: 90 }}
+              sx={{
+                width: 90,
+                ml: "auto",
+                bgcolor: "#fff",
+                borderRadius: 1,
+              }}
             >
               <MenuItem value={8}>8개</MenuItem>
               <MenuItem value={10}>10개</MenuItem>
@@ -290,38 +367,22 @@ export default function AdminBlogListPage() {
               <MenuItem value={100}>100개</MenuItem>
             </Select>
           </Box>
-        </Box>
-
-        <Box sx={{ display: "flex", gap: 0.5, mb: 1, alignItems: "center" }}>
-          {/* {[
-            { key: "ALL" as const, label: "전체글" },
-            { key: "NOTICE" as const, label: "공지" },
-            { key: "REVIEW" as const, label: "후기" },
-          ].map((c) => (
-            <Button
-              key={c.key}
-              size="small"
-              variant={category === c.key ? "contained" : "outlined"}
-              sx={{
-                bgcolor: category === c.key ? MAIN_COLOR : "#fff",
-                color: category === c.key ? "#fff" : MAIN_COLOR,
-                borderColor: MAIN_COLOR,
-              }}
-              onClick={() => {
-                setCategory(c.key);
-                setPage(0);
-                setKeyword("");
-                setAppliedKeyword("");
-              }}
-            >
-              {c.label}
-            </Button>
-          ))} */}
-        </Box>
+        </Paper>
 
         {posts.length === 0 ? (
-          <Paper sx={{ py: 6, textAlign: "center", color: "#888" }}>
-            게시글이 없습니다.
+          <Paper
+            elevation={0}
+            sx={{
+              py: 8,
+              textAlign: "center",
+              color: "#94a3b8",
+              fontSize: 15,
+              borderRadius: 2,
+              border: "1px dashed rgba(0,0,0,0.1)",
+              bgcolor: "#f8fafc",
+            }}
+          >
+            등록된 글이 없습니다.
           </Paper>
         ) : (
           <Box
@@ -332,7 +393,7 @@ export default function AdminBlogListPage() {
                 sm: "repeat(2, minmax(0, 1fr))",
                 md: "repeat(4, minmax(0, 1fr))",
               },
-              gap: 1.2,
+              gap: 2,
             }}
           >
             {posts.map((post) => {
@@ -348,24 +409,28 @@ export default function AdminBlogListPage() {
                   variant="outlined"
                   onClick={() => navigate(`/admin/blog/${post.id}`)}
                   sx={{
-                    borderColor: "#ececec",
+                    border: "1px solid",
+                    borderColor: "rgba(0,0,0,0.06)",
+                    borderRadius: 2,
                     cursor: "pointer",
+                    overflow: "hidden",
+                    transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)",
                     "&:hover": {
-                      borderColor: MAIN_COLOR,
-                      boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+                      borderColor: ACCENT,
+                      boxShadow: "0 8px 24px rgba(255,107,0,0.12)",
+                      transform: "translateY(-2px)",
                     },
                   }}
                 >
-                  <CardContent sx={{ py: 1.6, px: 2 }}>
+                  <CardContent sx={{ py: 2, px: 2 }}>
                     <Box
                       sx={{
                         width: "100%",
                         height: 160,
-                        borderRadius: 1,
-                        border: "1px solid #efefef",
-                        mb: 1.1,
+                        borderRadius: 1.5,
                         overflow: "hidden",
-                        bgcolor: "#fafafa",
+                        mb: 1.5,
+                        bgcolor: "#f1f5f9",
                       }}
                     >
                       {thumbnailUrl ? (
@@ -400,16 +465,20 @@ export default function AdminBlogListPage() {
                           label={getBlogLabel(post)}
                           size="small"
                           sx={{
-                            bgcolor: type === "NOTICE" ? MAIN_COLOR : "#adb5bd",
+                            height: 22,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            bgcolor: type === "NOTICE" ? ACCENT : "#64748b",
                             color: "#fff",
+                            "& .MuiChip-label": { px: 1 },
                           }}
                         />
-                        <Typography sx={{ fontSize: 12, color: "#999" }}>
+                        <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>
                           #{post.id}
                         </Typography>
                       </Box>
 
-                      <Typography sx={{ fontSize: 12, color: "#999" }}>
+                      <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>
                         {post.createdAt
                           ? new Date(post.createdAt).toLocaleDateString("ko-KR")
                           : "-"}
@@ -427,17 +496,17 @@ export default function AdminBlogListPage() {
                     >
                       {showDefaultBubble && (
                         <ChatBubbleOutlineIcon
-                          sx={{ fontSize: 18, color: "#9e9e9e" }}
+                          sx={{ fontSize: 18, color: "#94a3b8" }}
                         />
                       )}
                       {showImageIcon && (
                         <ImageOutlinedIcon
-                          sx={{ fontSize: 18, color: "#2e7d32" }}
+                          sx={{ fontSize: 18, color: "#059669" }}
                         />
                       )}
                       {showVideoIcon && (
                         <VideocamOutlinedIcon
-                          sx={{ fontSize: 18, color: "#1565c0" }}
+                          sx={{ fontSize: 18, color: "#2563eb" }}
                         />
                       )}
 
@@ -455,7 +524,7 @@ export default function AdminBlogListPage() {
                       </Typography>
 
                       {post.commentCount > 0 && (
-                        <Typography sx={{ fontSize: 13, color: "#888" }}>
+                        <Typography sx={{ fontSize: 13, color: "#94a3b8" }}>
                           [{post.commentCount}]
                         </Typography>
                       )}
@@ -472,9 +541,12 @@ export default function AdminBlogListPage() {
                         component="span"
                         sx={{
                           fontSize: 13,
-                          color: "#666",
+                          color: "#64748b",
                           cursor: "pointer",
-                          "&:hover": { textDecoration: "underline" },
+                          "&:hover": {
+                            color: ACCENT,
+                            textDecoration: "underline",
+                          },
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -487,8 +559,8 @@ export default function AdminBlogListPage() {
                       <Box
                         sx={{
                           display: "flex",
-                          gap: 1.4,
-                          color: "#777",
+                          gap: 1.5,
+                          color: "#94a3b8",
                           fontSize: 13,
                         }}
                       >
@@ -523,12 +595,26 @@ export default function AdminBlogListPage() {
           </MenuItem>
         </Menu>
 
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            mt: 4,
+            "& .MuiPaginationItem-root": { fontSize: 14 },
+            "& .Mui-selected": {
+              bgcolor: ACCENT,
+              color: "#fff",
+              "&:hover": { bgcolor: "#e55f00" },
+            },
+          }}
+        >
           <Pagination
             count={posts.length === 0 ? 1 : totalPages}
             page={page + 1}
             disabled={posts.length === 0}
             onChange={(_, v) => setPage(v - 1)}
+            color="standard"
+            shape="rounded"
           />
         </Box>
       </Box>
