@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Button,
+  Divider,
   Paper,
   TextField,
   Typography,
@@ -375,14 +376,14 @@ export default function AdminBlogEdit() {
           elevation={0}
           sx={{
             p: 4,
+            position: "relative",
             borderRadius: 2,
             border: "1px solid",
             borderColor: "rgba(0,0,0,0.06)",
             bgcolor: "#fff",
           }}
         >
-
-            <Box component="form" onSubmit={handleSubmit}>
+          <Box component="form" onSubmit={handleSubmit}>
               {/* <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
 
@@ -418,6 +419,7 @@ export default function AdminBlogEdit() {
                   mb: 3,
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 1.5,
+                    fontSize: "1.1rem",
                     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                       borderColor: ACCENT,
                       borderWidth: 2,
@@ -426,6 +428,8 @@ export default function AdminBlogEdit() {
                   "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
                 }}
               />
+
+              <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
               <Box
                 sx={{
@@ -517,20 +521,24 @@ export default function AdminBlogEdit() {
                 />
               </Box>
 
+              <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.06)" }} />
+
               <Box
                 sx={{
                   mb: 2,
                   "& .ql-toolbar.ql-snow": {
-                    borderRadius: "4px 4px 0 0",
+                    borderRadius: "8px 8px 0 0",
+                    borderColor: "rgba(0,0,0,0.12)",
                   },
                   "& .ql-container.ql-snow": {
                     minHeight: 360,
-                    borderRadius: "0 0 4px 4px",
+                    borderRadius: "0 0 8px 8px",
+                    borderColor: "rgba(0,0,0,0.12)",
                   },
                   "& .ql-editor": {
                     minHeight: 320,
                     fontSize: 15,
-                    lineHeight: 1.6,
+                    lineHeight: 1.7,
                   },
                 }}
               >
@@ -556,23 +564,28 @@ export default function AdminBlogEdit() {
                 )}
 
                 {isUploadingMedia && (
-                  <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
+                  <Typography sx={{ mt: 1, color: "#64748b", fontSize: 13 }}>
                     파일 업로드 중입니다...
                   </Typography>
                 )}
               </Box>
+
+              <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.06)" }} />
 
               <Box
                 sx={{
                   display: "flex",
                   justifyContent: "flex-end",
                   gap: 1.5,
-                  mt: 3,
+                  mt: 4,
+                  pt: 2,
                 }}
               >
                 <Button
                   variant="outlined"
                   sx={{
+                    height: 40,
+                    fontSize: 14,
                     borderRadius: 1.5,
                     textTransform: "none",
                     fontWeight: 600,
@@ -593,8 +606,10 @@ export default function AdminBlogEdit() {
                   type="submit"
                   variant="contained"
                   sx={{
-                    bgcolor: ACCENT,
+                    height: 40,
+                    fontSize: 14,
                     borderRadius: 1.5,
+                    bgcolor: ACCENT,
                     textTransform: "none",
                     fontWeight: 600,
                     px: 2.5,

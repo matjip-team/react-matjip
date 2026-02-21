@@ -2,10 +2,15 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Snackbar, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import PreviewIcon from "@mui/icons-material/Preview";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import ContentPasteSearchIcon from "@mui/icons-material/ContentPasteSearch";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import BlogFeaturedCarousel from "../components/BlogFeaturedCarousel/BlogFeaturedCarousel";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../pages/common/config/config";
 
 const toAvatarUrl = (url?: string) => {
@@ -20,8 +25,6 @@ export default function MainLayout() {
 
   const { user, logout } = useAuth();
   const [toast, setToast] = useState("");
-  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
-  const adminMenuRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
 
@@ -34,22 +37,13 @@ export default function MainLayout() {
     return () => window.removeEventListener("show-toast", handleShowToast);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        adminMenuRef.current &&
-        !adminMenuRef.current.contains(e.target as Node)
-      ) {
-        setAdminMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const myHandleClick = () => {
-    navigate("/auth/mypage");
-  };
+  const mypageTabs = [
+    { label: "찜한 식당", path: "/auth/mypage?tab=0", icon: FavoriteIcon },
+    { label: "내가 쓴 리뷰", path: "/auth/mypage?tab=1", icon: PreviewIcon },
+    { label: "맛집 등록", path: "/auth/mypage?tab=2", icon: RestaurantIcon },
+    { label: "내 신청 내역", path: "/auth/mypage?tab=3", icon: ContentPasteSearchIcon },
+    { label: "내 정보", path: "/auth/mypage?tab=4", icon: PersonOutlineIcon },
+  ];
 
   return (
     <div className="layout">
@@ -124,13 +118,12 @@ export default function MainLayout() {
               </span>
             </Tooltip>
             {isAdmin && (
-              <div className="nav-dropdown" ref={adminMenuRef}>
+              <div className="nav-dropdown admin-dropdown">
                 <Tooltip title="관리자 전용 메뉴" arrow placement="bottom">
                   <span
                     className={
                       location.pathname.startsWith("/admin") ? "active" : ""
                     }
-                    onClick={() => setAdminMenuOpen((prev) => !prev)}
                   >
                     관리자
                     <ExpandMoreIcon
@@ -138,77 +131,57 @@ export default function MainLayout() {
                         fontSize: 18,
                         verticalAlign: "middle",
                         ml: 0.5,
-                        transform: adminMenuOpen ? "rotate(180deg)" : "none",
                         transition: "transform 0.2s",
                       }}
+                      className="admin-chevron"
                     />
                   </span>
                 </Tooltip>
-                {adminMenuOpen && (
-                  <div className="nav-submenu">
-                    <Tooltip
-                      title="맛집 등록 신청을 검토합니다"
-                      arrow
-                      placement="right"
+                <div className="nav-submenu admin-submenu">
+                  <Tooltip
+                    title="맛집 등록 신청을 검토합니다"
+                    arrow
+                    placement="right"
+                  >
+                    <span onClick={() => navigate("/admin/restaurant-requests")}>
+                      신청 접수
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title="커뮤니티 게시글을 관리합니다"
+                    arrow
+                    placement="right"
+                  >
+                    <span onClick={() => navigate("/admin/board")}>
+                      커뮤니티 관리
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title="블로그 글을 관리합니다"
+                    arrow
+                    placement="right"
+                  >
+                    <span onClick={() => navigate("/admin/blog")}>
+                      블로그 관리
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title="회원 정보를 관리합니다"
+                    arrow
+                    placement="right"
+                  >
+                    <span
+                      className={
+                        location.pathname.startsWith("/admin/user")
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() => navigate("/admin/user")}
                     >
-                      <span
-                        onClick={() => {
-                          navigate("/admin/restaurant-requests");
-                          setAdminMenuOpen(false);
-                        }}
-                      >
-                        신청 접수
-                      </span>
-                    </Tooltip>
-                    <Tooltip
-                      title="커뮤니티 게시글을 관리합니다"
-                      arrow
-                      placement="right"
-                    >
-                      <span
-                        onClick={() => {
-                          navigate("/admin/board");
-                          setAdminMenuOpen(false);
-                        }}
-                      >
-                        커뮤니티 관리
-                      </span>
-                    </Tooltip>
-                    <Tooltip
-                      title="블로그 글을 관리합니다"
-                      arrow
-                      placement="right"
-                    >
-                      <span
-                        onClick={() => {
-                          navigate("/admin/blog");
-                          setAdminMenuOpen(false);
-                        }}
-                      >
-                        블로그 관리
-                      </span>
-                    </Tooltip>
-                    <Tooltip
-                      title="회원 정보를 관리합니다"
-                      arrow
-                      placement="right"
-                    >
-                      <span
-                        className={
-                          location.pathname.startsWith("/admin/user")
-                            ? "active"
-                            : ""
-                        }
-                        onClick={() => {
-                          navigate("/admin/user");
-                          setAdminMenuOpen(false);
-                        }}
-                      >
-                        회원관리
-                      </span>
-                    </Tooltip>
-                  </div>
-                )}
+                      회원관리
+                    </span>
+                  </Tooltip>
+                </div>
               </div>
             )}
           </nav>
@@ -222,9 +195,8 @@ export default function MainLayout() {
                 <span className="header-logout" onClick={logout}>
                   로그아웃
                 </span>
-                <Tooltip title="마이페이지">
-                  <div className="header-avatar" onClick={myHandleClick}>
-                    {/* <Badge badgeContent={1} color="primary" overlap="circular"> */}
+                <div className="mypage-dropdown">
+                  <div className="mypage-dropdown-trigger" title="마이페이지">
                     <Avatar
                       src={toAvatarUrl(user?.profileImageUrl)}
                       alt={user?.name}
@@ -233,7 +205,26 @@ export default function MainLayout() {
                       {!user?.profileImageUrl && <PersonIcon />}
                     </Avatar>
                   </div>
-                </Tooltip>
+                  <div className="mypage-submenu">
+                    {mypageTabs.map((item) => {
+                      const tabId = item.path.split("tab=")[1];
+                      const isActive =
+                        location.pathname === "/auth/mypage" &&
+                        (location.search === `?tab=${tabId}` || (!location.search && tabId === "0"));
+                      const Icon = item.icon;
+                      return (
+                        <span
+                          key={item.path}
+                          className={`mypage-submenu-item ${isActive ? "active" : ""}`}
+                          onClick={() => navigate(item.path)}
+                        >
+                          <Icon sx={{ fontSize: 18, mr: 1.5, flexShrink: 0 }} />
+                          {item.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
               </>
             ) : (
               <button

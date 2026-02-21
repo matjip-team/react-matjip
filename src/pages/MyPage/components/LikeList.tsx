@@ -9,9 +9,10 @@ import {
   TextField,
   Select,
   MenuItem,
-  Divider,
   Tooltip,
   IconButton,
+  Paper,
+  Skeleton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import StarIcon from "@mui/icons-material/Star";
@@ -32,6 +33,8 @@ import { renderCategories } from "../components/categoryUtils";
 import CustomizedDialogs from "../../common/component/dialog";
 
 /* ⭐ 별점 */
+const ACCENT = "#4F9FFA";
+
 const RatingStars = ({ rating }: { rating: number }) => (
   <Box sx={{ display: "flex", alignItems: "center" }}>
     {Array.from({ length: 5 }).map((_, i) =>
@@ -93,7 +96,38 @@ export default function LikeList() {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (status === "pending") {
-    return <div>로딩중...</div>;
+    return (
+      <Box sx={{ p: 0 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 4,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fafafa",
+          }}
+        >
+          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Skeleton variant="rounded" width={160} height={40} />
+            <Skeleton variant="rounded" width={110} height={40} />
+            <Skeleton variant="rounded" width={120} height={40} />
+          </Box>
+        </Paper>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+            gap: 2,
+          }}
+        >
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} variant="rounded" height={220} sx={{ borderRadius: 2 }} />
+          ))}
+        </Box>
+      </Box>
+    );
   }
 
   /* 📦 데이터 병합 */
@@ -128,104 +162,151 @@ export default function LikeList() {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      {/* ❌ 에러 */}
+    <Box sx={{ p: 0 }}>
       {globalError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
           {globalError}
         </Alert>
       )}
 
-      {/* 🔎 필터 영역 */}
-      <Box
+      {/* 필터 영역 */}
+      <Paper
+        elevation={0}
         sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 1.5,
-          mb: 2,
-          flexWrap: "wrap",
+          p: 2,
+          mb: 4,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fafafa",
         }}
       >
-        <TextField
-          size="small"
-          placeholder="가게명 검색"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-            },
-          }}
-        />
-
-        <Select
-          size="small"
-          value={minRating}
-          onChange={(e) => setMinRating(Number(e.target.value))}
-          sx={{ borderRadius: 2, minWidth: 110 }}
-        >
-          <MenuItem value={0}>전체</MenuItem>
-          <MenuItem value={4}>⭐ 4점+</MenuItem>
-          <MenuItem value={3}>⭐ 3점+</MenuItem>
-        </Select>
-
-        <Select
-          size="small"
-          value={sort}
-          onChange={(e) =>
-            setSort(e.target.value as "rating" | "reviews" | "views")
-          }
-          sx={{ borderRadius: 2, minWidth: 120 }}
-        >
-          <MenuItem value="rating">별점순</MenuItem>
-          <MenuItem value="reviews">리뷰순</MenuItem>
-          <MenuItem value="views">조회순</MenuItem>
-        </Select>
-      </Box>
-
-      {/* ➖ 구분선 */}
-      <Divider sx={{ mb: 3 }} />
-
-      {/* 📭 결과 없음 */}
-      {filteredLikes.length === 0 && (
         <Box
           sx={{
-            py: 6,
-            textAlign: "center",
-            color: "text.secondary",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1.5,
+            flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
-          <Typography fontWeight={500}>
-            조건에 맞는 좋아요가 없습니다
-          </Typography>
-          <Typography variant="caption">
-            다른 조건으로 다시 검색해보세요 ✍️
-          </Typography>
+          <TextField
+            size="small"
+            placeholder="가게명 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            sx={{
+              flex: "1 1 200px",
+              minWidth: { xs: "100%", sm: 180 },
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#fff",
+                borderRadius: 1,
+              },
+            }}
+          />
+          <Select
+            size="small"
+            value={minRating}
+            onChange={(e) => setMinRating(Number(e.target.value))}
+            sx={{
+              minWidth: 110,
+              bgcolor: "#fff",
+              borderRadius: 1,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.08)",
+              },
+            }}
+          >
+            <MenuItem value={0}>전체</MenuItem>
+            <MenuItem value={4}>⭐ 4점+</MenuItem>
+            <MenuItem value={3}>⭐ 3점+</MenuItem>
+          </Select>
+          <Select
+            size="small"
+            value={sort}
+            onChange={(e) =>
+              setSort(e.target.value as "rating" | "reviews" | "views")
+            }
+            sx={{
+              minWidth: 120,
+              bgcolor: "#fff",
+              borderRadius: 1,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.08)",
+              },
+            }}
+          >
+            <MenuItem value="rating">별점순</MenuItem>
+            <MenuItem value="reviews">리뷰순</MenuItem>
+            <MenuItem value="views">조회순</MenuItem>
+          </Select>
         </Box>
-      )}
+      </Paper>
 
-      {/* 🧱 카드 리스트 */}
-      <Grid container spacing={2}>
-        {filteredLikes.map((item) => (
-          <Grid key={item.id} size={{ xs: 12, sm: 4, md: 4 }}>
-            <Card
-              sx={{
-                borderRadius: 3,
-                cursor: item.restaurantId ? "pointer" : "default",
-                "&:hover": item.restaurantId ? { bgcolor: "action.hover" } : {},
-              }}
-              onClick={() => {
-                if (item.restaurantId)
-                  navigate(`/restaurant/${item.restaurantId}`, { state: { fromMyPageTab: 0 } });
-              }}
-            >
-              <CardMedia
-                component="img"
-                height="140"
-                image={item.imageUrl ?? "/images/hero-bg.jpg"}
-                alt={item.restaurantName}
-              />
-              <CardContent>
+      {/* 결과 없음 */}
+      {filteredLikes.length === 0 ? (
+        <Paper
+          elevation={0}
+          sx={{
+            py: 8,
+            textAlign: "center",
+            color: "#94a3b8",
+            fontSize: 15,
+            borderRadius: 2,
+            border: "1px dashed rgba(0,0,0,0.1)",
+            bgcolor: "#f8fafc",
+          }}
+        >
+          조건에 맞는 찜한 식당이 없습니다.
+        </Paper>
+      ) : (
+        <Grid container spacing={2}>
+          {filteredLikes.map((item) => (
+            <Grid key={item.id} size={{ xs: 12, sm: 4, md: 4 }}>
+              <Card
+                variant="outlined"
+                sx={{
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.06)",
+                  borderRadius: 2,
+                  cursor: item.restaurantId ? "pointer" : "default",
+                  overflow: "hidden",
+                  transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)",
+                  "&:hover": item.restaurantId
+                    ? {
+                        borderColor: ACCENT,
+                        boxShadow: `0 8px 24px ${ACCENT}20`,
+                        transform: "translateY(-2px)",
+                      }
+                    : {},
+                }}
+                onClick={() => {
+                  if (item.restaurantId)
+                    navigate(`/restaurant/${item.restaurantId}`, {
+                      state: { fromMyPageTab: 0 },
+                    });
+                }}
+              >
+                <Box
+                  sx={{
+                    height: 140,
+                    overflow: "hidden",
+                    bgcolor: "#f1f5f9",
+                  }}
+                >
+                  <CardMedia
+                    component="img"
+                    image={item.imageUrl ?? "/images/hero-bg.jpg"}
+                    alt={item.restaurantName}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                </Box>
+                <CardContent sx={{ py: 2, px: 2 }}>
                 <RatingStars rating={item.avgRating} />
                 <Typography fontWeight={700} noWrap>
                   {item.restaurantName}
@@ -297,11 +378,11 @@ export default function LikeList() {
               </CardActions>
             </Card>
 
-            {/* ♾ Observer */}
-            <div ref={ref} style={{ height: 10 }} />
-          </Grid>
-        ))}
-      </Grid>
+              <div ref={ref} style={{ height: 10 }} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
       <CustomizedDialogs
         open={modal.open}
         onClose={() => setModal({ ...modal, open: false })}

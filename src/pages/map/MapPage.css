@@ -1,4 +1,17 @@
 /* src/pages/map/MapPage.css */
+/* BlogPage와 동일한 컨텐츠 가로 사이즈: max-width 1100, px xs:16px sm:24px */
+.page-container.map-wrap {
+  max-width: 1100px;
+  padding: 40px 16px;
+}
+
+@media (min-width: 600px) {
+  .page-container.map-wrap {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
 .map-wrap {
   display: grid;
   grid-template-columns: 320px 1fr;

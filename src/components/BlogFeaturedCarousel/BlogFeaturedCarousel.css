@@ -7,10 +7,16 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 12px;
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 16px;
   overflow: hidden;
+}
+
+@media (min-width: 600px) {
+  .blog-featured-inner {
+    padding: 0 24px;
+  }
 }
 
 .blog-featured-item {
@@ -99,7 +105,16 @@
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 14px 0;
+  padding: 14px 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (min-width: 600px) {
+  .blog-featured-dots {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
 }
 
 .blog-featured-dot {

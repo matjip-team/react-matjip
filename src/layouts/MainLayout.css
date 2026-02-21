@@ -480,14 +480,14 @@ body,
   background: #ff6b00;
 }
 
-/* ===== 관리자 드롭다운 서브메뉴 ===== */
+/* ===== 관리자 드롭다운 서브메뉴 (호버 시 펼침) ===== */
 .nav-dropdown {
   position: relative;
   display: inline-flex;
   align-items: center;
 }
 
-.nav-dropdown>span {
+.nav-dropdown > span {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -495,15 +495,34 @@ body,
   position: relative;
   display: inline-flex;
   align-items: center;
+  padding: 10px 0 14px;
+  margin: -10px 0 -14px;
+}
+
+.admin-dropdown .nav-submenu {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.admin-dropdown:hover .nav-submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.admin-dropdown:hover .admin-chevron {
+  transform: rotate(180deg);
 }
 
 .nav-submenu {
   position: absolute;
   top: 100%;
   left: 0;
-  margin-top: 10px;
+  margin-top: 4px;
   min-width: 156px;
-  padding: 6px 0;
+  padding: 8px 0;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: var(--radius-sm);
@@ -513,6 +532,7 @@ body,
   flex-direction: column;
 }
 
+/* 메뉴 항목 사이 구분선 */
 .nav-submenu span {
   padding: 10px 16px;
   font-size: 13px;
@@ -521,6 +541,11 @@ body,
   cursor: pointer;
   white-space: nowrap;
   transition: background var(--transition);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.nav-submenu span:last-child {
+  border-bottom: none;
 }
 
 .nav-submenu span:hover {
@@ -534,4 +559,87 @@ body,
 
 .nav-submenu span.active::after {
   display: none;
+}
+
+/* ===== 마이페이지 드롭다운 (호버 시 펼침) ===== */
+.mypage-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mypage-dropdown-trigger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px 0 12px;
+  margin: -4px 0 -12px;
+  border-radius: 50%;
+  transition: transform var(--transition);
+}
+
+.mypage-dropdown-trigger:hover {
+  transform: scale(1.06);
+}
+
+.mypage-submenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 180px;
+  padding: 8px 0;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.mypage-dropdown:hover .mypage-submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.mypage-submenu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mypage-submenu-item:last-child {
+  border-bottom: none;
+}
+
+.mypage-submenu-item:hover {
+  background: var(--hover-bg);
+}
+
+.mypage-submenu-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mypage-submenu-item .MuiSvgIcon-root {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.mypage-submenu-item.active .MuiSvgIcon-root {
+  color: var(--accent);
 }

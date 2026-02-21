@@ -94,8 +94,15 @@ export default function Restaurant() {
     refresh();
   };
 
+  /* 이미 내 리뷰가 있는지 확인 (같은 사용자 중복 등록 방지) */
+  const hasMyReview = store ? store.reviews.some((r) => r.mine) : false;
+
   /* 리뷰 등록 */
   const submitReview = async () => {
+    if (hasMyReview) {
+      alert("이미 리뷰를 작성하셨습니다. 수정을 원하시면 기존 리뷰에서 수정 버튼을 이용해주세요.");
+      return;
+    }
     if (!myRating) return alert("평점을 선택해주세요.");
 
     await axios.post(`/api/restaurants/${id}/reviews`, {
@@ -191,10 +198,17 @@ export default function Restaurant() {
             리뷰 작성
           </Typography>
 
+          {hasMyReview && (
+            <Typography color="text.secondary" sx={{ mt: 1, fontSize: 14 }}>
+              이미 이 맛집에 리뷰를 작성하셨습니다. 수정은 아래 리뷰 목록에서 할 수 있습니다.
+            </Typography>
+          )}
+
           <Rating
             value={myRating}
             onChange={(_, value) => setMyRating(value)}
             sx={{ mt: 2 }}
+            disabled={hasMyReview}
           />
 
           <TextField
@@ -204,7 +218,8 @@ export default function Restaurant() {
             sx={{ mt: 2 }}
             value={reviewText}
             onChange={(e) => setReviewText(e.target.value)}
-            placeholder="리뷰를 작성해주세요."
+            placeholder={hasMyReview ? "이미 리뷰를 작성하셨습니다." : "리뷰를 작성해주세요."}
+            disabled={hasMyReview}
           />
 
           <Button
@@ -212,6 +227,7 @@ export default function Restaurant() {
             color="primary"
             sx={{ mt: 2, borderRadius: 3 }}
             onClick={submitReview}
+            disabled={hasMyReview}
           >
             리뷰 등록
           </Button>

@@ -13,6 +13,8 @@ import {
   Select,
   TextField,
   CardMedia,
+  Paper,
+  Skeleton,
 } from "@mui/material";
 
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -28,6 +30,8 @@ import { useFormError } from "../../common/utils/useFormError";
 import type { ReviewPage } from "../types/review";
 import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
 import { renderCategories } from "../components/categoryUtils";
+
+const ACCENT = "#4F9FFA";
 
 export default function ReviewList() {
   const navigate = useNavigate();
@@ -65,8 +69,38 @@ export default function ReviewList() {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (status === "pending") {
-    // 초기 로딩 Skeleton
-    return <div>로딩중</div>;
+    return (
+      <Box sx={{ p: 0 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 4,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fafafa",
+          }}
+        >
+          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Skeleton variant="rounded" width={160} height={40} />
+            <Skeleton variant="rounded" width={110} height={40} />
+            <Skeleton variant="rounded" width={120} height={40} />
+          </Box>
+        </Paper>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+            gap: 2,
+          }}
+        >
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} variant="rounded" height={160} sx={{ borderRadius: 2 }} />
+          ))}
+        </Box>
+      </Box>
+    );
   }
 
   const toggleLike = (id: number) => {
@@ -100,96 +134,147 @@ export default function ReviewList() {
     });
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 0 }}>
       {globalError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
           {globalError}
         </Alert>
       )}
 
-      {/* 🔎 필터 */}
-      <Box
+      {/* 필터 */}
+      <Paper
+        elevation={0}
         sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 1.5,
-          mb: 2,
-          flexWrap: "wrap",
+          p: 2,
+          mb: 4,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fafafa",
         }}
       >
-        <TextField
-          size="small"
-          placeholder="가게명 검색"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+        <Box
           sx={{
-            "& .MuiOutlinedInput-root": { borderRadius: 2 },
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1.5,
+            flexWrap: "wrap",
+            alignItems: "center",
           }}
-        />
-
-        <Select
-          size="small"
-          value={minRating}
-          onChange={(e) => setMinRating(Number(e.target.value))}
-          sx={{ borderRadius: 2, minWidth: 110 }}
         >
-          <MenuItem value={0}>전체</MenuItem>
-          <MenuItem value={4}>⭐ 4점+</MenuItem>
-          <MenuItem value={3}>⭐ 3점+</MenuItem>
-        </Select>
-
-        <Select
-          size="small"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as "latest" | "rating")}
-          sx={{ borderRadius: 2, minWidth: 120 }}
-        >
-          <MenuItem value="latest">최신순</MenuItem>
-          <MenuItem value="rating">별점순</MenuItem>
-        </Select>
-      </Box>
-
-      <Divider sx={{ mb: 3 }} />
-
-      <Grid container spacing={2}>
-        {filteredReviews.map((review) => (
-          <Grid
-            key={review.id}
-            size={{ xs: 12, sm: 6, md: 6 }} // ✅ 3열 유지
+          <TextField
+            size="small"
+            placeholder="가게명 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            sx={{
+              flex: "1 1 200px",
+              minWidth: { xs: "100%", sm: 180 },
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#fff",
+                borderRadius: 1,
+              },
+            }}
+          />
+          <Select
+            size="small"
+            value={minRating}
+            onChange={(e) => setMinRating(Number(e.target.value))}
+            sx={{
+              minWidth: 110,
+              bgcolor: "#fff",
+              borderRadius: 1,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.08)",
+              },
+            }}
           >
-            <Card
-              sx={{
-                borderRadius: 3,
-                height: "100%",
-                cursor: review.restaurantId ? "pointer" : "default",
-                "&:hover": review.restaurantId
-                  ? { bgcolor: "action.hover" }
-                  : {},
-              }}
-              onClick={() => {
-                if (review.restaurantId)
-                  navigate(`/restaurant/${review.restaurantId}`, { state: { fromMyPageTab: 1 } });
-              }}
-            >
+            <MenuItem value={0}>전체</MenuItem>
+            <MenuItem value={4}>⭐ 4점+</MenuItem>
+            <MenuItem value={3}>⭐ 3점+</MenuItem>
+          </Select>
+          <Select
+            size="small"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as "latest" | "rating")}
+            sx={{
+              minWidth: 120,
+              bgcolor: "#fff",
+              borderRadius: 1,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.08)",
+              },
+            }}
+          >
+            <MenuItem value="latest">최신순</MenuItem>
+            <MenuItem value="rating">별점순</MenuItem>
+          </Select>
+        </Box>
+      </Paper>
+
+      {filteredReviews.length === 0 ? (
+        <Paper
+          elevation={0}
+          sx={{
+            py: 8,
+            textAlign: "center",
+            color: "#94a3b8",
+            fontSize: 15,
+            borderRadius: 2,
+            border: "1px dashed rgba(0,0,0,0.1)",
+            bgcolor: "#f8fafc",
+          }}
+        >
+          작성한 리뷰가 없습니다.
+        </Paper>
+      ) : (
+        <Grid container spacing={2}>
+          {filteredReviews.map((review) => (
+            <Grid key={review.id} size={{ xs: 12, sm: 6, md: 6 }}>
+              <Card
+                variant="outlined"
+                sx={{
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.06)",
+                  borderRadius: 2,
+                  height: "100%",
+                  cursor: review.restaurantId ? "pointer" : "default",
+                  overflow: "hidden",
+                  transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)",
+                  "&:hover": review.restaurantId
+                    ? {
+                        borderColor: ACCENT,
+                        boxShadow: `0 8px 24px ${ACCENT}20`,
+                        transform: "translateY(-2px)",
+                      }
+                    : {},
+                }}
+                onClick={() => {
+                  if (review.restaurantId)
+                    navigate(`/restaurant/${review.restaurantId}`, {
+                      state: { fromMyPageTab: 1 },
+                    });
+                }}
+              >
               <CardContent
                 sx={{
                   display: "flex",
-                  alignItems: "center", // 🔥 세로 정렬 핵심
+                  alignItems: "center",
                   gap: 2,
-                  height: "100%",
-                  p: 2, // 기본 padding 덮어쓰기
-                  "&:last-child": {
-                    pb: 2, // 🔥 하단 24px 제거
-                  },
+                  p: 2,
+                  minHeight: 140,
+                  "&:last-child": { pb: 2 },
                 }}
               >
                 <Box
                   sx={{
-                    width: { xs: 90, sm: 110, md: 120 },
-                    height: "100%",
-                    borderRadius: 2,
+                    width: { xs: 96, sm: 110, md: 120 },
+                    height: { xs: 96, sm: 110, md: 120 },
+                    minHeight: 96,
+                    borderRadius: 1.5,
                     overflow: "hidden",
                     flexShrink: 0,
+                    bgcolor: "#f1f5f9",
                   }}
                 >
                   <CardMedia
@@ -309,7 +394,7 @@ export default function ReviewList() {
 
                   {/* ⬇ 하단 고정 영역 */}
                   <Box sx={{ mt: "auto" }}>
-                    <Divider sx={{ my: 0.5 }} />
+                    <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.06)" }} />
 
                     {/* 시간 + 아이콘 */}
                     <Box
@@ -362,10 +447,11 @@ export default function ReviewList() {
                 </Box>
               </CardContent>
             </Card>
-            <div ref={ref} />
-          </Grid>
-        ))}
-      </Grid>
+              <div ref={ref} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
     </Box>
   );
 }

@@ -51,17 +51,17 @@ const EMPTY_FORM: ProfileResponseForm = {
   passwordConfirm: "",
 };
 
-const MAIN_COLOR = "#4F9FFA";
+const ACCENT = "#ff6b00";
 
 const textFieldSx = {
   "& .MuiOutlinedInput-root": {
-    borderRadius: 2,
+    borderRadius: 1.5,
     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: MAIN_COLOR,
+      borderColor: ACCENT,
       borderWidth: 2,
     },
   },
-  "& .MuiInputLabel-root.Mui-focused": { color: MAIN_COLOR },
+  "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
 };
 
 const toPreviewUrl = (url?: string) => {
@@ -191,116 +191,151 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
 
   return (
     <>
-      <Paper
-        elevation={0}
+      <Box
         sx={{
-          maxWidth: 560,
-          mx: "auto",
-          mt: 5,
-          mb: 4,
-          borderRadius: 3,
-          overflow: "hidden",
-          border: "1px solid",
-          borderColor: "divider",
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          gap: 3,
         }}
       >
-        <Box
-          onSubmit={handleSubmit}
-          component="form"
-          sx={{ display: "flex", flexDirection: "column" }}
+        {/* 왼쪽: 프로필 카드 */}
+        <Paper
+          elevation={0}
+          sx={{
+            flexShrink: 0,
+            width: { xs: "100%", md: 320 },
+            borderRadius: 2,
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            alignSelf: "flex-start",
+          }}
         >
-          {/* 프로필 헤더 */}
           <Box
             sx={{
-              background: `linear-gradient(135deg, ${MAIN_COLOR}08 0%, ${MAIN_COLOR}18 100%)`,
-              px: 4,
-              pt: 4,
-              pb: 3,
+              background: `linear-gradient(135deg, ${ACCENT}08 0%, ${ACCENT}15 100%)`,
+              p: 3,
+              textAlign: "center",
             }}
           >
-            <Typography
-              variant="h5"
-              fontWeight={700}
-              sx={{ color: "text.primary", letterSpacing: "-0.02em", mb: 3 }}
+            <Box
+              sx={{
+                display: "inline-flex",
+                position: "relative",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: -6,
+                  borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${ACCENT}30, ${ACCENT}08)`,
+                },
+              }}
             >
-              프로필 수정
+              <Box sx={{ position: "relative" }}>
+                <AvatarUpload
+                  imageUrl={previewUrl}
+                  onChange={(file) => void handleFileChange(file)}
+                  size={100}
+                />
+              </Box>
+            </Box>
+            <Typography
+              variant="h6"
+              fontWeight={600}
+              sx={{ mt: 2, color: "#1a1a1a" }}
+            >
+              {form.name || "-"}
             </Typography>
-            {globalError && (
-              <Alert
-                severity="error"
-                sx={{ mb: 2, borderRadius: 2 }}
+            <Typography variant="body2" sx={{ mt: 0.5, color: "#64748b" }}>
+              {form.email || "-"}
+            </Typography>
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => setImageViewerOpen(true)}
+              sx={{
+                mt: 2,
+                color: ACCENT,
+                fontWeight: 600,
+                textTransform: "none",
+                "&:hover": { bgcolor: "#fff7ed" },
+              }}
+            >
+              사진 보기
+            </Button>
+            {imageUploading && (
+              <Typography
+                variant="caption"
+                display="block"
+                sx={{ mt: 1, color: "#64748b" }}
               >
+                이미지 업로드 중...
+              </Typography>
+            )}
+          </Box>
+        </Paper>
+
+        {/* 오른쪽: 폼 */}
+        <Paper
+          elevation={0}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            borderRadius: 2,
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+          }}
+        >
+          <Box
+            sx={{
+              px: 4,
+              py: 3,
+              borderBottom: "1px solid",
+              borderColor: "rgba(0,0,0,0.06)",
+              bgcolor: "#fafafa",
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#1a1a1a" }}>
+              회원 정보 수정
+            </Typography>
+            <Typography variant="caption" sx={{ color: "#64748b", display: "block", mt: 0.5 }}>
+              프로필 정보를 수정할 수 있습니다
+            </Typography>
+          </Box>
+
+          <Box
+            onSubmit={handleSubmit}
+            component="form"
+            sx={{ display: "flex", flexDirection: "column" }}
+          >
+            {globalError && (
+              <Alert severity="error" sx={{ m: 3, mb: 0, borderRadius: 2 }}>
                 {globalError}
               </Alert>
             )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-              <Box
-                sx={{
-                  position: "relative",
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    inset: -4,
-                    borderRadius: "50%",
-                    background: `linear-gradient(135deg, ${MAIN_COLOR}40, ${MAIN_COLOR}10)`,
-                  },
-                }}
-              >
-                <Box sx={{ position: "relative" }}>
-                  <AvatarUpload
-                    imageUrl={previewUrl}
-                    onChange={(file) => void handleFileChange(file)}
-                    size={88}
-                  />
-                </Box>
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Button
-                  size="small"
-                  variant="text"
-                  onClick={() => setImageViewerOpen(true)}
-                  sx={{
-                    color: MAIN_COLOR,
-                    fontWeight: 600,
-                    "&:hover": { bgcolor: `${MAIN_COLOR}12` },
-                  }}
-                >
-                  사진 보기
-                </Button>
-                {imageUploading && (
-                  <Typography
-                    variant="caption"
-                    display="block"
-                    sx={{ mt: 1, color: "text.secondary" }}
-                  >
-                    이미지 업로드 중...
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-          </Box>
 
-          <ImageViewerDialog
-            open={imageViewerOpen}
-            onClose={() => setImageViewerOpen(false)}
-            imageUrl={previewUrl}
-            alt="프로필 사진"
-          />
+            <ImageViewerDialog
+              open={imageViewerOpen}
+              onClose={() => setImageViewerOpen(false)}
+              imageUrl={previewUrl}
+              alt="프로필 사진"
+            />
 
-          {/* 폼 필드 */}
-          <Box sx={{ px: 4, py: 3 }}>
+            {/* 폼 필드 */}
+            <Box sx={{ px: 4, py: 3 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {/* 계정 정보 */}
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 2,
-                    color: "text.secondary",
-                  }}
-                >
+              <Box
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: "#f8fafc",
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.06)",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, color: "#64748b" }}>
                   <PersonOutlineIcon sx={{ fontSize: 20 }} />
                   <Typography variant="subtitle2" fontWeight={600}>
                     계정 정보
@@ -316,16 +351,16 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
               </Box>
 
               {/* 비밀번호 변경 */}
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 2,
-                    color: "text.secondary",
-                  }}
-                >
+              <Box
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: "#f8fafc",
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.06)",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, color: "#64748b" }}>
                   <LockOutlinedIcon sx={{ fontSize: 20 }} />
                   <Typography variant="subtitle2" fontWeight={600}>
                     비밀번호 변경
@@ -359,16 +394,16 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
               </Box>
 
               {/* 프로필 정보 */}
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 2,
-                    color: "text.secondary",
-                  }}
-                >
+              <Box
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: "#f8fafc",
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.06)",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, color: "#64748b" }}>
                   <BadgeOutlinedIcon sx={{ fontSize: 20 }} />
                   <Typography variant="subtitle2" fontWeight={600}>
                     프로필
@@ -387,16 +422,16 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
               </Box>
 
               {/* 자기소개 */}
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 2,
-                    color: "text.secondary",
-                  }}
-                >
+              <Box
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: "#f8fafc",
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.06)",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, color: "#64748b" }}>
                   <NotesOutlinedIcon sx={{ fontSize: 20 }} />
                   <Typography variant="subtitle2" fontWeight={600}>
                     자기소개
@@ -426,7 +461,7 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
                 mt: 4,
                 pt: 3,
                 borderTop: "1px solid",
-                borderColor: "divider",
+                borderColor: "rgba(0,0,0,0.06)",
               }}
             >
               {onBack && (
@@ -435,9 +470,16 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
                   startIcon={<ArrowBackIcon fontSize="small" />}
                   onClick={onBack}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 1.5,
                     textTransform: "none",
                     fontWeight: 600,
+                    borderColor: "rgba(0,0,0,0.2)",
+                    color: "#64748b",
+                    "&:hover": {
+                      borderColor: ACCENT,
+                      color: ACCENT,
+                      bgcolor: "#fff7ed",
+                    },
                   }}
                 >
                   취소
@@ -448,12 +490,12 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
                 type="submit"
                 disabled={imageUploading}
                 sx={{
-                  borderRadius: 2,
-                  bgcolor: MAIN_COLOR,
+                  borderRadius: 1.5,
+                  bgcolor: ACCENT,
                   textTransform: "none",
                   fontWeight: 600,
                   px: 2.5,
-                  "&:hover": { bgcolor: "#3d8ae6" },
+                  "&:hover": { bgcolor: "#e55f00" },
                 }}
               >
                 저장
@@ -461,17 +503,18 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
             </Box>
           </Box>
         </Box>
+        </Paper>
+      </Box>
 
-        <CustomizedDialogs
-          open={modal.open}
-          onClose={() => {
-            setModal({ ...modal, open: false });
-            onSaved?.();
-          }}
-          title={modal.title}
-          message={modal.message}
-        />
-      </Paper>
+      <CustomizedDialogs
+        open={modal.open}
+        onClose={() => {
+          setModal({ ...modal, open: false });
+          onSaved?.();
+        }}
+        title={modal.title}
+        message={modal.message}
+      />
     </>
   );
 }
