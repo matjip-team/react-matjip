@@ -1,4 +1,4 @@
-﻿import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Badge, Snackbar, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -55,16 +55,9 @@ export default function MainLayout() {
       {/* ===== 헤더 ===== */}
       <header className="header">
         <div className="header-inner">
-          <div className="logo" onClick={() => navigate("/")}>
-           <img
-            src="/images/logo.png"
-            alt="MATJIB"
-            style={{
-         height: 80,
-        cursor: "pointer",
-       }}
-      />
-  </div>
+          <div className="header-logo" onClick={() => navigate("/")}>
+            <img src="/images/logo2.png" alt="MATJIB" />
+          </div>
 
           <nav className="nav">
             <span
@@ -73,35 +66,30 @@ export default function MainLayout() {
             >
               맛집 소개
             </span>
-
             <span
               className={location.pathname === "/map" ? "active" : ""}
               onClick={() => navigate("/map")}
             >
               맛집 지도
             </span>
-
             <span
               className={location.pathname === "/board" ? "active" : ""}
               onClick={() => navigate("/board")}
             >
               커뮤니티
             </span>
-
             <span
               className={location.pathname.startsWith("/blog") ? "active" : ""}
               onClick={() => navigate("/blog")}
             >
               블로그
             </span>
-
             <span
               className={location.pathname === "/ai" ? "active" : ""}
               onClick={() => navigate("/ai")}
             >
               AI 서비스
             </span>
-
             {isAdmin && (
               <div className="nav-dropdown" ref={adminMenuRef}>
                 <span
@@ -110,7 +98,7 @@ export default function MainLayout() {
                   }
                   onClick={() => setAdminMenuOpen((prev) => !prev)}
                 >
-                  관리자 페이지
+                  관리자
                   <ExpandMoreIcon
                     sx={{
                       fontSize: 18,
@@ -121,7 +109,6 @@ export default function MainLayout() {
                     }}
                   />
                 </span>
-
                 {adminMenuOpen && (
                   <div className="nav-submenu">
                     <span
@@ -132,7 +119,6 @@ export default function MainLayout() {
                     >
                       신청 접수
                     </span>
-
                     <span
                       onClick={() => {
                         navigate("/admin/board");
@@ -141,7 +127,6 @@ export default function MainLayout() {
                     >
                       커뮤니티 관리
                     </span>
-
                     <span
                       onClick={() => {
                         navigate("/admin/blog");
@@ -152,7 +137,9 @@ export default function MainLayout() {
                     </span>
                     <span
                       className={
-                        location.pathname.startsWith("/admin/user") ? "active" : ""
+                        location.pathname.startsWith("/admin/user")
+                          ? "active"
+                          : ""
                       }
                       onClick={() => {
                         navigate("/admin/user");
@@ -167,39 +154,38 @@ export default function MainLayout() {
             )}
           </nav>
 
-          {user ? (
-            <div className="auth" style={{ display: "flex", alignItems: "center" }}>
-              <span>안녕하세요, {user?.name ?? ""}님</span>
-
-              <span onClick={logout} style={{ marginLeft: 10 }}>
-                로그아웃
-              </span>
-
-              <Tooltip title="My 페이지 클릭">
-                <div
-                  onClick={myHandleClick}
-                  style={{
-                    display: "inline-block",
-                    cursor: "pointer",
-                    marginLeft: 10,
-                  }}
-                >
-                  <Badge badgeContent={1} color="primary" overlap="circular">
+          <div className="header-auth">
+            {user ? (
+              <>
+                <span className="header-greeting">
+                  안녕하세요, {user?.name ?? ""}님
+                </span>
+                <span className="header-logout" onClick={logout}>
+                  로그아웃
+                </span>
+                <Tooltip title="마이페이지">
+                  <div className="header-avatar" onClick={myHandleClick}>
+                    {/* <Badge badgeContent={1} color="primary" overlap="circular"> */}
                     <Avatar
                       src={toAvatarUrl(user?.profileImageUrl)}
                       alt={user?.name}
+                      sx={{ width: 36, height: 36 }}
                     >
                       {!user?.profileImageUrl && <PersonIcon />}
                     </Avatar>
-                  </Badge>
-                </div>
-              </Tooltip>
-            </div>
-          ) : (
-            <div className="auth" onClick={() => navigate("/auth/login")}>
-              로그인
-            </div>
-          )}
+                  </div>
+                </Tooltip>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="header-login-btn"
+                onClick={() => navigate("/auth/login")}
+              >
+                로그인
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -212,7 +198,31 @@ export default function MainLayout() {
 
       {/* ===== 푸터 ===== */}
       <footer className="footer">
-        Copyright © MATJIB
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <img src="/images/logo2.png" alt="MATJIB" className="footer-logo" />
+            <p className="footer-tagline">오늘 뭐 먹지? 맛집을 찾아보세요</p>
+          </div>
+          <div className="footer-links">
+            <div className="footer-column">
+              <h4>맛집 둘러보기</h4>
+              <span onClick={() => navigate("/")}>맛집 소개</span>
+              <span onClick={() => navigate("/map")}>맛집 지도</span>
+            </div>
+            <div className="footer-column">
+              <h4>커뮤니티</h4>
+              <span onClick={() => navigate("/board")}>커뮤니티</span>
+              <span onClick={() => navigate("/blog")}>블로그</span>
+            </div>
+            <div className="footer-column">
+              <h4>서비스</h4>
+              <span onClick={() => navigate("/ai")}>AI 서비스</span>
+            </div>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} MATJIB. All rights reserved.</span>
+        </div>
       </footer>
 
       <Snackbar
@@ -224,4 +234,4 @@ export default function MainLayout() {
       />
     </div>
   );
-} 
+}

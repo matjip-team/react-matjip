@@ -48,7 +48,14 @@ export default function Restaurant() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const fromMyPageTab = (location.state as { fromMyPageTab?: number } | null)?.fromMyPageTab;
+  const navState = location.state as
+    | { fromMyPageTab?: number; fromHomepage?: boolean; page?: number; keyword?: string; category?: string }
+    | null;
+  const fromMyPageTab = navState?.fromMyPageTab;
+  const fromHomepage = navState?.fromHomepage;
+  const homepagePage = navState?.page ?? 0;
+  const homepageKeyword = navState?.keyword ?? "";
+  const homepageCategory = navState?.category ?? "전체";
 
   const [store, setStore] = useState<RestaurantDetail | null>(null);
   const [myRating, setMyRating] = useState<number | null>(0);
@@ -299,6 +306,12 @@ export default function Restaurant() {
           onClick={() => {
             if (fromMyPageTab !== undefined) {
               navigate(`/auth/mypage?tab=${fromMyPageTab}`, { replace: true });
+            } else if (fromHomepage) {
+              const params = new URLSearchParams();
+              params.set("page", String(homepagePage + 1));
+              if (homepageKeyword) params.set("keyword", homepageKeyword);
+              if (homepageCategory && homepageCategory !== "전체") params.set("category", homepageCategory);
+              navigate(`/?${params.toString()}`, { replace: true });
             } else {
               navigate(-1);
             }

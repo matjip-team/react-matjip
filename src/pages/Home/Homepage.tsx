@@ -57,32 +57,39 @@ type SearchParams = {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const initialKeyword = searchParams.get("keyword") ?? "";
 
-  const [selectedCategory, setSelectedCategory] = useState("전체");
+  const pageParam = Math.max(0, (Number(searchParams.get("page")) || 1) - 1);
+  const keywordParam = searchParams.get("keyword") ?? "";
+  const categoryParam = searchParams.get("category") ?? "전체";
+
+  const [selectedCategory, setSelectedCategory] = useState(categoryParam);
   const [stores, setStores] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(false);
-  const [keyword, setKeyword] = useState(initialKeyword);
-  const [page, setPage] = useState(0);
+  const [keyword, setKeyword] = useState(keywordParam);
+  const [page, setPage] = useState(pageParam);
   const [totalPages, setTotalPages] = useState(0);
 
+  // URL 파라미터 변경 시 상태 동기화 (뒤로가기 등)
   useEffect(() => {
-    const nextKeyword = searchParams.get("keyword") ?? "";
-    setKeyword(nextKeyword);
-    setPage(0);
-  }, [searchParams]);
+    setPage(pageParam);
+    setKeyword(keywordParam);
+    setSelectedCategory(categoryParam);
+  }, [pageParam, keywordParam, categoryParam]);
 
   /* ===================== 맛집 조회 ===================== */
-  const fetchRestaurants = useCallback(async () => {
-    setLoading(true);
+  const fetchRestaurants = useCallback(
+    async (overrides?: { page?: number }) => {
+      setLoading(true);
+      const usePage = overrides?.page ?? page;
 
-    try {
-      const params: SearchParams = {
-        page,
-        size: 9,
-      };
+      try {
+        const params: SearchParams = {
+          page: usePage,
+          size: 9,
+        };
 
       if (selectedCategory !== "전체") {
         params.categories = selectedCategory;
@@ -103,7 +110,9 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, keyword, page]);
+    },
+    [selectedCategory, keyword, page],
+  );
 
   useEffect(() => {
     fetchRestaurants();
@@ -205,7 +214,21 @@ export default function HomePage() {
             <Button
               variant="contained"
               startIcon={<SearchIcon />}
-              onClick={fetchRestaurants}
+              onClick={() => {
+                setPage(0);
+                setSearchParams(
+                  (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set("page", "1");
+                    if (keyword.trim()) next.set("keyword", keyword.trim());
+                    else next.delete("keyword");
+                    next.set("category", selectedCategory);
+                    return next;
+                  },
+                  { replace: true },
+                );
+                fetchRestaurants({ page: 0 });
+              }}
               sx={{
                 ml: 2,
                 px: 3,
@@ -233,6 +256,17 @@ export default function HomePage() {
                 onClick={() => {
                   setSelectedCategory(cat.value);
                   setPage(0);
+                  setSearchParams(
+                    (prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set("category", cat.value);
+                      next.set("page", "1");
+                      const kw = prev.get("keyword");
+                      if (kw) next.set("keyword", kw);
+                      return next;
+                    },
+                    { replace: true },
+                  );
                 }}
                 sx={{
                   m: 1,
@@ -284,7 +318,16 @@ export default function HomePage() {
                     }}
                   >
                     <CardActionArea
-                      onClick={() => navigate(`/restaurant/${store.id}`)}
+                      onClick={() =>
+                        navigate(`/restaurant/${store.id}`, {
+                          state: {
+                            fromHomepage: true,
+                            page,
+                            keyword,
+                            category: selectedCategory,
+                          },
+                        })
+                      }
                     >
                       <CardMedia
                         component="img"
@@ -352,7 +395,18 @@ export default function HomePage() {
               <Pagination
                 count={totalPages}
                 page={page + 1}
-                onChange={(_, value) => setPage(value - 1)}
+                onChange={(_, value) => {
+                  const newPage = value - 1;
+                  setPage(newPage);
+                  setSearchParams(
+                    (prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set("page", String(value));
+                      return next;
+                    },
+                    { replace: true },
+                  );
+                }}
                 sx={{
                   "& .Mui-selected": {
                     backgroundColor: "#ff6b00 !important",
