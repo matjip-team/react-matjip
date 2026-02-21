@@ -2,6 +2,7 @@ import type { Category } from "./catetory";
 
 export interface Review {
   id: number;
+  restaurantId?: number;
   restaurantName: string;
   content: string;
   rating: number; // 0 ~ 5
@@ -15,7 +16,7 @@ export interface Review {
   reviewCount: number; // 리뷰 개수
   categories: Category[];
   address: string;
-  
+  imageUrl?: string | null;
 }
 
 export interface ReviewPage {
