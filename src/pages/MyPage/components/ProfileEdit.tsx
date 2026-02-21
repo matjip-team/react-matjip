@@ -191,6 +191,22 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
 
   return (
     <>
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
+            mb: 0.5,
+          }}
+        >
+          프로필 수정
+        </Typography>
+        <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+          내 정보를 수정합니다
+        </Typography>
+      </Box>
       <Box
         sx={{
           display: "flex",

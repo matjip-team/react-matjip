@@ -1,17 +1,17 @@
-﻿import {
+import {
+  Alert,
   Box,
-  Button,
   Card,
   CardContent,
   CircularProgress,
-  Container,
-  Grid,
+  IconButton,
+  Paper,
   TextField,
   Typography,
-  Alert,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { useState } from "react";
+import { INPUT_HEIGHT } from "../common/utils/helperUtil";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
 
@@ -27,6 +27,8 @@ type RecommendResponse = {
   recommended_places?: Place[];
   ai_comment?: string;
 };
+
+const ACCENT = "#ff6b00";
 
 export default function AIRecommendPage() {
   const { user } = useAuth();
@@ -76,12 +78,22 @@ export default function AIRecommendPage() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 6, mb: 10 }}>
-      {/* 타이틀 */}
-      <Box display="flex" alignItems="center" mb={4}>
-        <AutoAwesomeIcon sx={{ mr: 1, color: "#FF7A00" }} />
-        <Typography variant="h4" fontWeight="bold" sx={{ color: "#FF7A00" }}>
+    <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+      {/* 페이지 타이틀 */}
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
+            mb: 0.5,
+          }}
+        >
           AI 맛집 추천
+        </Typography>
+        <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+          원하는 조건을 입력하면 AI가 맞춤 맛집을 추천해 드려요
         </Typography>
       </Box>
 
@@ -91,51 +103,74 @@ export default function AIRecommendPage() {
           severity="info"
           sx={{
             mb: 3,
-            backgroundColor: "#FFF3E6",
-            color: "#FF7A00",
+            borderRadius: 2,
+            border: "1px solid rgba(0,0,0,0.06)",
+            backgroundColor: "rgba(255,107,0,0.06)",
+            color: "#1a1a1a",
           }}
         >
           로그인하면 더 정확한 추천을 받을 수 있어요 😉
         </Alert>
       )}
 
-      {/* 검색 카드 */}
-      <Card
+      {/* 검색 영역 */}
+      <Paper
+        elevation={0}
         sx={{
-          p: 3,
+          p: 2,
           mb: 4,
-          borderRadius: 3,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fafafa",
         }}
       >
-        <Box display="flex" gap={2}>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 1.5,
+            alignItems: "center",
+          }}
+        >
           <TextField
-            fullWidth
-            label="어디를 찾고 있나요?"
+            size="small"
             placeholder="예: 강남 파스타 맛집"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-          />
-
-          <Button
-            variant="contained"
-            size="large"
-            onClick={getRecommendation}
-            disabled={!question.trim() || loading}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") getRecommendation();
+            }}
             sx={{
-              backgroundColor: "#FF7A00",
-              "&:hover": {
-                backgroundColor: "#E66E00",
+              width: { xs: "100%", sm: 280 },
+              flex: "1 1 200px",
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#fff",
+                borderRadius: 1,
+                height: INPUT_HEIGHT,
+                minHeight: INPUT_HEIGHT,
               },
             }}
+          />
+
+          <IconButton
+            sx={{
+              bgcolor: ACCENT,
+              color: "#fff",
+              "&:hover": { bgcolor: "#e55f00", transform: "scale(1.02)" },
+              transition: "all 0.2s",
+            }}
+            onClick={getRecommendation}
+            disabled={!question.trim() || loading}
           >
             {loading ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
+              <CircularProgress size={22} sx={{ color: "#fff" }} />
             ) : (
-              "추천받기"
+              <AutoAwesomeIcon />
             )}
-          </Button>
+          </IconButton>
         </Box>
-      </Card>
+      </Paper>
 
       {/* AI 코멘트 */}
       {comment && (
@@ -143,8 +178,9 @@ export default function AIRecommendPage() {
           severity="success"
           sx={{
             mb: 4,
-            backgroundColor: "#FFF3E6",
-            color: "#FF7A00",
+            borderRadius: 2,
+            border: "1px solid rgba(0,0,0,0.06)",
+            backgroundColor: "rgba(5,150,105,0.08)",
           }}
         >
           {comment}
@@ -152,53 +188,97 @@ export default function AIRecommendPage() {
       )}
 
       {/* 결과 리스트 */}
-      <Grid container spacing={3}>
-        {places.map((p, i) => (
-          <Grid size={12} key={i}>
+      {places.length === 0 && !loading ? (
+        <Paper
+          elevation={0}
+          sx={{
+            py: 8,
+            textAlign: "center",
+            color: "#94a3b8",
+            fontSize: 15,
+            borderRadius: 2,
+            border: "1px dashed rgba(0,0,0,0.1)",
+            bgcolor: "#f8fafc",
+          }}
+        >
+          검색어를 입력하고 추천받기를 눌러보세요
+        </Paper>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              md: "repeat(4, minmax(0, 1fr))",
+            },
+            gap: 2,
+          }}
+        >
+          {places.map((p, i) => (
             <Card
+              key={i}
+              variant="outlined"
               onClick={() => logUserChoice(p)}
               sx={{
+                border: "1px solid",
+                borderColor: "rgba(0,0,0,0.06)",
+                borderRadius: 2,
                 cursor: user ? "pointer" : "default",
-                transition: "all 0.2s ease",
-                borderRadius: 3,
+                overflow: "hidden",
+                transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)",
                 "&:hover": {
-                  transform: user ? "translateY(-4px)" : "none",
-                  boxShadow: 6,
+                  borderColor: ACCENT,
+                  boxShadow: "0 8px 24px rgba(255,107,0,0.12)",
+                  transform: user ? "translateY(-2px)" : "none",
                 },
               }}
             >
-              <CardContent>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  sx={{ color: "#FF7A00" }}
-                >
-                  {p.name}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary" mt={1}>
-                  {p.address}
-                </Typography>
-
-                <Typography
-                  variant="caption"
+              <CardContent sx={{ py: 2, px: 2 }}>
+                <Box
                   sx={{
-                    display: "inline-block",
-                    mt: 2,
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 10,
-                    backgroundColor: "#FF7A00",
-                    color: "#fff",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 0.9,
                   }}
                 >
-                  {p.category}
+                  <Typography
+                    sx={{
+                      flex: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {p.name}
+                  </Typography>
+                  <Typography
+                    component="span"
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      bgcolor: ACCENT,
+                      color: "#fff",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {p.category}
+                  </Typography>
+                </Box>
+
+                <Typography sx={{ fontSize: 13, color: "#64748b" }}>
+                  {p.address}
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
+          ))}
+        </Box>
+      )}
+    </Box>
   );
 }

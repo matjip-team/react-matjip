@@ -4,8 +4,8 @@ import {
   Box,
   Button,
   ButtonGroup,
-  Card,
-  CardContent,
+  Divider,
+  Paper,
   TextField,
   Typography,
 } from "@mui/material";
@@ -45,7 +45,7 @@ interface ValidationErrorResponse {
 export default function BoardEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const MAIN_COLOR = "#ff6b00";
+  const ACCENT = "#ff6b00";
 
   const [boardType, setBoardType] = useState<BoardType>("REVIEW");
   const [title, setTitle] = useState("");
@@ -200,87 +200,204 @@ export default function BoardEdit() {
 
   return (
     <ThemeProvider theme={boardTheme}>
-      <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="h5" sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}>
-              글 수정
-            </Typography>
+      <Box
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          py: 5,
+          px: { xs: 2, sm: 3 },
+        }}
+      >
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            글 수정
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            게시글을 수정합니다
+          </Typography>
+        </Box>
 
-            <Box component="form" onSubmit={handleSubmit}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            position: "relative",
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fff",
+          }}
+        >
+          <Box component="form" onSubmit={handleSubmit}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+              <Typography sx={{ mr: 2, fontWeight: 600, color: "#334155" }}>
+                말머리
+              </Typography>
+              <ButtonGroup size="small">
+                <Button
+                  variant={boardType === "NOTICE" ? "contained" : "outlined"}
+                  sx={{
+                    bgcolor: boardType === "NOTICE" ? ACCENT : "transparent",
+                    color: boardType === "NOTICE" ? "#fff" : "#64748b",
+                    borderColor: boardType === "NOTICE" ? ACCENT : "rgba(0,0,0,0.2)",
+                    borderRadius: 1,
+                    "&:hover": {
+                      bgcolor: boardType === "NOTICE" ? "#e55f00" : "rgba(0,0,0,0.04)",
+                      borderColor: boardType === "NOTICE" ? "#e55f00" : "rgba(0,0,0,0.3)",
+                    },
+                  }}
+                  onClick={() => setBoardType("NOTICE")}
+                >
+                  공지
+                </Button>
+                <Button
+                  variant={boardType === "REVIEW" ? "contained" : "outlined"}
+                  sx={{
+                    bgcolor: boardType === "REVIEW" ? ACCENT : "transparent",
+                    color: boardType === "REVIEW" ? "#fff" : "#64748b",
+                    borderColor: boardType === "REVIEW" ? ACCENT : "rgba(0,0,0,0.2)",
+                    borderRadius: 1,
+                    "&:hover": {
+                      bgcolor: boardType === "REVIEW" ? "#e55f00" : "rgba(0,0,0,0.04)",
+                      borderColor: boardType === "REVIEW" ? "#e55f00" : "rgba(0,0,0,0.3)",
+                    },
+                  }}
+                  onClick={() => setBoardType("REVIEW")}
+                >
+                  일반
+                </Button>
+              </ButtonGroup>
+            </Box>
 
-                <ButtonGroup size="small">
-                  <Button
-                    variant={boardType === "REVIEW" ? "contained" : "outlined"}
-                    sx={{
-                      bgcolor: boardType === "REVIEW" ? MAIN_COLOR : "#fff",
-                      color: boardType === "REVIEW" ? "#fff" : MAIN_COLOR,
-                      borderColor: MAIN_COLOR,
-                    }}
-                    onClick={() => setBoardType("REVIEW")}
-                  >
-                    일반
-                  </Button>
-                </ButtonGroup>
-              </Box>
+            <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-              <TextField
-                fullWidth
-                placeholder="제목을 입력하세요"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setErrors((prev) => ({ ...prev, title: [] }));
+            <TextField
+              fullWidth
+              placeholder="제목을 입력하세요"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setErrors((prev) => ({ ...prev, title: [] }));
+              }}
+              error={!!errors.title}
+              helperText={errors.title?.[0]}
+              sx={{
+                mb: 3,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1.5,
+                  fontSize: "1.1rem",
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: ACCENT,
+                    borderWidth: 2,
+                  },
+                },
+                "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+              }}
+            />
+
+            <Box
+              sx={{
+                mb: 3,
+                "& .ql-toolbar.ql-snow": {
+                  borderRadius: "8px 8px 0 0",
+                  borderColor: "rgba(0,0,0,0.12)",
+                },
+                "& .ql-container.ql-snow": {
+                  minHeight: 360,
+                  borderRadius: "0 0 8px 8px",
+                  borderColor: "rgba(0,0,0,0.12)",
+                },
+                "& .ql-editor": {
+                  minHeight: 320,
+                  fontSize: 15,
+                  lineHeight: 1.7,
+                },
+              }}
+            >
+              <ReactQuill
+                ref={quillRef}
+                theme="snow"
+                value={content}
+                onChange={(value) => {
+                  setContent(value);
+                  setErrors((prev) => ({ ...prev, content: [] }));
                 }}
-                error={!!errors.title}
-                helperText={errors.title?.[0]}
-                sx={{ mb: 3 }}
+                modules={quillModules}
+                style={{ marginBottom: "45px" }}
               />
 
-              <Box sx={{ mb: 3 }}>
-                <ReactQuill
-                  ref={quillRef}
-                  theme="snow"
-                  value={content}
-                  onChange={(value) => {
-                    setContent(value);
-                    setErrors((prev) => ({ ...prev, content: [] }));
-                  }}
-                  modules={quillModules}
-                  style={{ height: "400px", marginBottom: "45px" }}
-                />
+              {errors.content && (
+                <Typography color="error" sx={{ mt: 1 }}>
+                  {errors.content[0]}
+                </Typography>
+              )}
 
-                {errors.content && (
-                  <Typography color="error" sx={{ mt: 1 }}>
-                    {errors.content[0]}
-                  </Typography>
-                )}
-
-                {isUploadingMedia && (
-                  <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
-                    이미지/영상 업로드 중입니다...
-                  </Typography>
-                )}
-              </Box>
-
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                <Button
-                  variant="outlined"
-                  sx={{ mr: 1, color: MAIN_COLOR, borderColor: MAIN_COLOR }}
-                  onClick={() => navigate(-1)}
-                >
-                  취소
-                </Button>
-
-                <Button type="submit" variant="contained" sx={{ bgcolor: MAIN_COLOR }}>
-                  저장
-                </Button>
-              </Box>
+              {isUploadingMedia && (
+                <Typography sx={{ mt: 1, color: "#64748b", fontSize: 13 }}>
+                  이미지/영상 업로드 중입니다...
+                </Typography>
+              )}
             </Box>
-          </CardContent>
-        </Card>
+
+            <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.06)" }} />
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1.5,
+                mt: 4,
+                pt: 2,
+              }}
+            >
+              <Button
+                variant="outlined"
+                sx={{
+                  height: 40,
+                  fontSize: 14,
+                  borderRadius: 1.5,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderColor: "rgba(0,0,0,0.2)",
+                  color: "#64748b",
+                  "&:hover": {
+                    borderColor: ACCENT,
+                    color: ACCENT,
+                    bgcolor: "rgba(255,107,0,0.04)",
+                  },
+                }}
+                onClick={() => navigate(-1)}
+              >
+                취소
+              </Button>
+
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  height: 40,
+                  fontSize: 14,
+                  borderRadius: 1.5,
+                  bgcolor: ACCENT,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  px: 2.5,
+                  "&:hover": { bgcolor: "#e55f00" },
+                }}
+              >
+                저장
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
       </Box>
     </ThemeProvider>
   );

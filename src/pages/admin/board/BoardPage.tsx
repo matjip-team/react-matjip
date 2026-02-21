@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -81,12 +81,55 @@ const applyStatusFilter = (
   return items;
 };
 
+const ACCENT = "#ff6b00";
+
 const statusChip = (item: AdminBoardListItem) => {
-  if (item.hidden) return <Chip size="small" color="default" label="숨김" />;
-  if ((item.reportCount ?? 0) > 0) {
-    return <Chip size="small" color="error" label={`신고 ${item.reportCount ?? 0}`} />;
+  if (item.hidden) {
+    return (
+      <Chip
+        size="small"
+        label="숨김"
+        sx={{
+          height: 22,
+          fontSize: 11,
+          fontWeight: 600,
+          bgcolor: "#64748b",
+          color: "#fff",
+          "& .MuiChip-label": { px: 1 },
+        }}
+      />
+    );
   }
-  return <Chip size="small" color="success" label="정상" />;
+  if ((item.reportCount ?? 0) > 0) {
+    return (
+      <Chip
+        size="small"
+        label={`신고 ${item.reportCount ?? 0}`}
+        sx={{
+          height: 22,
+          fontSize: 11,
+          fontWeight: 600,
+          bgcolor: "#dc2626",
+          color: "#fff",
+          "& .MuiChip-label": { px: 1 },
+        }}
+      />
+    );
+  }
+  return (
+    <Chip
+      size="small"
+      label="정상"
+      sx={{
+        height: 22,
+        fontSize: 11,
+        fontWeight: 600,
+        bgcolor: "#059669",
+        color: "#fff",
+        "& .MuiChip-label": { px: 1 },
+      }}
+    />
+  );
 };
 
 const mediaIcon = (item: AdminBoardListItem) => {
@@ -95,22 +138,28 @@ const mediaIcon = (item: AdminBoardListItem) => {
 
   if (hasImage && hasVideo) {
     return (
-      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.3, mr: 0.8 }}>
-        <ImageOutlinedIcon sx={{ fontSize: 16, color: "#2e7d32" }} />
-        <SmartDisplayOutlinedIcon sx={{ fontSize: 16, color: "#d32f2f" }} />
+      <Box component="span" sx={{ display: "inline-flex", gap: 0.4, mr: 0.8 }}>
+        <ImageOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", color: "#059669" }} />
+        <SmartDisplayOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", color: "#2563eb" }} />
       </Box>
     );
   }
 
   if (hasImage) {
-    return <ImageOutlinedIcon sx={{ fontSize: 16, color: "#2e7d32", mr: 0.8 }} />;
+    return (
+      <ImageOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#059669" }} />
+    );
   }
 
   if (hasVideo) {
-    return <SmartDisplayOutlinedIcon sx={{ fontSize: 16, color: "#d32f2f", mr: 0.8 }} />;
+    return (
+      <SmartDisplayOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#2563eb" }} />
+    );
   }
 
-  return <ChatBubbleOutlineIcon sx={{ fontSize: 16, color: "#9e9e9e", mr: 0.8 }} />;
+  return (
+    <ChatBubbleOutlineIcon sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#94a3b8" }} />
+  );
 };
 
 export default function BoardPage() {
@@ -191,26 +240,69 @@ export default function BoardPage() {
 
   return (
     <ThemeProvider theme={boardTheme}>
-      <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4, px: 1 }}>
+      <Box
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          py: 5,
+          px: { xs: 2, sm: 3 },
+        }}
+      >
+        {/* 헤더 */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-            gap: 1,
+            alignItems: "flex-start",
             flexWrap: "wrap",
+            gap: 2,
+            mb: 4,
           }}
         >
-          <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#ff6b00" }}>
-            관리자 게시글 목록
-          </Typography>
-
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: "#1a1a1a",
+                letterSpacing: "-0.02em",
+                mb: 0.5,
+              }}
+            >
+              관리자 게시글 목록
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+              게시글을 검토하고 관리합니다
+            </Typography>
+          </Box>
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="outlined" onClick={() => navigate("/admin/board")}>대시보드</Button>
+            <Button
+              variant="outlined"
+              sx={{
+                borderColor: "rgba(0,0,0,0.2)",
+                color: "#64748b",
+                fontWeight: 600,
+                borderRadius: 1.5,
+                "&:hover": {
+                  borderColor: ACCENT,
+                  color: ACCENT,
+                  bgcolor: "rgba(255,107,0,0.04)",
+                },
+              }}
+              onClick={() => navigate("/admin/board")}
+            >
+              대시보드
+            </Button>
             <Button
               variant="contained"
-              sx={{ bgcolor: "#ff6b00", "&:hover": { bgcolor: "#e65f00" } }}
+              sx={{
+                bgcolor: ACCENT,
+                "&:hover": { bgcolor: "#e55f00" },
+                textTransform: "none",
+                fontWeight: 600,
+                px: 2.5,
+                borderRadius: 1.5,
+              }}
               onClick={() => navigate("/admin/board/write")}
             >
               관리자 작성
@@ -218,35 +310,59 @@ export default function BoardPage() {
           </Box>
         </Box>
 
-        <Paper variant="outlined" sx={{ borderColor: "#ececec", p: 1.5, mb: 1.5 }}>
-          <Box sx={{ display: "flex", gap: 0.7, flexWrap: "wrap", mb: 1.2 }}>
+        {/* 검색 + 필터 */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 3,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fafafa",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1.5,
+              alignItems: "center",
+            }}
+          >
             {statusOptions.map((option) => (
               <Button
                 key={option.value}
                 size="small"
                 variant={statusFilter === option.value ? "contained" : "outlined"}
                 sx={{
-                  color: statusFilter === option.value ? "#fff" : "#ff6b00",
-                  bgcolor: statusFilter === option.value ? "#ff6b00" : "#fff",
-                  borderColor: "#ff6b00",
+                  bgcolor: statusFilter === option.value ? ACCENT : "transparent",
+                  color: statusFilter === option.value ? "#fff" : "#64748b",
+                  borderColor: statusFilter === option.value ? ACCENT : "rgba(0,0,0,0.2)",
                   "&:hover": {
-                    bgcolor: statusFilter === option.value ? "#e65f00" : "#fff8f2",
-                    borderColor: "#ff6b00",
+                    bgcolor: statusFilter === option.value ? "#e55f00" : "rgba(0,0,0,0.04)",
+                    borderColor: statusFilter === option.value ? "#e55f00" : "rgba(0,0,0,0.3)",
                   },
+                  borderRadius: 1,
                 }}
                 onClick={() => handleStatusChange(option.value)}
               >
                 {option.label}
               </Button>
             ))}
-          </Box>
 
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
             <Select
               size="small"
               value={searchType}
-              onChange={(event) => setSearchType(event.target.value as BoardSearchType)}
-              sx={{ minWidth: 140 }}
+              onChange={(e) => setSearchType(e.target.value as BoardSearchType)}
+              sx={{
+                width: 120,
+                bgcolor: "#fff",
+                borderRadius: 1,
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(0,0,0,0.08)",
+                },
+              }}
             >
               <MenuItem value="TITLE_CONTENT">제목+내용</MenuItem>
               <MenuItem value="TITLE">제목</MenuItem>
@@ -257,31 +373,43 @@ export default function BoardPage() {
 
             <TextField
               size="small"
-              placeholder="검색어"
+              placeholder="검색어 입력"
               value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  handleSearch();
-                }
+              onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
               }}
-              sx={{ width: { xs: "100%", sm: 280 } }}
+              sx={{
+                width: { xs: "100%", sm: 280 },
+                flex: "1 1 200px",
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "#fff",
+                  borderRadius: 1,
+                },
+              }}
             />
 
             <IconButton
-              sx={{ bgcolor: "#ff6b00", color: "#fff", "&:hover": { bgcolor: "#e65f00" } }}
+              sx={{
+                bgcolor: ACCENT,
+                color: "#fff",
+                "&:hover": { bgcolor: "#e55f00", transform: "scale(1.02)" },
+                transition: "all 0.2s",
+              }}
               onClick={handleSearch}
             >
               <SearchIcon />
             </IconButton>
 
-            <Box sx={{ flex: 1 }} />
-
             <Select
               size="small"
               value={sortType}
-              onChange={(event) => setSortType(event.target.value as SortType)}
-              sx={{ minWidth: 140 }}
+              onChange={(e) => setSortType(e.target.value as SortType)}
+              sx={{
+                width: 110,
+                bgcolor: "#fff",
+                borderRadius: 1,
+              }}
             >
               <MenuItem value="LATEST">최신순</MenuItem>
               <MenuItem value="OLDEST">등록순</MenuItem>
@@ -293,11 +421,16 @@ export default function BoardPage() {
             <Select
               size="small"
               value={size}
-              onChange={(event) => {
-                setSize(Number(event.target.value));
+              onChange={(e) => {
+                setSize(Number(e.target.value));
                 setPage(1);
               }}
-              sx={{ minWidth: 90 }}
+              sx={{
+                width: 90,
+                ml: "auto",
+                bgcolor: "#fff",
+                borderRadius: 1,
+              }}
             >
               <MenuItem value={10}>10개</MenuItem>
               <MenuItem value={20}>20개</MenuItem>
@@ -306,37 +439,75 @@ export default function BoardPage() {
           </Box>
         </Paper>
 
-        <TableContainer component={Paper} variant="outlined" sx={{ borderColor: "#ececec" }}>
-          <Table size="small" sx={{ tableLayout: "fixed" }}>
+        {/* 테이블 */}
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            overflow: "hidden",
+          }}
+        >
+          <Table sx={{ tableLayout: "fixed" }}>
             <TableHead>
-              <TableRow>
-                <TableCell align="center" sx={{ width: 70 }}>번호</TableCell>
-                <TableCell align="center" sx={{ width: 84 }}>상태</TableCell>
-                <TableCell align="center" sx={{ width: 80 }}>말머리</TableCell>
-                <TableCell align="left">제목</TableCell>
+              <TableRow
+                sx={{
+                  bgcolor: "#f8fafc",
+                  "& th": {
+                    py: 1.5,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    color: "#475569",
+                    borderBottom: "1px solid rgba(0,0,0,0.08)",
+                  },
+                }}
+              >
+                <TableCell align="center" sx={{ width: 50 }}>번호</TableCell>
+                <TableCell align="center" sx={{ width: 60 }}>상태</TableCell>
+                <TableCell align="center" sx={{ width: 60 }}>말머리</TableCell>
+                <TableCell align="center">제목</TableCell>
                 <TableCell align="center" sx={{ width: 120 }}>작성자</TableCell>
-                <TableCell align="center" sx={{ width: 130 }}>작성일</TableCell>
-                <TableCell align="center" sx={{ width: 70 }}>조회</TableCell>
-                <TableCell align="center" sx={{ width: 70 }}>추천</TableCell>
-                <TableCell align="center" sx={{ width: 84 }}>신고</TableCell>
+                <TableCell align="center" sx={{ width: 110 }}>작성일</TableCell>
+                <TableCell align="center" sx={{ width: 50 }}>조회</TableCell>
+                <TableCell align="center" sx={{ width: 50 }}>추천</TableCell>
+                <TableCell align="center" sx={{ width: 50 }}>신고</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {!loading && pageItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 5, color: "#777" }}>
+                  <TableCell
+                    colSpan={9}
+                    align="center"
+                    sx={{
+                      py: 8,
+                      color: "#94a3b8",
+                      fontSize: 15,
+                      borderBottom: "none",
+                    }}
+                  >
                     게시글이 없습니다.
                   </TableCell>
                 </TableRow>
               ) : (
                 pageItems.map((item) => {
                   const isReported = (item.reportCount ?? 0) > 0;
+                  const type = item.boardType;
                   return (
                     <TableRow
                       key={item.id}
-                      hover
                       sx={{
+                        "&:hover": { bgcolor: "rgba(255,107,0,0.04)" },
+                        transition: "background 0.2s",
                         bgcolor: item.hidden ? "#fafafa" : "transparent",
+                        "& td": {
+                          py: 1.75,
+                          fontSize: 14,
+                          color: "#334155",
+                          borderBottom: "1px solid rgba(0,0,0,0.06)",
+                        },
                       }}
                     >
                       <TableCell align="center">{item.id}</TableCell>
@@ -344,27 +515,43 @@ export default function BoardPage() {
                       <TableCell align="center">
                         <Chip
                           size="small"
-                          color={item.boardType === "NOTICE" ? "warning" : "default"}
-                          label={item.boardType === "NOTICE" ? "공지" : "일반"}
+                          label={type === "NOTICE" ? "공지" : "일반"}
+                          sx={{
+                            height: 22,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            bgcolor: type === "NOTICE" ? ACCENT : "#64748b",
+                            color: "#fff",
+                            "& .MuiChip-label": { px: 1 },
+                          }}
                         />
                       </TableCell>
-                      <TableCell align="left" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <TableCell
+                        align="left"
+                        sx={{
+                          pl: 3,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          fontWeight: type === "NOTICE" ? 700 : 500,
+                        }}
+                      >
                         <Box
+                          component="span"
+                          onClick={() => navigate(`/admin/board/${item.id}`)}
                           sx={{
                             display: "inline-flex",
                             alignItems: "center",
                             cursor: "pointer",
-                            maxWidth: "100%",
-                            "&:hover": { textDecoration: "underline" },
+                            "&:hover": { color: ACCENT, textDecoration: "underline" },
                           }}
-                          onClick={() => navigate(`/admin/board/${item.id}`)}
                         >
                           {mediaIcon(item)}
-                          {item.hidden ? <VisibilityOffOutlinedIcon sx={{ fontSize: 15, mr: 0.5, color: "#757575" }} /> : null}
-                          {isReported ? <FlagOutlinedIcon sx={{ fontSize: 15, mr: 0.5, color: "#d32f2f" }} /> : null}
-                          <span>{item.title}</span>
+                          {item.hidden ? <VisibilityOffOutlinedIcon sx={{ fontSize: 15, mr: 0.5, color: "#94a3b8" }} /> : null}
+                          {isReported ? <FlagOutlinedIcon sx={{ fontSize: 15, mr: 0.5, color: "#dc2626" }} /> : null}
+                          {item.title}
                           {item.commentCount > 0 ? (
-                            <Typography component="span" sx={{ color: "#888", ml: 0.4 }}>
+                            <Typography component="span" sx={{ color: "#94a3b8", ml: 0.5, fontSize: "inherit" }}>
                               [{item.commentCount}]
                             </Typography>
                           ) : null}
@@ -372,7 +559,7 @@ export default function BoardPage() {
                       </TableCell>
                       <TableCell align="center">{item.authorNickname}</TableCell>
                       <TableCell align="center">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleString("ko-KR") : "-"}
+                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString("ko-KR") : "-"}
                       </TableCell>
                       <TableCell align="center">{item.viewCount}</TableCell>
                       <TableCell align="center">{item.recommendCount}</TableCell>
@@ -389,21 +576,35 @@ export default function BoardPage() {
           </Table>
         </TableContainer>
 
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            mt: 4,
+            "& .MuiPaginationItem-root": { fontSize: 14 },
+            "& .Mui-selected": {
+              bgcolor: ACCENT,
+              color: "#fff",
+              "&:hover": { bgcolor: "#e55f00" },
+            },
+          }}
+        >
           <Pagination
-            count={totalPages}
+            count={pageItems.length === 0 ? 1 : totalPages}
             page={currentPage}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
+            disabled={pageItems.length === 0}
+            onChange={(_, v) => setPage(v)}
+            color="standard"
+            shape="rounded"
           />
         </Box>
       </Box>
 
       <Snackbar
         open={Boolean(toast)}
-        autoHideDuration={1800}
-        onClose={() => setToast("")}
+        autoHideDuration={1500}
         message={toast}
+        onClose={() => setToast("")}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
     </ThemeProvider>

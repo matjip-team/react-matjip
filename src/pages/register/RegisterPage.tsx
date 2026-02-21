@@ -1,13 +1,13 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
+  CircularProgress,
   Divider,
+  Paper,
   Snackbar,
   Stack,
   TextField,
@@ -30,8 +30,12 @@ import {
   getMyRestaurantRequestLicenseViewUrl,
   updateMyRestaurantRequest,
 } from "./api/restaurantRequestApi";
+import { ThemeProvider } from "@mui/material/styles";
+import { boardTheme } from "../board/theme/boardTheme";
 
 registerBlogQuillModules(Quill);
+
+const ACCENT = "#ff6b00";
 
 type FormState = {
   name: string;
@@ -117,11 +121,15 @@ const toDisplayImageUrl = (value?: string | null): string => {
   return `${S3_PUBLIC_BASE_URL}/${raw.replace(/^\/+/, "")}`;
 };
 
-export default function RegisterPage() {
+interface Props {
+  /** 마이페이지 탭 내부에 렌더될 때 true (상단 여백 제거) */
+  embedded?: boolean;
+}
+
+export default function RegisterPage({ embedded = false }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const ACCENT = "#ff8a3d";
   const queryEditRequestId = Number(
     new URLSearchParams(location.search).get("editRequestId"),
   );
@@ -574,53 +582,140 @@ export default function RegisterPage() {
 
   if (!user) {
     return (
-      <Box sx={{ maxWidth: 760, mx: "auto", mt: 5 }}>
-        <Alert severity="warning" sx={{ mb: 2, border: `1px solid ${ACCENT}` }}>
-          맛집 등록은 로그인 후 이용할 수 있습니다.
-        </Alert>
-
-        <Stack direction="row" spacing={1}>
-          <Button variant="contained" onClick={() => navigate("/auth/login")} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#f07a2d" } }}>
-            로그인 하러가기
-          </Button>
-          <Button variant="outlined" onClick={() => navigate("/")} sx={{ borderColor: ACCENT, color: ACCENT }}>
-            홈
-          </Button>
-        </Stack>
-      </Box>
+      <ThemeProvider theme={boardTheme}>
+        <Box
+          sx={{
+            maxWidth: embedded ? "100%" : 1100,
+            mx: embedded ? 0 : "auto",
+            px: embedded ? 0 : { xs: 2, sm: 3 },
+            ...(embedded ? { py: 0 } : { py: 5 }),
+          }}
+        >
+          <Alert severity="warning" sx={{ mb: 2, borderRadius: 2, border: "1px solid rgba(245,158,11,0.3)" }}>
+            맛집 등록은 로그인 후 이용할 수 있습니다.
+          </Alert>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              variant="contained"
+              onClick={() => navigate("/auth/login")}
+              sx={{
+                bgcolor: ACCENT,
+                "&:hover": { bgcolor: "#e55f00" },
+                fontWeight: 600,
+                borderRadius: 1.5,
+              }}
+            >
+              로그인 하러가기
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => navigate("/")}
+              sx={{
+                borderColor: "rgba(0,0,0,0.2)",
+                color: "#64748b",
+                fontWeight: 600,
+                borderRadius: 1.5,
+                "&:hover": {
+                  borderColor: ACCENT,
+                  color: ACCENT,
+                  bgcolor: "rgba(255,107,0,0.04)",
+                },
+              }}
+            >
+              홈
+            </Button>
+          </Stack>
+        </Box>
+      </ThemeProvider>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 760, mx: "auto", mt: 5 }}>
-      <Card sx={{ border: "1px solid rgba(255, 138, 61, 0.28)" }}>
-        <CardContent>
-          <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between" spacing={1}>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: ACCENT }}>
-                {isEditMode ? "맛집 신청 수정" : "맛집 등록"}
-              </Typography>
-              <Typography sx={{ color: "#666", mt: 0.5 }}>
-                {isEditMode
-                  ? "기존 신청 정보를 수정합니다."
-                  : "주소를 검색해 위치를 선택하고 사업자등록증을 첨부해 주세요."}
-              </Typography>
-            </Box>
-            <Button size="small" variant="outlined" onClick={() => navigate("/register/requests")} sx={{ borderColor: ACCENT, color: ACCENT }}>
+    <ThemeProvider theme={boardTheme}>
+      <Box
+        sx={{
+          maxWidth: embedded ? "100%" : 1100,
+          mx: embedded ? 0 : "auto",
+          px: embedded ? 0 : { xs: 2, sm: 3 },
+          ...(embedded ? { py: 0 } : { py: 5 }),
+        }}
+      >
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            {isEditMode ? "맛집 신청 수정" : "맛집 등록"}
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            {isEditMode
+              ? "기존 신청 정보를 수정합니다."
+              : "주소를 검색해 위치를 선택하고 사업자등록증을 첨부해 주세요."}
+          </Typography>
+        </Box>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            position: "relative",
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fff",
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate("/register/requests")}
+              sx={{
+                borderColor: "rgba(0,0,0,0.2)",
+                color: "#64748b",
+                fontWeight: 600,
+                borderRadius: 1.5,
+                "&:hover": {
+                  borderColor: ACCENT,
+                  color: ACCENT,
+                  bgcolor: "rgba(255,107,0,0.04)",
+                },
+              }}
+            >
               내 신청내역
             </Button>
-          </Stack>
+          </Box>
 
-          <Divider sx={{ my: 2, borderColor: "rgba(255, 138, 61, 0.35)" }} />
+          <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
           <Box component="form" onSubmit={handleSubmit}>
             {isEditMode && editLoading && (
-              <Alert severity="info" sx={{ mb: 2 }}>
+              <Alert severity="info" sx={{ mb: 2, borderRadius: 2, border: "1px solid rgba(33,150,243,0.3)" }}>
                 수정할 신청 정보를 불러오는 중입니다...
               </Alert>
             )}
             <Stack spacing={2}>
-              <TextField label="가게명" value={form.name} onChange={handleChange("name")} required fullWidth />
+              <TextField
+                label="가게명"
+                value={form.name}
+                onChange={handleChange("name")}
+                required
+                fullWidth
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: ACCENT,
+                      borderWidth: 2,
+                    },
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+                }}
+              />
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                 <TextField
@@ -635,47 +730,118 @@ export default function RegisterPage() {
                   }}
                   fullWidth
                   placeholder="예) 강남 갈비"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5,
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: ACCENT,
+                        borderWidth: 2,
+                      },
+                    },
+                    "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+                  }}
                 />
-                <Button type="button" variant="outlined" onClick={handleSearchPlace} sx={{ borderColor: ACCENT, color: ACCENT, minWidth: 110 }}>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={handleSearchPlace}
+                  sx={{
+                    borderColor: ACCENT,
+                    color: ACCENT,
+                    minWidth: 110,
+                    fontWeight: 600,
+                    borderRadius: 1.5,
+                    "&:hover": {
+                      borderColor: "#e55f00",
+                      bgcolor: "rgba(255,107,0,0.04)",
+                    },
+                  }}
+                >
                   검색
                 </Button>
               </Stack>
 
-              <Box ref={mapContainerRef} sx={{ width: "100%", height: 260, borderRadius: 1, border: "1px solid #e0e0e0", overflow: "hidden" }} />
+              <Box
+                ref={mapContainerRef}
+                sx={{
+                  width: "100%",
+                  height: 260,
+                  borderRadius: 1.5,
+                  border: "1px solid",
+                  borderColor: "rgba(0,0,0,0.08)",
+                  overflow: "hidden",
+                  bgcolor: "#f8fafc",
+                }}
+              />
 
               {searchResults.length > 0 && (
-                <Box sx={{ maxHeight: 170, overflowY: "auto", border: "1px solid #eee", borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    maxHeight: 170,
+                    overflowY: "auto",
+                    border: "1px solid",
+                    borderColor: "rgba(0,0,0,0.08)",
+                    borderRadius: 1.5,
+                  }}
+                >
                   {searchResults.map((place) => (
                     <Box
                       key={place.id}
                       onClick={() => selectPlace(place)}
                       sx={{
-                        px: 1.2,
-                        py: 0.9,
+                        px: 1.5,
+                        py: 1,
                         cursor: "pointer",
-                        borderBottom: "1px solid #f5f5f5",
-                        backgroundColor: selectedPlaceId === place.id ? "rgba(255, 138, 61, 0.12)" : "#fff",
-                        "&:hover": { backgroundColor: "rgba(255, 138, 61, 0.08)" },
+                        borderBottom: "1px solid rgba(0,0,0,0.06)",
+                        backgroundColor: selectedPlaceId === place.id ? "rgba(255,107,0,0.08)" : "#fff",
+                        "&:hover": { backgroundColor: "rgba(255,107,0,0.04)" },
                       }}
                     >
-                      <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{place.name}</Typography>
-                      <Typography sx={{ fontSize: 12, color: "#666" }}>{place.address}</Typography>
+                      <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#334155" }}>{place.name}</Typography>
+                      <Typography sx={{ fontSize: 12, color: "#64748b" }}>{place.address}</Typography>
                     </Box>
                   ))}
                 </Box>
               )}
 
-              <TextField label="주소" value={form.address} fullWidth InputProps={{ readOnly: true }} />
+              <TextField
+                label="주소"
+                value={form.address}
+                fullWidth
+                InputProps={{ readOnly: true }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    bgcolor: "#f8fafc",
+                  },
+                }}
+              />
 
               <Stack spacing={1}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>대표사진 (필수)</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#334155" }}>대표사진 (필수)</Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
-                  <Button type="button" variant="outlined" onClick={handleRepresentativeImageButtonClick} disabled={representativeUploading} sx={{ borderColor: ACCENT, color: ACCENT, minWidth: 160 }}>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleRepresentativeImageButtonClick}
+                    disabled={representativeUploading}
+                    sx={{
+                      borderColor: ACCENT,
+                      color: ACCENT,
+                      minWidth: 160,
+                      fontWeight: 600,
+                      borderRadius: 1.5,
+                      "&:hover": {
+                        borderColor: "#e55f00",
+                        bgcolor: "rgba(255,107,0,0.04)",
+                      },
+                    }}
+                  >
                     {representativeUploading ? "업로드 중..." : "대표사진 업로드"}
                   </Button>
-                  <Typography sx={{ fontSize: 13, color: "#666" }}>{representativeImageName || "선택된 대표사진 없음"}</Typography>
+                  <Typography sx={{ fontSize: 13, color: "#64748b" }}>{representativeImageName || "선택된 대표사진 없음"}</Typography>
                 </Stack>
-                <Typography sx={{ fontSize: 12, color: "#999" }}>허용: PNG, JPG, WEBP (최대 10MB)</Typography>
+                <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>허용: PNG, JPG, WEBP (최대 10MB)</Typography>
                 {(representativePreviewUrl || form.imageUrl) && (
                   <Box
                     component="img"
@@ -686,19 +852,43 @@ export default function RegisterPage() {
                       if (img.src.includes("/images/world.jpg")) return;
                       img.src = "/images/world.jpg";
                     }}
-                    sx={{ width: 220, maxWidth: "100%", height: 140, objectFit: "cover", borderRadius: 1, border: "1px solid #eee" }}
+                    sx={{
+                      width: 220,
+                      maxWidth: "100%",
+                      height: 140,
+                      objectFit: "cover",
+                      borderRadius: 1.5,
+                      border: "1px solid",
+                      borderColor: "rgba(0,0,0,0.08)",
+                    }}
                   />
                 )}
                 <input ref={representativeImageInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" style={{ display: "none" }} onChange={handleRepresentativeImageChange} />
               </Stack>
 
               <Stack spacing={1}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>사업자등록증 첨부 (임시 보관)</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#334155" }}>사업자등록증 첨부 (임시 보관)</Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
-                  <Button type="button" variant="outlined" onClick={handleLicenseButtonClick} disabled={licenseUploading} sx={{ borderColor: ACCENT, color: ACCENT, minWidth: 160 }}>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleLicenseButtonClick}
+                    disabled={licenseUploading}
+                    sx={{
+                      borderColor: ACCENT,
+                      color: ACCENT,
+                      minWidth: 160,
+                      fontWeight: 600,
+                      borderRadius: 1.5,
+                      "&:hover": {
+                        borderColor: "#e55f00",
+                        bgcolor: "rgba(255,107,0,0.04)",
+                      },
+                    }}
+                  >
                     {licenseUploading ? "업로드 중..." : "파일 선택/업로드"}
                   </Button>
-                  <Typography sx={{ fontSize: 13, color: "#666" }}>{licenseFileName || "선택된 파일 없음"}</Typography>
+                  <Typography sx={{ fontSize: 13, color: "#64748b" }}>{licenseFileName || "선택된 파일 없음"}</Typography>
                   {(hasExistingLicenseFile || Boolean(form.businessLicenseFileKey.trim())) && (
                     <Button
                       type="button"
@@ -706,13 +896,21 @@ export default function RegisterPage() {
                       variant="outlined"
                       onClick={() => void handleOpenLicenseFile()}
                       disabled={licenseOpening}
-                      sx={{ borderColor: ACCENT, color: ACCENT }}
+                      sx={{
+                        borderColor: ACCENT,
+                        color: ACCENT,
+                        borderRadius: 1,
+                        "&:hover": {
+                          borderColor: "#e55f00",
+                          bgcolor: "rgba(255,107,0,0.04)",
+                        },
+                      }}
                     >
                       {licenseOpening ? "여는 중..." : "첨부파일 확인"}
                     </Button>
                   )}
                 </Stack>
-                <Typography sx={{ fontSize: 12, color: "#999" }}>허용: PDF, PNG, JPG, WEBP (최대 10MB, 14일 후 자동 삭제)</Typography>
+                <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>허용: PDF, PNG, JPG, WEBP (최대 10MB, 14일 후 자동 삭제)</Typography>
                 <input ref={licenseFileInputRef} type="file" accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp" style={{ display: "none" }} onChange={handleLicenseFileChange} />
               </Stack>
 
@@ -724,10 +922,20 @@ export default function RegisterPage() {
                 placeholder="숫자와 - 입력 (예: 02-123-4567)"
                 inputProps={{ inputMode: "tel", pattern: "[0-9-]*", maxLength: 13 }}
                 helperText="숫자와 하이픈(-)만 입력 가능합니다."
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: ACCENT,
+                      borderWidth: 2,
+                    },
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+                }}
               />
 
               <Stack spacing={1}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>카테고리</Typography>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#334155" }}>카테고리</Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                   {CATEGORY_OPTIONS.map((category) => {
                     const selected = form.categories.includes(category);
@@ -738,11 +946,15 @@ export default function RegisterPage() {
                         label={category}
                         onClick={() => toggleCategory(category)}
                         sx={{
-                          borderRadius: 1.2,
+                          borderRadius: 1.5,
                           fontWeight: 600,
                           bgcolor: selected ? ACCENT : "#fff",
-                          color: selected ? "#fff" : "#444",
-                          border: `1px solid ${selected ? ACCENT : "#ddd"}`,
+                          color: selected ? "#fff" : "#64748b",
+                          border: `1px solid ${selected ? ACCENT : "rgba(0,0,0,0.2)"}`,
+                          "&:hover": {
+                            bgcolor: selected ? "#e55f00" : "rgba(0,0,0,0.04)",
+                            borderColor: selected ? "#e55f00" : "rgba(0,0,0,0.3)",
+                          },
                         }}
                       />
                     );
@@ -751,12 +963,19 @@ export default function RegisterPage() {
               </Stack>
 
               <Stack spacing={1}>
-                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>식당 정보글을 작성해주세요</Typography>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#334155" }}>식당 정보글을 작성해주세요</Typography>
                 <Box
                   sx={{
-                    "& .ql-toolbar.ql-snow": { borderRadius: "4px 4px 0 0" },
-                    "& .ql-container.ql-snow": { minHeight: 220, borderRadius: "0 0 4px 4px" },
-                    "& .ql-editor": { minHeight: 180, fontSize: 15, lineHeight: 1.6 },
+                    "& .ql-toolbar.ql-snow": {
+                      borderRadius: "8px 8px 0 0",
+                      borderColor: "rgba(0,0,0,0.12)",
+                    },
+                    "& .ql-container.ql-snow": {
+                      minHeight: 220,
+                      borderRadius: "0 0 8px 8px",
+                      borderColor: "rgba(0,0,0,0.12)",
+                    },
+                    "& .ql-editor": { minHeight: 180, fontSize: 15, lineHeight: 1.7 },
                   }}
                 >
                   <ReactQuill
@@ -769,11 +988,29 @@ export default function RegisterPage() {
                 </Box>
               </Stack>
 
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Stack
+                direction="row"
+                spacing={1.5}
+                justifyContent="flex-end"
+                sx={{ mt: 4, pt: 2 }}
+              >
                 <Button
                   variant="outlined"
                   onClick={() => navigate(isEditMode && editRequestId ? `/register/requests/${editRequestId}` : "/")}
-                  sx={{ borderColor: ACCENT, color: ACCENT }}
+                  sx={{
+                    height: 40,
+                    fontSize: 14,
+                    borderRadius: 1.5,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderColor: "rgba(0,0,0,0.2)",
+                    color: "#64748b",
+                    "&:hover": {
+                      borderColor: ACCENT,
+                      color: ACCENT,
+                      bgcolor: "rgba(255,107,0,0.04)",
+                    },
+                  }}
                 >
                   취소
                 </Button>
@@ -781,15 +1018,23 @@ export default function RegisterPage() {
                   type="submit"
                   variant="contained"
                   disabled={editLoading || submitting || licenseUploading || representativeUploading}
-                  sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#f07a2d" } }}
+                  sx={{
+                    height: 40,
+                    fontSize: 14,
+                    borderRadius: 1.5,
+                    bgcolor: ACCENT,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 2.5,
+                    "&:hover": { bgcolor: "#e55f00" },
+                  }}
                 >
-                  {submitting ? (isEditMode ? "수정 중..." : "등록 중...") : isEditMode ? "수정 저장" : "등록"}
+                  {submitting ? <CircularProgress size={20} color="inherit" /> : isEditMode ? "수정 저장" : "등록"}
                 </Button>
               </Stack>
             </Stack>
           </Box>
-        </CardContent>
-      </Card>
+        </Paper>
 
       <Snackbar
         open={Boolean(toast)}
@@ -799,5 +1044,6 @@ export default function RegisterPage() {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
     </Box>
+    </ThemeProvider>
   );
 }

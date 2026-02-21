@@ -1,5 +1,16 @@
 import type { ApiResponse } from "../types/api";
 
+/** BlogPage 기준 Select, TextField 높이 (px) - 검색/필터 인풋 일관 높이 */
+export const INPUT_HEIGHT = 40;
+
+/** size="small" Select/TextField에 적용할 일관된 높이 sx */
+export const inputHeightSx = {
+  "& .MuiOutlinedInput-root": {
+    height: INPUT_HEIGHT,
+    minHeight: INPUT_HEIGHT,
+  },
+};
+
 // 성공 시 data 반환, 실패 시 에러 반환
 export function unwrapData<T>(res: ApiResponse<T>): T {
   if (!res.success) {

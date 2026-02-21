@@ -1,17 +1,17 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  Paper,
   Snackbar,
   Stack,
   TextField,
@@ -33,8 +33,13 @@ import {
   type RestaurantMyRequestDetail,
   updateMyRestaurantRequest,
 } from "./api/restaurantRequestApi";
+import { ThemeProvider } from "@mui/material/styles";
+import { boardTheme } from "../board/theme/boardTheme";
 
 registerBlogQuillModules(Quill);
+
+const ACCENT = "#ff6b00";
+const LABEL_WIDTH = 120;
 
 const STATUS_META: Record<
   RestaurantApprovalStatus,
@@ -141,11 +146,25 @@ const buildEditForm = (data: RestaurantMyRequestDetail): EditFormState => ({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
-      <Typography sx={{ width: { xs: "100%", sm: 100 }, color: "#666", fontSize: 14 }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={1}
+      alignItems={{ xs: "stretch", sm: "flex-start" }}
+      sx={{ py: 0.5 }}
+    >
+      <Typography
+        sx={{
+          width: { xs: "100%", sm: LABEL_WIDTH },
+          flexShrink: 0,
+          color: "#64748b",
+          fontSize: 14,
+        }}
+      >
         {label}
       </Typography>
-      <Typography sx={{ flex: 1, color: "#222", fontSize: 14, whiteSpace: "pre-wrap" }}>{value}</Typography>
+      <Typography sx={{ flex: 1, minWidth: 0, color: "#334155", fontSize: 14, whiteSpace: "pre-wrap" }}>
+        {value}
+      </Typography>
     </Stack>
   );
 }
@@ -411,25 +430,45 @@ export default function MyRestaurantRequestDetailPage() {
 
   if (!user) {
     return (
-      <Box sx={{ maxWidth: 940, mx: "auto", mt: 5 }}>
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          로그인 후 신청 상세를 확인할 수 있습니다.
-        </Alert>
-        <Button variant="contained" onClick={() => navigate("/auth/login")}>
-          로그인 하러가기
-        </Button>
-      </Box>
+      <ThemeProvider theme={boardTheme}>
+        <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+          <Alert severity="warning" sx={{ mb: 2, borderRadius: 2, border: "1px solid rgba(245,158,11,0.3)" }}>
+            로그인 후 신청 상세를 확인할 수 있습니다.
+          </Alert>
+          <Button
+            variant="contained"
+            onClick={() => navigate("/auth/login")}
+            sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: "#e55f00" }, fontWeight: 600, borderRadius: 1.5 }}
+          >
+            로그인 하러가기
+          </Button>
+        </Box>
+      </ThemeProvider>
     );
   }
 
   if (!hasValidRequestId) {
     return (
-      <Box sx={{ maxWidth: 940, mx: "auto", mt: 5 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          잘못된 접근입니다.
-        </Alert>
-        <Button variant="outlined" onClick={() => navigate("/register/requests")}>목록으로</Button>
-      </Box>
+      <ThemeProvider theme={boardTheme}>
+        <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2, border: "1px solid rgba(220,38,38,0.2)" }}>
+            잘못된 접근입니다.
+          </Alert>
+          <Button
+            variant="outlined"
+            sx={{
+              borderColor: "rgba(0,0,0,0.2)",
+              color: "#64748b",
+              fontWeight: 600,
+              borderRadius: 1.5,
+              "&:hover": { borderColor: ACCENT, color: ACCENT, bgcolor: "rgba(255,107,0,0.04)" },
+            }}
+            onClick={() => navigate("/register/requests")}
+          >
+            목록으로
+          </Button>
+        </Box>
+      </ThemeProvider>
     );
   }
 
@@ -481,40 +520,90 @@ export default function MyRestaurantRequestDetailPage() {
   }, [displayDescription]);
 
   return (
-    <Box sx={{ maxWidth: 940, mx: "auto", mt: 5 }}>
-      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} sx={{ mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          신청 상세
-        </Typography>
-        <Button variant="outlined" onClick={() => navigate("/register/requests")}>목록으로</Button>
-      </Stack>
+    <ThemeProvider theme={boardTheme}>
+      <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 2, mb: 4 }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", mb: 0.5 }}>
+              신청 상세
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+              맛집 등록 신청 내역을 확인합니다
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            sx={{
+              borderColor: "rgba(0,0,0,0.2)",
+              color: "#64748b",
+              fontWeight: 600,
+              borderRadius: 1.5,
+              "&:hover": { borderColor: ACCENT, color: ACCENT, bgcolor: "rgba(255,107,0,0.04)" },
+            }}
+            onClick={() => navigate("/register/requests")}
+          >
+            목록으로
+          </Button>
+        </Box>
 
-      {loading && <Typography sx={{ color: "#666", mb: 2 }}>상세 정보를 불러오는 중...</Typography>}
-
-      {!loading && !detail && <Alert severity="info">표시할 신청 정보가 없습니다.</Alert>}
-
-      {detail && (
-        <Card sx={{ border: "1px solid #ececec" }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+            <CircularProgress sx={{ color: ACCENT }} />
+          </Box>
+        ) : !detail ? (
+          <Paper
+            elevation={0}
+            sx={{
+              py: 8,
+              textAlign: "center",
+              color: "#94a3b8",
+              fontSize: 15,
+              borderRadius: 2,
+              border: "1px dashed rgba(0,0,0,0.1)",
+              bgcolor: "#f8fafc",
+            }}
+          >
+            표시할 신청 정보가 없습니다.
+          </Paper>
+        ) : (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "rgba(0,0,0,0.06)",
+              bgcolor: "#fff",
+            }}
+          >
             <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1}>
               <Box>
-                <Typography sx={{ fontSize: 24, fontWeight: 800, lineHeight: 1.25 }}>{detail.name}</Typography>
-                <Typography sx={{ fontSize: 13, color: "#888", mt: 0.5 }}>신청 번호: #{detail.id}</Typography>
+                <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>{detail.name}</Typography>
+                <Typography sx={{ fontSize: 13, color: "#94a3b8", mt: 0.5 }}>신청 번호: #{detail.id}</Typography>
               </Box>
               <Chip
                 size="small"
                 label={STATUS_META[detail.approvalStatus].label}
-                color={STATUS_META[detail.approvalStatus].color}
-                sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
+                sx={{
+                  alignSelf: { xs: "flex-start", sm: "center" },
+                  height: 22,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  "& .MuiChip-label": { px: 1 },
+                  ...(detail.approvalStatus === "PENDING" && { bgcolor: ACCENT, color: "#fff" }),
+                  ...(detail.approvalStatus === "APPROVED" && { bgcolor: "#059669", color: "#fff" }),
+                  ...(detail.approvalStatus === "REJECTED" && { bgcolor: "#dc2626", color: "#fff" }),
+                  ...(detail.approvalStatus === "CANCELLED" && { bgcolor: "#64748b", color: "#fff" }),
+                }}
               />
             </Stack>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-            <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
+            <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, alignItems: "start" }}>
               <Box>
-                <Typography sx={{ fontWeight: 700, mb: 1 }}>신청 요약</Typography>
-                <Stack spacing={0.8}>
+                <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#334155", fontSize: 15 }}>신청 요약</Typography>
+                <Stack spacing={0}>
                   <InfoRow label="신청일" value={formatDateTime(detail.createdAt)} />
                   <InfoRow
                     label="처리일"
@@ -524,13 +613,25 @@ export default function MyRestaurantRequestDetailPage() {
               </Box>
 
               <Box>
-                <Typography sx={{ fontWeight: 700, mb: 1 }}>첨부 서류</Typography>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7} alignItems={{ xs: "flex-start", sm: "center" }}>
-                  <Typography sx={{ width: { xs: "100%", sm: 100 }, color: "#666", fontSize: 14 }}>
+                <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#334155", fontSize: 15 }}>첨부 서류</Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ xs: "stretch", sm: "flex-start" }}
+                  sx={{ py: 0.5 }}
+                >
+                  <Typography
+                    sx={{
+                      width: { xs: "100%", sm: LABEL_WIDTH },
+                      flexShrink: 0,
+                      color: "#64748b",
+                      fontSize: 14,
+                    }}
+                  >
                     사업자등록증
                   </Typography>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap" }}>
-                    <Typography sx={{ color: "#222", fontSize: 14 }}>
+                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ color: "#334155", fontSize: 14 }}>
                       {detail.hasBusinessLicenseFile || detail.businessLicenseFileKey ? "첨부됨" : "없음"}
                     </Typography>
                     <Button
@@ -538,7 +639,13 @@ export default function MyRestaurantRequestDetailPage() {
                       variant="outlined"
                       startIcon={<DescriptionOutlinedIcon />}
                       onClick={() => void handleOpenLicense()}
-                      disabled={licenseOpening}
+                      disabled={(!detail.hasBusinessLicenseFile && !detail.businessLicenseFileKey) || licenseOpening}
+                      sx={{
+                        borderColor: ACCENT,
+                        color: ACCENT,
+                        borderRadius: 1,
+                        "&:hover": { borderColor: "#e55f00", bgcolor: "rgba(255,107,0,0.04)" },
+                      }}
                     >
                       {licenseOpening ? "여는 중..." : "첨부파일 열기"}
                     </Button>
@@ -547,9 +654,9 @@ export default function MyRestaurantRequestDetailPage() {
               </Box>
             </Box>
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.06)" }} />
 
-            <Typography sx={{ fontWeight: 700, mb: 1 }}>신청 정보</Typography>
+            <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#334155", fontSize: 15 }}>신청 정보</Typography>
             {isEditMode ? (
               <Stack spacing={2}>
                 <TextField
@@ -558,6 +665,13 @@ export default function MyRestaurantRequestDetailPage() {
                   onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
                   fullWidth
                   required
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5,
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: ACCENT, borderWidth: 2 },
+                    },
+                    "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+                  }}
                 />
                 <TextField
                   label="주소"
@@ -565,20 +679,39 @@ export default function MyRestaurantRequestDetailPage() {
                   onChange={(e) => setEditForm((prev) => ({ ...prev, address: e.target.value }))}
                   fullWidth
                   required
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5,
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: ACCENT, borderWidth: 2 },
+                    },
+                    "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+                  }}
                 />
                 <Box
                   ref={mapContainerRef}
                   sx={{
                     width: "100%",
                     height: 250,
-                    borderRadius: 1,
-                    border: "1px solid #e8e8e8",
+                    borderRadius: 1.5,
+                    border: "1px solid",
+                    borderColor: "rgba(0,0,0,0.06)",
                     overflow: "hidden",
-                    backgroundColor: "#fafafa",
+                    backgroundColor: "#f8fafc",
                   }}
                 />
                 <Box>
-                  <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    endIcon={<OpenInNewIcon />}
+                    onClick={openMap}
+                    sx={{
+                      borderColor: "rgba(0,0,0,0.2)",
+                      color: "#64748b",
+                      borderRadius: 1,
+                      "&:hover": { borderColor: ACCENT, color: ACCENT, bgcolor: "rgba(255,107,0,0.04)" },
+                    }}
+                  >
                     지도에서 크게 보기
                   </Button>
                 </Box>
@@ -595,9 +728,16 @@ export default function MyRestaurantRequestDetailPage() {
                   placeholder="숫자와 - 입력 (예: 02-123-4567)"
                   inputProps={{ inputMode: "tel", pattern: "[0-9-]*", maxLength: 13 }}
                   helperText="숫자와 하이픈(-)만 입력 가능합니다."
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5,
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: ACCENT, borderWidth: 2 },
+                    },
+                    "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+                  }}
                 />
                 <Stack spacing={1}>
-                  <Typography sx={{ fontWeight: 700, fontSize: 14 }}>카테고리</Typography>
+                  <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#334155" }}>카테고리</Typography>
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                     {CATEGORY_OPTIONS.map((category) => {
                       const selected = selectedEditCategories.includes(category);
@@ -608,11 +748,15 @@ export default function MyRestaurantRequestDetailPage() {
                           label={category}
                           onClick={() => toggleEditCategory(category)}
                           sx={{
-                            borderRadius: 1.2,
+                            borderRadius: 1.5,
                             fontWeight: 600,
-                            bgcolor: selected ? "#ff8a3d" : "#fff",
-                            color: selected ? "#fff" : "#444",
-                            border: `1px solid ${selected ? "#ff8a3d" : "#ddd"}`,
+                            bgcolor: selected ? ACCENT : "#fff",
+                            color: selected ? "#fff" : "#64748b",
+                            border: `1px solid ${selected ? ACCENT : "rgba(0,0,0,0.2)"}`,
+                            "&:hover": {
+                              bgcolor: selected ? "#e55f00" : "rgba(0,0,0,0.04)",
+                              borderColor: selected ? "#e55f00" : "rgba(0,0,0,0.3)",
+                            },
                           }}
                         />
                       );
@@ -621,25 +765,45 @@ export default function MyRestaurantRequestDetailPage() {
                 </Stack>
               </Stack>
             ) : (
-              <Stack spacing={0.9}>
+              <Stack spacing={0}>
                 <InfoRow label="주소" value={detail.address || "-"} />
-                <Box
-                  ref={mapContainerRef}
-                  sx={{
-                    mt: 0.5,
-                    width: "100%",
-                    height: 250,
-                    borderRadius: 1,
-                    border: "1px solid #e8e8e8",
-                    overflow: "hidden",
-                    backgroundColor: "#fafafa",
-                  }}
-                />
-                <Box sx={{ pl: { xs: 0, sm: 12.5 } }}>
-                  <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
-                    지도에서 크게 보기
-                  </Button>
-                </Box>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ xs: "stretch", sm: "flex-start" }}
+                  sx={{ py: 0.5 }}
+                >
+                  <Box sx={{ width: { xs: "100%", sm: LABEL_WIDTH }, flexShrink: 0 }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box
+                      ref={mapContainerRef}
+                      sx={{
+                        width: "100%",
+                        height: 220,
+                        borderRadius: 1.5,
+                        border: "1px solid",
+                        borderColor: "rgba(0,0,0,0.06)",
+                        overflow: "hidden",
+                        backgroundColor: "#f8fafc",
+                      }}
+                    />
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      endIcon={<OpenInNewIcon />}
+                      onClick={openMap}
+                      sx={{
+                        mt: 1,
+                        borderColor: "rgba(0,0,0,0.2)",
+                        color: "#64748b",
+                        borderRadius: 1,
+                        "&:hover": { borderColor: ACCENT, color: ACCENT, bgcolor: "rgba(255,107,0,0.04)" },
+                      }}
+                    >
+                      지도에서 크게 보기
+                    </Button>
+                  </Box>
+                </Stack>
                 <InfoRow label="전화번호" value={detail.phone || "-"} />
                 <InfoRow
                   label="카테고리"
@@ -647,12 +811,24 @@ export default function MyRestaurantRequestDetailPage() {
                 />
               </Stack>
             )}
-            <Stack spacing={0.9}>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
-                <Typography sx={{ width: { xs: "100%", sm: 100 }, color: "#666", fontSize: 14 }}>
+            <Stack spacing={0}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1}
+                alignItems={{ xs: "stretch", sm: "flex-start" }}
+                sx={{ py: 0.5 }}
+              >
+                <Typography
+                  sx={{
+                    width: { xs: "100%", sm: LABEL_WIDTH },
+                    flexShrink: 0,
+                    color: "#64748b",
+                    fontSize: 14,
+                  }}
+                >
                   대표사진
                 </Typography>
-                <Box sx={{ flex: 1 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
                   {displayImageUrl ? (
                     <Box
                       component="img"
@@ -668,22 +844,36 @@ export default function MyRestaurantRequestDetailPage() {
                         maxWidth: "100%",
                         height: 150,
                         objectFit: "cover",
-                        borderRadius: 1,
-                        border: "1px solid #e8e8e8",
+                        borderRadius: 1.5,
+                        border: "1px solid",
+                        borderColor: "rgba(0,0,0,0.06)",
                       }}
                     />
                   ) : (
-                    <Typography sx={{ color: "#222", fontSize: 14 }}>없음</Typography>
+                    <Typography sx={{ color: "#94a3b8", fontSize: 14 }}>없음</Typography>
                   )}
                 </Box>
               </Stack>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
-                <Typography sx={{ width: { xs: "100%", sm: 100 }, color: "#666", fontSize: 14 }}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1}
+                alignItems={{ xs: "stretch", sm: "flex-start" }}
+                sx={{ py: 0.5 }}
+              >
+                <Typography
+                  sx={{
+                    width: { xs: "100%", sm: LABEL_WIDTH },
+                    flexShrink: 0,
+                    color: "#64748b",
+                    fontSize: 14,
+                  }}
+                >
                   설명
                 </Typography>
                 <Box
                   sx={{
                     flex: 1,
+                    minWidth: 0,
                     "& .ql-editor": { padding: 0 },
                     "& .ql-editor img": { maxWidth: "100%", height: "auto" },
                     "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
@@ -722,28 +912,60 @@ export default function MyRestaurantRequestDetailPage() {
             </Stack>
 
             {detail.approvalStatus === "REJECTED" && (
-              <Alert severity="error" sx={{ mt: 2 }}>
+              <Alert severity="error" sx={{ mt: 3, borderRadius: 2, border: "1px solid rgba(220,38,38,0.2)" }}>
                 반려 사유: {detail.rejectedReason || "사유가 전달되지 않았습니다."}
               </Alert>
             )}
 
             {statusGuide && (
-              <Alert severity={statusGuide.severity} sx={{ mt: 2 }}>
+              <Alert severity={statusGuide.severity} sx={{ mt: 3, borderRadius: 2 }}>
                 {statusGuide.text}
               </Alert>
             )}
 
-            <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate("/register/requests")}>목록으로</Button>
-              <Button variant="outlined" onClick={() => setIsPreviewOpen(true)}>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              justifyContent="flex-end"
+              sx={{ mt: 3, pt: 2, borderTop: "1px solid", borderColor: "rgba(0,0,0,0.06)" }}
+            >
+              <Button
+                variant="outlined"
+                sx={{
+                  borderColor: "rgba(0,0,0,0.2)",
+                  color: "#64748b",
+                  fontWeight: 600,
+                  borderRadius: 1.5,
+                  "&:hover": { borderColor: ACCENT, color: ACCENT, bgcolor: "rgba(255,107,0,0.04)" },
+                }}
+                onClick={() => navigate("/register/requests")}
+              >
+                목록으로
+              </Button>
+              <Button
+                variant="outlined"
+                sx={{
+                  borderColor: ACCENT,
+                  color: ACCENT,
+                  fontWeight: 600,
+                  borderRadius: 1.5,
+                  "&:hover": { borderColor: "#e55f00", bgcolor: "rgba(255,107,0,0.04)" },
+                }}
+                onClick={() => setIsPreviewOpen(true)}
+              >
                 미리보기
               </Button>
               {detail.approvalStatus === "PENDING" && !isEditMode && (
                 <Button
                   variant="outlined"
-                  onClick={() =>
-                    navigate(`/register?editRequestId=${detail.id}`)
-                  }
+                  sx={{
+                    borderColor: ACCENT,
+                    color: ACCENT,
+                    fontWeight: 600,
+                    borderRadius: 1.5,
+                    "&:hover": { borderColor: "#e55f00", bgcolor: "rgba(255,107,0,0.04)" },
+                  }}
+                  onClick={() => navigate(`/register?editRequestId=${detail.id}`)}
                 >
                   수정
                 </Button>
@@ -752,6 +974,13 @@ export default function MyRestaurantRequestDetailPage() {
                 <>
                   <Button
                     variant="outlined"
+                    sx={{
+                      borderColor: "rgba(0,0,0,0.2)",
+                      color: "#64748b",
+                      fontWeight: 600,
+                      borderRadius: 1.5,
+                      "&:hover": { borderColor: ACCENT, color: ACCENT, bgcolor: "rgba(255,107,0,0.04)" },
+                    }}
                     onClick={() => {
                       setIsEditMode(false);
                       setEditForm(buildEditForm(detail));
@@ -762,30 +991,40 @@ export default function MyRestaurantRequestDetailPage() {
                   <Button
                     variant="contained"
                     disabled={saving}
+                    sx={{
+                      bgcolor: ACCENT,
+                      fontWeight: 600,
+                      borderRadius: 1.5,
+                      "&:hover": { bgcolor: "#e55f00" },
+                    }}
                     onClick={() => void handleSaveEdit()}
                   >
-                    {saving ? "저장 중..." : "수정 저장"}
+                    {saving ? <CircularProgress size={20} color="inherit" /> : "수정 저장"}
                   </Button>
                 </>
               )}
               {detail.approvalStatus === "PENDING" && (
                 <Button
-                  color="error"
                   variant="contained"
                   disabled={processing}
+                  sx={{
+                    bgcolor: "#dc2626",
+                    fontWeight: 600,
+                    borderRadius: 1.5,
+                    "&:hover": { bgcolor: "#b91c1c" },
+                  }}
                   onClick={() => void handleCancel()}
                 >
                   신청 철회
                 </Button>
               )}
             </Stack>
-          </CardContent>
-        </Card>
-      )}
+          </Paper>
+        )}
 
       <Snackbar
         open={Boolean(toast)}
-        autoHideDuration={2200}
+        autoHideDuration={2000}
         message={toast}
         onClose={() => setToast("")}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
@@ -797,15 +1036,23 @@ export default function MyRestaurantRequestDetailPage() {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>맛집 소개 미리보기</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: "#1a1a1a" }}>맛집 소개 미리보기</DialogTitle>
         <DialogContent dividers>
           {detail?.approvalStatus !== "APPROVED" && (
-            <Alert severity="info" sx={{ mb: 2 }}>
+            <Alert severity="info" sx={{ mb: 2, borderRadius: 2, border: "1px solid rgba(33,150,243,0.3)" }}>
               현재 승인 전 상태입니다. 실제 맛집 소개 페이지에는 아직 노출되지 않습니다.
             </Alert>
           )}
           <Stack spacing={2}>
-            <Card sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid #ececec" }}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 2,
+                overflow: "hidden",
+                border: "1px solid",
+                borderColor: "rgba(0,0,0,0.06)",
+              }}
+            >
               <Box
                 component="img"
                 src={previewImageUrl || "/images/world.jpg"}
@@ -821,17 +1068,34 @@ export default function MyRestaurantRequestDetailPage() {
                   objectFit: "cover",
                 }}
               />
-            </Card>
+            </Paper>
 
-            <Card sx={{ borderRadius: 3, border: "1px solid #ececec" }}>
-              <CardContent>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "rgba(0,0,0,0.06)",
+                p: 2,
+              }}
+            >
                 <Typography variant="h5" sx={{ fontWeight: 800 }}>
                   {previewName || "-"}
                 </Typography>
 
                 <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
                   {(previewCategories.length ? previewCategories : ["-"]).map((category) => (
-                    <Chip key={category} label={category} color="primary" size="small" />
+                    <Chip
+                      key={category}
+                      label={category}
+                      size="small"
+                      sx={{
+                        bgcolor: ACCENT,
+                        color: "#fff",
+                        fontWeight: 600,
+                        "& .MuiChip-label": { px: 1 },
+                      }}
+                    />
                   ))}
                 </Box>
 
@@ -867,14 +1131,26 @@ export default function MyRestaurantRequestDetailPage() {
                     value={descriptionHtml}
                   />
                 </Box>
-              </CardContent>
-            </Card>
+            </Paper>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsPreviewOpen(false)}>닫기</Button>
+          <Button
+            variant="outlined"
+            onClick={() => setIsPreviewOpen(false)}
+            sx={{
+              borderColor: "rgba(0,0,0,0.2)",
+              color: "#64748b",
+              fontWeight: 600,
+              borderRadius: 1.5,
+              "&:hover": { borderColor: ACCENT, color: ACCENT, bgcolor: "rgba(255,107,0,0.04)" },
+            }}
+          >
+            닫기
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
+    </ThemeProvider>
   );
 }

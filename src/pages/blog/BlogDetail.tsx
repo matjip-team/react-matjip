@@ -11,7 +11,7 @@ import {
   TextField,
   CircularProgress,
 } from "@mui/material";
-import { useAuth } from "../../pages/common/context/useAuth";
+import { useAuth } from "../common/context/useAuth";
 import { formatDateTime } from "../common/utils/helperUtil";
 import ReactQuill, { Quill } from "react-quill-new";
 import "react-quill-new/dist/quill.bubble.css";
@@ -67,7 +67,7 @@ export default function BlogDetail() {
   const [toast, setToast] = useState("");
   const [recommended, setRecommended] = useState(false);
 
-  const MAIN_COLOR = "#4F9FFA";
+  const ACCENT = "#ff6b00";
 
   // 로그인사용자 정보  가져오기
   const { user } = useAuth();
@@ -332,11 +332,14 @@ export default function BlogDetail() {
         sx={{
           cursor: "pointer",
           fontSize: 14,
-          px: 0.6,
-          py: 0.1,
-          borderRadius: "6px",
-          backgroundColor: recommended ? "#ffddb8" : "#f5f5f5",
-          "&:hover": { backgroundColor: "#ffe0cc" },
+          px: 1,
+          py: 0.5,
+          borderRadius: 1.5,
+          backgroundColor: recommended ? "rgba(255,107,0,0.15)" : "#f8fafc",
+          color: recommended ? ACCENT : "#64748b",
+          "&:hover": {
+            backgroundColor: recommended ? "rgba(255,107,0,0.2)" : "#f1f5f9",
+          },
         }}
         onClick={handleRecommend}
       >
@@ -347,11 +350,12 @@ export default function BlogDetail() {
         sx={{
           cursor: "pointer",
           fontSize: 14,
-          px: 0.6,
-          py: 0.1,
-          borderRadius: "6px",
-          backgroundColor: "#f5f5f5",
-          "&:hover": { backgroundColor: "#e3f2fd" },
+          px: 1,
+          py: 0.5,
+          borderRadius: 1.5,
+          backgroundColor: "#f8fafc",
+          color: "#64748b",
+          "&:hover": { backgroundColor: "#f1f5f9" },
         }}
         onClick={handleShare}
       >
@@ -409,25 +413,44 @@ export default function BlogDetail() {
   // 렌더
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
-      <Paper sx={{ p: 3, position: "relative" }}>
+    <Box
+      sx={{
+        maxWidth: 1100,
+        mx: "auto",
+        py: 5,
+        px: { xs: 2, sm: 3 },
+      }}
+    >
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          position: "relative",
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fff",
+        }}
+      >
         {renderActionButtons()}
 
         {/* 제목 */}
         <Typography
+          variant="h4"
           sx={{
-            fontSize: 25,
             fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
             display: "flex",
             alignItems: "center",
             gap: 1,
           }}
         >
           <span>
-            [{post.blogType === "NOTICE" ? "공지" : "소개"}] {post.title}
+            [{post.blogType === "NOTICE" ? "공지" : "후기"}] {post.title}
           </span>
 
-          <Typography component="span" sx={{ fontSize: 15, color: "#888" }}>
+          <Typography component="span" sx={{ fontSize: 15, color: "#64748b" }}>
             {post.commentCount > 0 && `[${post.commentCount}]`}
           </Typography>
         </Typography>
@@ -438,7 +461,7 @@ export default function BlogDetail() {
             mt: 3,
             display: "flex",
             justifyContent: "space-between",
-            color: "#666",
+            color: "#64748b",
           }}
         >
           <Typography sx={{ fontSize: 12 }}>
@@ -451,7 +474,7 @@ export default function BlogDetail() {
           </Typography>
         </Box>
 
-        <Divider sx={{ my: 1 }} />
+        <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
         {/* 이미지 */}
         {post?.imageUrl && (
@@ -527,7 +550,7 @@ export default function BlogDetail() {
                 sx={{
                   fontSize: 13,
                   cursor: "pointer",
-                  color: sortType === "created" ? MAIN_COLOR : "#888",
+                  color: sortType === "created" ? ACCENT : "#888",
                 }}
                 onClick={() => setSortType("created")}
               >
@@ -538,7 +561,7 @@ export default function BlogDetail() {
                 sx={{
                   fontSize: 13,
                   cursor: "pointer",
-                  color: sortType === "latest" ? MAIN_COLOR : "#888",
+                  color: sortType === "latest" ? ACCENT : "#888",
                 }}
                 onClick={() => setSortType("latest")}
               >
@@ -547,10 +570,10 @@ export default function BlogDetail() {
             </Box>
           </Box>
 
-          <Divider sx={{ mb: 1 }} />
+          <Divider sx={{ mb: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
           {/* 댓글 작성 */}
-          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+          <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
             <TextField
               fullWidth
               multiline
@@ -568,19 +591,27 @@ export default function BlogDetail() {
               }}
               disabled={loadingSubmit}
               sx={{
-                "& textarea": {
-                  fontSize: 13,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1.5,
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: ACCENT,
+                    borderWidth: 2,
+                  },
                 },
+                "& textarea": { fontSize: 14 },
               }}
             />
             <Button
               variant="contained"
               sx={{
-                bgcolor: MAIN_COLOR,
+                bgcolor: ACCENT,
                 whiteSpace: "nowrap",
-                height: 32,
-                fontSize: 12,
-                px: 1.5,
+                height: 40,
+                fontSize: 14,
+                px: 2,
+                borderRadius: 1.5,
+                fontWeight: 600,
+                "&:hover": { bgcolor: "#e55f00" },
               }}
               onClick={submitComment}
               disabled={loadingSubmit}
@@ -645,7 +676,14 @@ export default function BlogDetail() {
                       />
                       <Button
                         variant="contained"
-                        sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+                        sx={{
+                          bgcolor: ACCENT,
+                          height: 36,
+                          fontSize: 13,
+                          borderRadius: 1.5,
+                          fontWeight: 600,
+                          "&:hover": { bgcolor: "#e55f00" },
+                        }}
                         onClick={() => updateComment(c.id)}
                       >
                         저장
@@ -656,7 +694,7 @@ export default function BlogDetail() {
                           height: 32,
                           fontSize: 12,
                           borderColor: "#bbb",
-                          color: "#666",
+                          color: "#64748b",
                         }}
                         onClick={() => {
                           setEditingId(null);
@@ -731,7 +769,7 @@ export default function BlogDetail() {
                 <Typography
                   sx={{
                     fontSize: 12,
-                    color: MAIN_COLOR,
+                    color: ACCENT,
                     cursor: "pointer",
                     mt: 0.6,
                     width: "fit-content",
@@ -773,10 +811,13 @@ export default function BlogDetail() {
                     <Button
                       variant="contained"
                       sx={{
-                        bgcolor: MAIN_COLOR,
+                        bgcolor: ACCENT,
                         whiteSpace: "nowrap",
-                        height: 32,
-                        fontSize: 12,
+                        height: 36,
+                        fontSize: 13,
+                        borderRadius: 1.5,
+                        fontWeight: 600,
+                        "&:hover": { bgcolor: "#e55f00" },
                       }}
                       onClick={() => submitReply(c.id, replyText)}
                     >
@@ -785,7 +826,7 @@ export default function BlogDetail() {
                     <Button
                       variant="text"
                       sx={{
-                        color: "#666",
+                        color: "#64748b",
                         whiteSpace: "nowrap",
                         backgroundColor: "#f3f3f3",
                         height: 32,
@@ -871,9 +912,12 @@ export default function BlogDetail() {
                                 <Button
                                   variant="contained"
                                   sx={{
-                                    bgcolor: MAIN_COLOR,
-                                    height: 32,
-                                    fontSize: 12,
+                                    bgcolor: ACCENT,
+                                    height: 36,
+                                    fontSize: 13,
+                                    borderRadius: 1.5,
+                                    fontWeight: 600,
+                                    "&:hover": { bgcolor: "#e55f00" },
                                   }}
                                   onClick={() => updateComment(r.id)}
                                 >
@@ -920,7 +964,7 @@ export default function BlogDetail() {
                                         sx={{
                                           minWidth: 0,
                                           fontSize: 12,
-                                          color: "#666",
+                                          color: "#64748b",
                                         }}
                                         onClick={() => {
                                           setEditingId(r.id);
@@ -968,39 +1012,28 @@ export default function BlogDetail() {
         </Box>
 
         {/* 게시글 관련 버튼 */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-          {/* {user &&
-            (user.id === post.authorId || user.role === "ROLE_ADMIN") && (
-              <>
-                <Button
-                  variant="contained"
-                  sx={{
-                    height: 32,
-                    fontSize: 12,
-                  }}
-                  onClick={() => navigate(`/blog/edit/${id}`)}
-                >
-                  수정
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{
-                    height: 32,
-                    fontSize: 12,
-                  }}
-                  onClick={handleDelete}
-                >
-                  삭제
-                </Button>
-              </>
-            )} */}
-
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1.5,
+            mt: 4,
+          }}
+        >
           <Button
-            variant="contained"
+            variant="outlined"
             sx={{
-              bgcolor: MAIN_COLOR,
-              height: 32,
-              fontSize: 12,
+              height: 40,
+              fontSize: 14,
+              borderRadius: 1.5,
+              fontWeight: 600,
+              borderColor: "rgba(0,0,0,0.2)",
+              color: "#64748b",
+              "&:hover": {
+                borderColor: ACCENT,
+                color: ACCENT,
+                bgcolor: "rgba(255,107,0,0.04)",
+              },
             }}
             onClick={() => navigate("/blog")}
           >

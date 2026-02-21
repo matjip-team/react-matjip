@@ -1,13 +1,13 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
+  CircularProgress,
   Divider,
+  Paper,
   Snackbar,
   Stack,
   TextField,
@@ -53,6 +53,9 @@ const STATUS_META: Record<RestaurantApprovalStatus, { label: string; color: "war
   CANCELLED: { label: "철회", color: "default" },
 };
 
+const ACCENT = "#ff6b00";
+const LABEL_WIDTH = 120;
+
 const formatDateTime = (value?: string | null) => {
   if (!value) {
     return "-";
@@ -74,11 +77,25 @@ const toDisplayImageUrl = (value?: string | null): string | null => {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
-      <Typography sx={{ width: { xs: "100%", sm: 110 }, color: "#666", fontSize: 14 }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={1}
+      alignItems={{ xs: "stretch", sm: "flex-start" }}
+      sx={{ py: 0.5 }}
+    >
+      <Typography
+        sx={{
+          width: { xs: "100%", sm: LABEL_WIDTH },
+          flexShrink: 0,
+          color: "#64748b",
+          fontSize: 14,
+        }}
+      >
         {label}
       </Typography>
-      <Typography sx={{ flex: 1, color: "#222", fontSize: 14, whiteSpace: "pre-wrap" }}>{value}</Typography>
+      <Typography sx={{ flex: 1, minWidth: 0, color: "#334155", fontSize: 14, whiteSpace: "pre-wrap" }}>
+        {value}
+      </Typography>
     </Stack>
   );
 }
@@ -255,172 +272,349 @@ export default function RestaurantRequestDetailPage() {
 
   if (!user) {
     return (
-      <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
-        <Alert severity="warning">로그인이 필요합니다.</Alert>
+      <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+        <Alert severity="warning" sx={{ borderRadius: 2, border: "1px solid rgba(245,158,11,0.3)" }}>
+          로그인이 필요합니다.
+        </Alert>
       </Box>
     );
   }
 
   if (!isAdmin) {
     return (
-      <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
-        <Alert severity="error">관리자만 접근 가능합니다.</Alert>
+      <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+        <Alert severity="error" sx={{ borderRadius: 2, border: "1px solid rgba(220,38,38,0.2)" }}>
+          관리자만 접근 가능합니다.
+        </Alert>
       </Box>
     );
   }
 
   if (!hasValidRequestId) {
     return (
-      <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
+      <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2, border: "1px solid rgba(220,38,38,0.2)" }}>
           잘못된 접근입니다.
         </Alert>
-        <Button variant="outlined" onClick={() => navigate("/admin/restaurant-requests")}>목록으로</Button>
+        <Button
+          variant="outlined"
+          sx={{
+            borderColor: "rgba(0,0,0,0.2)",
+            color: "#64748b",
+            fontWeight: 600,
+            borderRadius: 1.5,
+            "&:hover": {
+              borderColor: ACCENT,
+              color: ACCENT,
+              bgcolor: "rgba(255,107,0,0.04)",
+            },
+          }}
+          onClick={() => navigate("/admin/restaurant-requests")}
+        >
+          목록으로
+        </Button>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
-      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} sx={{ mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>신청 상세</Typography>
-        <Button variant="outlined" onClick={() => navigate("/admin/restaurant-requests")}>목록으로</Button>
-      </Stack>
+    <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <Box>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            맛집 등록 신청 상세
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            신청 내용을 검토하고 승인 또는 반려합니다
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          sx={{
+            borderColor: "rgba(0,0,0,0.2)",
+            color: "#64748b",
+            fontWeight: 600,
+            borderRadius: 1.5,
+            "&:hover": {
+              borderColor: ACCENT,
+              color: ACCENT,
+              bgcolor: "rgba(255,107,0,0.04)",
+            },
+          }}
+          onClick={() => navigate("/admin/restaurant-requests")}
+        >
+          목록으로
+        </Button>
+      </Box>
 
-      {loading && <Typography sx={{ color: "#666", mb: 2 }}>상세 정보를 불러오는 중...</Typography>}
-      {!loading && !detail && <Alert severity="info">표시할 신청 정보가 없습니다.</Alert>}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+          <CircularProgress sx={{ color: ACCENT }} />
+        </Box>
+      ) : !detail ? (
+        <Paper
+          elevation={0}
+          sx={{
+            py: 8,
+            textAlign: "center",
+            color: "#94a3b8",
+            fontSize: 15,
+            borderRadius: 2,
+            border: "1px dashed rgba(0,0,0,0.1)",
+            bgcolor: "#f8fafc",
+          }}
+        >
+          표시할 신청 정보가 없습니다.
+        </Paper>
+      ) : (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fff",
+          }}
+        >
+          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1}>
+            <Box>
+              <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>{detail.name}</Typography>
+              <Typography sx={{ fontSize: 13, color: "#94a3b8", mt: 0.5 }}>신청 번호: #{detail.id}</Typography>
+            </Box>
+            <Chip
+              size="small"
+              label={STATUS_META[detail.approvalStatus].label}
+              sx={{
+                alignSelf: { xs: "flex-start", sm: "center" },
+                height: 22,
+                fontSize: 11,
+                fontWeight: 600,
+                "& .MuiChip-label": { px: 1 },
+                ...(detail.approvalStatus === "PENDING" && { bgcolor: ACCENT, color: "#fff" }),
+                ...(detail.approvalStatus === "APPROVED" && { bgcolor: "#059669", color: "#fff" }),
+                ...(detail.approvalStatus === "REJECTED" && { bgcolor: "#dc2626", color: "#fff" }),
+                ...(detail.approvalStatus === "CANCELLED" && { bgcolor: "#64748b", color: "#fff" }),
+              }}
+            />
+          </Stack>
 
-      {detail && (
-        <Card sx={{ border: "1px solid #eee" }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1}>
-              <Box>
-                <Typography sx={{ fontSize: 24, fontWeight: 800 }}>{detail.name}</Typography>
-                <Typography sx={{ fontSize: 13, color: "#888", mt: 0.5 }}>신청 번호: #{detail.id}</Typography>
-              </Box>
-              <Chip
-                size="small"
-                label={STATUS_META[detail.approvalStatus].label}
-                color={STATUS_META[detail.approvalStatus].color}
-                sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
-              />
-            </Stack>
+          <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-            <Divider sx={{ my: 2 }} />
+          <Box
+            sx={{
+              display: "grid",
+              gap: 3,
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+              alignItems: "start",
+            }}
+          >
+            <Box>
+              <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#334155", fontSize: 15 }}>
+                신청 요약
+              </Typography>
+              <Stack spacing={0}>
+                <InfoRow label="신청자" value={detail.registeredByNickname || "-"} />
+                <InfoRow label="신청일" value={formatDateTime(detail.createdAt)} />
+                <InfoRow
+                  label="처리일"
+                  value={detail.approvalStatus === "PENDING" ? "-" : formatDateTime(detail.reviewedAt)}
+                />
+              </Stack>
+            </Box>
 
-            <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
-              <Box>
-                <Typography sx={{ fontWeight: 700, mb: 1 }}>신청 요약</Typography>
-                <Stack spacing={0.8}>
-                  <InfoRow label="신청자" value={detail.registeredByNickname || "-"} />
-                  <InfoRow label="신청일" value={formatDateTime(detail.createdAt)} />
-                  <InfoRow
-                    label="처리일"
-                    value={detail.approvalStatus === "PENDING" ? "-" : formatDateTime(detail.reviewedAt)}
-                  />
-                </Stack>
-              </Box>
-
-              <Box>
-                <Typography sx={{ fontWeight: 700, mb: 1 }}>첨부 서류</Typography>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7} alignItems={{ xs: "flex-start", sm: "center" }}>
-                  <Typography sx={{ width: { xs: "100%", sm: 110 }, color: "#666", fontSize: 14 }}>
-                    사업자등록증
+            <Box>
+              <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#334155", fontSize: 15 }}>
+                첨부 서류
+              </Typography>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1}
+                alignItems={{ xs: "stretch", sm: "flex-start" }}
+                sx={{ py: 0.5 }}
+              >
+                <Typography
+                  sx={{
+                    width: { xs: "100%", sm: LABEL_WIDTH },
+                    flexShrink: 0,
+                    color: "#64748b",
+                    fontSize: 14,
+                  }}
+                >
+                  사업자등록증
+                </Typography>
+                <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ color: "#334155", fontSize: 14 }}>
+                    {detail.hasBusinessLicenseFile ? "첨부됨" : "없음"}
                   </Typography>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap" }}>
-                    <Typography sx={{ color: "#222", fontSize: 14 }}>
-                      {detail.hasBusinessLicenseFile ? "첨부됨" : "없음"}
-                    </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<DescriptionOutlinedIcon />}
+                    onClick={() => void handleOpenLicense()}
+                    disabled={!detail.hasBusinessLicenseFile || openingLicense}
+                    sx={{
+                      borderColor: ACCENT,
+                      color: ACCENT,
+                      borderRadius: 1,
+                      "&:hover": {
+                        borderColor: "#e55f00",
+                        bgcolor: "rgba(255,107,0,0.04)",
+                      },
+                    }}
+                  >
+                    {openingLicense ? "여는 중..." : "첨부파일 열기"}
+                  </Button>
+                </Stack>
+              </Stack>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.06)" }} />
+
+          <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#334155", fontSize: 15 }}>
+            신청 정보
+          </Typography>
+          {(() => {
+            const raw = detail.description?.trim() ?? "";
+            const hasHtml = /<[^>]+>/.test(raw);
+            const escaped = raw
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#39;");
+            const descriptionHtml = raw
+              ? hasHtml
+                ? raw
+                : `<p>${escaped.replace(/\n/g, "<br/>")}</p>`
+              : "<p>-</p>";
+            return (
+              <Stack spacing={0}>
+                <InfoRow label="주소" value={detail.address || "-"} />
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ xs: "stretch", sm: "flex-start" }}
+                  sx={{ py: 0.5 }}
+                >
+                  <Box sx={{ width: { xs: "100%", sm: LABEL_WIDTH }, flexShrink: 0 }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box
+                      ref={mapContainerRef}
+                      sx={{
+                        width: "100%",
+                        height: 220,
+                        borderRadius: 1.5,
+                        border: "1px solid",
+                        borderColor: "rgba(0,0,0,0.06)",
+                        overflow: "hidden",
+                        backgroundColor: "#f8fafc",
+                      }}
+                    />
                     <Button
                       size="small"
                       variant="outlined"
-                      startIcon={<DescriptionOutlinedIcon />}
-                      onClick={() => void handleOpenLicense()}
-                      disabled={!detail.hasBusinessLicenseFile || openingLicense}
-                    >
-                      {openingLicense ? "여는 중..." : "첨부파일 열기"}
-                    </Button>
-                  </Stack>
-                </Stack>
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography sx={{ fontWeight: 700, mb: 1 }}>신청 정보</Typography>
-            {(() => {
-              const raw = detail.description?.trim() ?? "";
-              const hasHtml = /<[^>]+>/.test(raw);
-              const escaped = raw
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#39;");
-              const descriptionHtml = raw
-                ? hasHtml
-                  ? raw
-                  : `<p>${escaped.replace(/\n/g, "<br/>")}</p>`
-                : "<p>-</p>";
-              return (
-            <Stack spacing={0.9}>
-              <InfoRow label="주소" value={detail.address || "-"} />
-              <Box
-                ref={mapContainerRef}
-                sx={{
-                  mt: 0.5,
-                  width: "100%",
-                  height: 250,
-                  borderRadius: 1,
-                  border: "1px solid #e8e8e8",
-                  overflow: "hidden",
-                  backgroundColor: "#fafafa",
-                }}
-              />
-              <Box sx={{ pl: { xs: 0, sm: 13.8 } }}>
-                <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
-                  지도에서 크게 보기
-                </Button>
-              </Box>
-              <InfoRow label="전화번호" value={detail.phone || "-"} />
-              <InfoRow label="카테고리" value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"} />
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
-                <Typography sx={{ width: { xs: "100%", sm: 110 }, color: "#666", fontSize: 14 }}>
-                  대표사진
-                </Typography>
-                <Box sx={{ flex: 1 }}>
-                  {displayImageUrl ? (
-                    <Box
-                      component="img"
-                      src={displayImageUrl}
-                      alt="대표사진"
-                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                        const img = e.currentTarget;
-                        if (img.src.includes("/images/world.jpg")) return;
-                        img.src = "/images/world.jpg";
-                      }}
+                      endIcon={<OpenInNewIcon />}
+                      onClick={openMap}
                       sx={{
-                        width: 240,
-                        maxWidth: "100%",
-                        height: 150,
-                        objectFit: "cover",
+                        mt: 1,
+                        borderColor: "rgba(0,0,0,0.2)",
+                        color: "#64748b",
                         borderRadius: 1,
-                        border: "1px solid #e8e8e8",
+                        "&:hover": {
+                          borderColor: ACCENT,
+                          color: ACCENT,
+                          bgcolor: "rgba(255,107,0,0.04)",
+                        },
                       }}
-                    />
-                  ) : (
-                    <Typography sx={{ color: "#222", fontSize: 14 }}>없음</Typography>
-                  )}
-                </Box>
-              </Stack>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
-                <Typography sx={{ width: { xs: "100%", sm: 110 }, color: "#666", fontSize: 14 }}>
-                  설명
-                </Typography>
-                <Box
-                  sx={{
-                    flex: 1,
-                    "& .ql-editor": { padding: 0 },
+                    >
+                      지도에서 크게 보기
+                    </Button>
+                  </Box>
+                </Stack>
+                <InfoRow label="전화번호" value={detail.phone || "-"} />
+                <InfoRow label="카테고리" value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"} />
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ xs: "stretch", sm: "flex-start" }}
+                  sx={{ py: 0.5 }}
+                >
+                  <Typography
+                    sx={{
+                      width: { xs: "100%", sm: LABEL_WIDTH },
+                      flexShrink: 0,
+                      color: "#64748b",
+                      fontSize: 14,
+                    }}
+                  >
+                    대표사진
+                  </Typography>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    {displayImageUrl ? (
+                      <Box
+                        component="img"
+                        src={displayImageUrl}
+                        alt="대표사진"
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                          const img = e.currentTarget;
+                          if (img.src.includes("/images/world.jpg")) return;
+                          img.src = "/images/world.jpg";
+                        }}
+                        sx={{
+                          width: 240,
+                          maxWidth: "100%",
+                          height: 150,
+                          objectFit: "cover",
+                          borderRadius: 1.5,
+                          border: "1px solid",
+                          borderColor: "rgba(0,0,0,0.06)",
+                        }}
+                      />
+                    ) : (
+                      <Typography sx={{ color: "#94a3b8", fontSize: 14 }}>없음</Typography>
+                    )}
+                  </Box>
+                </Stack>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ xs: "stretch", sm: "flex-start" }}
+                  sx={{ py: 0.5 }}
+                >
+                  <Typography
+                    sx={{
+                      width: { xs: "100%", sm: LABEL_WIDTH },
+                      flexShrink: 0,
+                      color: "#64748b",
+                      fontSize: 14,
+                    }}
+                  >
+                    설명
+                  </Typography>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      "& .ql-editor": { padding: 0 },
                     "& .ql-editor img": { maxWidth: "100%", height: "auto" },
                     "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
                     "& .ql-editor table": {
@@ -434,69 +628,106 @@ export default function RestaurantRequestDetailPage() {
                       verticalAlign: "top",
                     },
                   }}
-                >
-                  <ReactQuill theme="bubble" readOnly modules={{ toolbar: false }} value={descriptionHtml} />
-                </Box>
-              </Stack>
-            </Stack>
-              );
-            })()}
-
-            {detail.approvalStatus === "PENDING" && (
-              <Box sx={{ mt: 2 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  multiline
-                  minRows={2}
-                  label="반려 사유"
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="반려 사유를 입력해 주세요."
-                />
-
-                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1 }}>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    disabled={processing}
-                    onClick={() => void handleDecision("APPROVED")}
                   >
-                    승인
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    disabled={processing}
-                    onClick={() => void handleDecision("REJECTED")}
-                  >
-                    반려
-                  </Button>
+                    <ReactQuill theme="bubble" readOnly modules={{ toolbar: false }} value={descriptionHtml} />
+                  </Box>
                 </Stack>
-              </Box>
-            )}
-            {detail.approvalStatus === "REJECTED" && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                반려 사유: {detail.rejectedReason?.trim() ? detail.rejectedReason : "-"}
-              </Alert>
-            )}
-            {detail.approvalStatus === "APPROVED" && (
-              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+              </Stack>
+            );
+          })()}
+
+          {detail.approvalStatus === "PENDING" && (
+            <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid", borderColor: "rgba(0,0,0,0.06)" }}>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                minRows={2}
+                label="반려 사유"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="반려 사유를 입력해 주세요."
+                sx={{
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: ACCENT,
+                      borderWidth: 2,
+                    },
+                  },
+                }}
+              />
+
+              <Stack direction="row" spacing={1.5} justifyContent="flex-end">
                 <Button
-                  variant="outlined"
-                  onClick={() => navigate(`/?keyword=${encodeURIComponent(detail.name)}`)}
+                  variant="contained"
+                  disabled={processing}
+                  onClick={() => void handleDecision("APPROVED")}
+                  sx={{
+                    bgcolor: "#059669",
+                    fontWeight: 600,
+                    borderRadius: 1.5,
+                    "&:hover": { bgcolor: "#047857" },
+                  }}
                 >
-                  홈에서 카드 확인
+                  승인
+                </Button>
+                <Button
+                  variant="contained"
+                  disabled={processing}
+                  onClick={() => void handleDecision("REJECTED")}
+                  sx={{
+                    bgcolor: "#dc2626",
+                    fontWeight: 600,
+                    borderRadius: 1.5,
+                    "&:hover": { bgcolor: "#b91c1c" },
+                  }}
+                >
+                  반려
                 </Button>
               </Stack>
-            )}
-          </CardContent>
-        </Card>
+            </Box>
+          )}
+          {detail.approvalStatus === "REJECTED" && (
+            <Alert
+              severity="error"
+              sx={{
+                mt: 3,
+                borderRadius: 2,
+                border: "1px solid rgba(220,38,38,0.2)",
+              }}
+            >
+              반려 사유: {detail.rejectedReason?.trim() ? detail.rejectedReason : "-"}
+            </Alert>
+          )}
+          {detail.approvalStatus === "APPROVED" && (
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate(`/?keyword=${encodeURIComponent(detail.name)}`)}
+                sx={{
+                  borderColor: "rgba(0,0,0,0.2)",
+                  color: "#64748b",
+                  fontWeight: 600,
+                  borderRadius: 1.5,
+                  "&:hover": {
+                    borderColor: ACCENT,
+                    color: ACCENT,
+                    bgcolor: "rgba(255,107,0,0.04)",
+                  },
+                }}
+              >
+                홈에서 카드 확인
+              </Button>
+            </Stack>
+          )}
+        </Paper>
       )}
 
       <Snackbar
         open={Boolean(toast)}
-        autoHideDuration={1800}
+        autoHideDuration={2000}
         message={toast}
         onClose={() => setToast("")}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}

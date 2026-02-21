@@ -77,6 +77,22 @@ export default function ProfileInfo({ data, onEdit }: Props) {
 
   return (
     <>
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
+            mb: 0.5,
+          }}
+        >
+          내 정보
+        </Typography>
+        <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+          프로필을 확인하고 수정할 수 있습니다
+        </Typography>
+      </Box>
       <Box
         sx={{
           display: "flex",

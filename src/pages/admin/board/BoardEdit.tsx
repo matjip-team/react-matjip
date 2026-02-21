@@ -1,14 +1,14 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   Box,
   Button,
   ButtonGroup,
-  Card,
-  CardContent,
   CircularProgress,
+  Divider,
   FormControlLabel,
+  Paper,
   Snackbar,
   Switch,
   TextField,
@@ -65,6 +65,8 @@ const parseValidationErrors = (error: unknown): Record<string, string> => {
   });
   return map;
 };
+
+const ACCENT = "#ff6b00";
 
 export default function BoardEdit() {
   const { id } = useParams();
@@ -254,112 +256,247 @@ export default function BoardEdit() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
-        <CircularProgress />
+      <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+        <CircularProgress sx={{ color: ACCENT }} />
       </Box>
     );
   }
 
   return (
     <ThemeProvider theme={boardTheme}>
-      <Box sx={{ maxWidth: 980, mx: "auto", mt: 4, px: 1 }}>
-        {warning ? <Alert severity="warning" sx={{ mb: 2 }}>{warning}</Alert> : null}
+      <Box
+        sx={{
+          maxWidth: 1100,
+          mx: "auto",
+          py: 5,
+          px: { xs: 2, sm: 3 },
+        }}
+      >
+        {warning ? (
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              border: "1px solid rgba(245,158,11,0.3)",
+            }}
+          >
+            {warning}
+          </Alert>
+        ) : null}
 
-        <Card variant="outlined" sx={{ borderColor: "#ececec" }}>
-          <CardContent>
-            <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#ff6b00", mb: 2 }}>
-              관리자 글 수정
-            </Typography>
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            관리자 글 수정
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            게시글을 수정합니다
+          </Typography>
+        </Box>
 
-            <Box component="form" onSubmit={handleSubmit}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
-                <Typography sx={{ fontWeight: 700 }}>말머리</Typography>
-                <ButtonGroup size="small">
-                  <Button
-                    variant={boardType === "NOTICE" ? "contained" : "outlined"}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            position: "relative",
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "rgba(0,0,0,0.06)",
+            bgcolor: "#fff",
+          }}
+        >
+          <Box component="form" onSubmit={handleSubmit}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3, flexWrap: "wrap" }}>
+              <Typography sx={{ fontWeight: 600, color: "#334155" }}>말머리</Typography>
+              <ButtonGroup size="small">
+                <Button
+                  variant={boardType === "NOTICE" ? "contained" : "outlined"}
+                  sx={{
+                    bgcolor: boardType === "NOTICE" ? ACCENT : "transparent",
+                    color: boardType === "NOTICE" ? "#fff" : "#64748b",
+                    borderColor: boardType === "NOTICE" ? ACCENT : "rgba(0,0,0,0.2)",
+                    borderRadius: 1,
+                    "&:hover": {
+                      bgcolor: boardType === "NOTICE" ? "#e55f00" : "rgba(0,0,0,0.04)",
+                      borderColor: boardType === "NOTICE" ? "#e55f00" : "rgba(0,0,0,0.3)",
+                    },
+                  }}
+                  onClick={() => setBoardType("NOTICE")}
+                >
+                  공지
+                </Button>
+                <Button
+                  variant={boardType === "REVIEW" ? "contained" : "outlined"}
+                  sx={{
+                    bgcolor: boardType === "REVIEW" ? ACCENT : "transparent",
+                    color: boardType === "REVIEW" ? "#fff" : "#64748b",
+                    borderColor: boardType === "REVIEW" ? ACCENT : "rgba(0,0,0,0.2)",
+                    borderRadius: 1,
+                    "&:hover": {
+                      bgcolor: boardType === "REVIEW" ? "#e55f00" : "rgba(0,0,0,0.04)",
+                      borderColor: boardType === "REVIEW" ? "#e55f00" : "rgba(0,0,0,0.3)",
+                    },
+                  }}
+                  onClick={() => setBoardType("REVIEW")}
+                >
+                  일반
+                </Button>
+              </ButtonGroup>
+
+              <Box sx={{ flex: 1 }} />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={hidden}
+                    onChange={(_, value) => setHidden(value)}
                     sx={{
-                      bgcolor: boardType === "NOTICE" ? "#ff6b00" : "#fff",
-                      color: boardType === "NOTICE" ? "#fff" : "#ff6b00",
-                      borderColor: "#ff6b00",
+                      "& .MuiSwitch-switchBase.Mui-checked": { color: "#94a3b8" },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                        backgroundColor: "#94a3b8",
+                      },
                     }}
-                    onClick={() => setBoardType("NOTICE")}
-                  >
-                    공지
-                  </Button>
-                  <Button
-                    variant={boardType === "REVIEW" ? "contained" : "outlined"}
-                    sx={{
-                      bgcolor: boardType === "REVIEW" ? "#ff6b00" : "#fff",
-                      color: boardType === "REVIEW" ? "#fff" : "#ff6b00",
-                      borderColor: "#ff6b00",
-                    }}
-                    onClick={() => setBoardType("REVIEW")}
-                  >
-                    일반
-                  </Button>
-                </ButtonGroup>
+                  />
+                }
+                label={
+                  <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+                    {hidden ? "숨김" : "노출"}
+                  </Typography>
+                }
+              />
+            </Box>
 
-                <Box sx={{ flex: 1 }} />
+            <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-                <FormControlLabel
-                  control={<Switch checked={hidden} onChange={(_, value) => setHidden(value)} />}
-                  label={hidden ? "숨김" : "노출"}
-                />
-              </Box>
+            <TextField
+              fullWidth
+              value={title}
+              placeholder="제목을 입력하세요"
+              onChange={(event) => {
+                setTitle(event.target.value);
+                if (errors.title) {
+                  setErrors((prev) => ({ ...prev, title: "" }));
+                }
+              }}
+              error={Boolean(errors.title)}
+              helperText={errors.title}
+              sx={{
+                mb: 3,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1.5,
+                  fontSize: "1.1rem",
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: ACCENT,
+                    borderWidth: 2,
+                  },
+                },
+                "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+              }}
+            />
 
-              <TextField
-                fullWidth
-                value={title}
-                placeholder="제목"
-                onChange={(event) => {
-                  setTitle(event.target.value);
-                  if (errors.title) {
-                    setErrors((prev) => ({ ...prev, title: "" }));
+            <Box
+              sx={{
+                mb: 3,
+                "& .ql-toolbar.ql-snow": {
+                  borderRadius: "8px 8px 0 0",
+                  borderColor: "rgba(0,0,0,0.12)",
+                },
+                "& .ql-container.ql-snow": {
+                  minHeight: 360,
+                  borderRadius: "0 0 8px 8px",
+                  borderColor: "rgba(0,0,0,0.12)",
+                },
+                "& .ql-editor": {
+                  minHeight: 320,
+                  fontSize: 15,
+                  lineHeight: 1.7,
+                },
+              }}
+            >
+              <ReactQuill
+                ref={quillRef}
+                theme="snow"
+                value={content}
+                onChange={(value) => {
+                  setContent(value);
+                  if (errors.content) {
+                    setErrors((prev) => ({ ...prev, content: "" }));
                   }
                 }}
-                error={Boolean(errors.title)}
-                helperText={errors.title}
-                sx={{ mb: 2 }}
+                modules={modules}
+                style={{ marginBottom: 45 }}
               />
-
-              <Box sx={{ mb: 2 }}>
-                <ReactQuill
-                  ref={quillRef}
-                  theme="snow"
-                  value={content}
-                  onChange={(value) => {
-                    setContent(value);
-                    if (errors.content) {
-                      setErrors((prev) => ({ ...prev, content: "" }));
-                    }
-                  }}
-                  modules={modules}
-                  style={{ height: 420, marginBottom: 45 }}
-                />
-                {errors.content ? (
-                  <Typography sx={{ color: "#d32f2f", fontSize: 13, mt: 0.5 }}>{errors.content}</Typography>
-                ) : null}
-                {uploading ? (
-                  <Typography sx={{ color: "#777", fontSize: 13, mt: 0.5 }}>
-                    미디어 업로드 중입니다...
-                  </Typography>
-                ) : null}
-              </Box>
-
-              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                <Button variant="outlined" onClick={() => navigate(`/admin/board/${id}`)}>취소</Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  sx={{ bgcolor: "#ff6b00", "&:hover": { bgcolor: "#e65f00" } }}
-                  disabled={saving}
-                >
-                  {saving ? <CircularProgress size={18} color="inherit" /> : "저장"}
-                </Button>
-              </Box>
+              {errors.content ? (
+                <Typography color="error" sx={{ mt: 1 }}>
+                  {errors.content}
+                </Typography>
+              ) : null}
+              {uploading ? (
+                <Typography sx={{ mt: 1, color: "#64748b", fontSize: 13 }}>
+                  미디어 업로드 중입니다...
+                </Typography>
+              ) : null}
             </Box>
-          </CardContent>
-        </Card>
+
+            <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.06)" }} />
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1.5,
+                mt: 4,
+                pt: 2,
+              }}
+            >
+              <Button
+                variant="outlined"
+                sx={{
+                  height: 40,
+                  fontSize: 14,
+                  borderRadius: 1.5,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderColor: "rgba(0,0,0,0.2)",
+                  color: "#64748b",
+                  "&:hover": {
+                    borderColor: ACCENT,
+                    color: ACCENT,
+                    bgcolor: "rgba(255,107,0,0.04)",
+                  },
+                }}
+                onClick={() => navigate(`/admin/board/${id}`)}
+              >
+                취소
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  height: 40,
+                  fontSize: 14,
+                  borderRadius: 1.5,
+                  bgcolor: ACCENT,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  px: 2.5,
+                  "&:hover": { bgcolor: "#e55f00" },
+                }}
+                disabled={saving}
+              >
+                {saving ? <CircularProgress size={20} color="inherit" /> : "저장"}
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
       </Box>
 
       <Snackbar

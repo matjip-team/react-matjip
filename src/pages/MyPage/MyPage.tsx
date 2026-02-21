@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Paper from "@mui/material/Paper";
-import Typography from "@mui/material/Typography";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import PreviewIcon from "@mui/icons-material/Preview";
 import ContentPasteSearchIcon from "@mui/icons-material/ContentPasteSearch";
@@ -21,14 +20,6 @@ import { ThemeProvider } from "@mui/material/styles";
 import myPageTheme from "../common/theme/mypage";
 import RegisterPage from "../register/RegisterPage";
 import MyRestaurantRequestListPage from "../register/MyRestaurantRequestListPage";
-
-const TAB_TITLES: Record<number, { title: string; subtitle: string }> = {
-  0: { title: "찜한 식당", subtitle: "찜해둔 맛집을 확인해보세요" },
-  1: { title: "내가 쓴 리뷰", subtitle: "작성한 리뷰를 관리할 수 있습니다" },
-  2: { title: "맛집 등록", subtitle: "새 맛집을 등록해보세요" },
-  3: { title: "내 신청 내역", subtitle: "맛집 등록 신청 현황을 확인합니다" },
-  4: { title: "내 정보", subtitle: "프로필을 확인하고 수정할 수 있습니다" },
-};
 
 export default function MyPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -78,9 +69,9 @@ export default function MyPage() {
         return <ReviewList />;
 
       case 2:
-        return <RegisterPage />;
+        return <RegisterPage embedded />;
       case 3:
-        return <MyRestaurantRequestListPage />;
+        return <MyRestaurantRequestListPage embedded />;
       case 4:
         if (!profile) {
           return (
@@ -121,43 +112,18 @@ export default function MyPage() {
     }
   };
 
-  const currentTab = TAB_TITLES[value as keyof typeof TAB_TITLES] ?? {
-    title: "마이페이지",
-    subtitle: "",
-  };
-
   return (
     <ThemeProvider theme={myPageTheme}>
       <Box
         sx={{
           pb: 10,
           width: "100%",
-          maxWidth: 1160,
+          maxWidth: 1100,
           mx: "auto",
           py: 5,
           px: { xs: 2, sm: 3 },
         }}
       >
-
-        {/* 페이지 타이틀 */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: "#1a1a1a",
-              letterSpacing: "-0.02em",
-              mb: 0.5,
-            }}
-          >
-            {currentTab.title}
-          </Typography>
-          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
-            {currentTab.subtitle}
-          </Typography>
-        </Box>
-
-        {/* 콘텐츠 영역 */}
         {renderContent()}
 
         {/* 하단 네비게이션 */}

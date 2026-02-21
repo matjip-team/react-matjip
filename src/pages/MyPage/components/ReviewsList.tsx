@@ -24,7 +24,7 @@ import ReportOutlinedIcon from "@mui/icons-material/ReportOutlined";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import { useInView } from "react-intersection-observer";
 
-import { formatRelativeTime } from "../../common/utils/helperUtil";
+import { formatRelativeTime, inputHeightSx, INPUT_HEIGHT } from "../../common/utils/helperUtil";
 import { useReviews } from "../hooks/reviewsHook";
 import { useFormError } from "../../common/utils/useFormError";
 import type { ReviewPage } from "../types/review";
@@ -71,6 +71,22 @@ export default function ReviewList() {
   if (status === "pending") {
     return (
       <Box sx={{ p: 0 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            내가 쓴 리뷰
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            작성한 리뷰를 관리할 수 있습니다
+          </Typography>
+        </Box>
         <Paper
           elevation={0}
           sx={{
@@ -135,6 +151,22 @@ export default function ReviewList() {
 
   return (
     <Box sx={{ p: 0 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
+            mb: 0.5,
+          }}
+        >
+          내가 쓴 리뷰
+        </Typography>
+        <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+          작성한 리뷰를 관리할 수 있습니다
+        </Typography>
+      </Box>
       {globalError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
           {globalError}
@@ -173,6 +205,8 @@ export default function ReviewList() {
               "& .MuiOutlinedInput-root": {
                 bgcolor: "#fff",
                 borderRadius: 1,
+                height: INPUT_HEIGHT,
+                minHeight: INPUT_HEIGHT,
               },
             }}
           />
@@ -184,6 +218,7 @@ export default function ReviewList() {
               minWidth: 110,
               bgcolor: "#fff",
               borderRadius: 1,
+              ...inputHeightSx,
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: "rgba(0,0,0,0.08)",
               },
@@ -201,6 +236,7 @@ export default function ReviewList() {
               minWidth: 120,
               bgcolor: "#fff",
               borderRadius: 1,
+              ...inputHeightSx,
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: "rgba(0,0,0,0.08)",
               },

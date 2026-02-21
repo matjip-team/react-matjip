@@ -28,6 +28,7 @@ import React, { useEffect, useState } from "react";
 import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
 import { useDeleteLike, useLikes } from "../hooks/LikesHook";
 import { useFormError } from "../../common/utils/useFormError";
+import { inputHeightSx, INPUT_HEIGHT } from "../../common/utils/helperUtil";
 import { useInView } from "react-intersection-observer";
 import { renderCategories } from "../components/categoryUtils";
 import CustomizedDialogs from "../../common/component/dialog";
@@ -98,6 +99,22 @@ export default function LikeList() {
   if (status === "pending") {
     return (
       <Box sx={{ p: 0 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            찜한 식당
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            찜해둔 맛집을 확인해보세요
+          </Typography>
+        </Box>
         <Paper
           elevation={0}
           sx={{
@@ -163,6 +180,22 @@ export default function LikeList() {
 
   return (
     <Box sx={{ p: 0 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
+            mb: 0.5,
+          }}
+        >
+          찜한 식당
+        </Typography>
+        <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+          찜해둔 맛집을 확인해보세요
+        </Typography>
+      </Box>
       {globalError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
           {globalError}
@@ -201,6 +234,8 @@ export default function LikeList() {
               "& .MuiOutlinedInput-root": {
                 bgcolor: "#fff",
                 borderRadius: 1,
+                height: INPUT_HEIGHT,
+                minHeight: INPUT_HEIGHT,
               },
             }}
           />
@@ -212,6 +247,7 @@ export default function LikeList() {
               minWidth: 110,
               bgcolor: "#fff",
               borderRadius: 1,
+              ...inputHeightSx,
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: "rgba(0,0,0,0.08)",
               },
@@ -231,6 +267,7 @@ export default function LikeList() {
               minWidth: 120,
               bgcolor: "#fff",
               borderRadius: 1,
+              ...inputHeightSx,
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: "rgba(0,0,0,0.08)",
               },

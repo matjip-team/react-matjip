@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Box,
   // Button,
@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import axios from "../common/axios";
+import { inputHeightSx, INPUT_HEIGHT } from "../common/utils/helperUtil";
 // import { useAuth } from "../common/context/useAuth";
 import { ThemeProvider } from "@mui/material/styles";
 import { blogTheme } from "./theme/blogTheme";
@@ -61,7 +62,6 @@ const normalizeBlog = (blog: BlogLikePayload): BlogPost => ({
 const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
 
 export default function BlogPage() {
-  const navigate = useNavigate();
   // const { user } = useAuth();
   const ACCENT = "#4F9FFA";
 
@@ -211,6 +211,7 @@ export default function BlogPage() {
                 width: 120,
                 bgcolor: "#fff",
                 borderRadius: 1,
+                ...inputHeightSx,
                 "& .MuiOutlinedInput-notchedOutline": {
                   borderColor: "rgba(0,0,0,0.08)",
                 },
@@ -237,6 +238,8 @@ export default function BlogPage() {
                 "& .MuiOutlinedInput-root": {
                   bgcolor: "#fff",
                   borderRadius: 1,
+                  height: INPUT_HEIGHT,
+                  minHeight: INPUT_HEIGHT,
                 },
               }}
             />
@@ -265,6 +268,7 @@ export default function BlogPage() {
                 ml: "auto",
                 bgcolor: "#fff",
                 borderRadius: 1,
+                ...inputHeightSx,
               }}
             >
               <MenuItem value={8}>8개</MenuItem>
@@ -310,14 +314,17 @@ export default function BlogPage() {
               return (
                 <Card
                   key={post.id}
+                  component={Link}
+                  to={`/blog/${post.id}`}
                   variant="outlined"
-                  onClick={() => navigate(`/blog/${post.id}`)}
                   sx={{
                     border: "1px solid",
                     borderColor: "rgba(0,0,0,0.06)",
                     borderRadius: 2,
                     cursor: "pointer",
                     overflow: "hidden",
+                    textDecoration: "none",
+                    color: "inherit",
                     transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)",
                     "&:hover": {
                       borderColor: ACCENT,
@@ -436,6 +443,7 @@ export default function BlogPage() {
                           },
                         }}
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           openAuthorMenu(e, post.authorNickname);
                         }}

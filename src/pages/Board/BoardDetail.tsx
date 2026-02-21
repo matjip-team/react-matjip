@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
@@ -51,7 +51,7 @@ export default function BoardDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const MAIN_COLOR = "#ff6b00";
+  const ACCENT = "#ff6b00";
 
   const [post, setPost] = useState<BoardPostDetail | null>(null);
   const [comments, setComments] = useState<CommentNode[]>([]);
@@ -314,11 +314,14 @@ export default function BoardDetail() {
         sx={{
           cursor: "pointer",
           fontSize: 14,
-          px: 0.6,
-          py: 0.1,
-          borderRadius: "6px",
-          backgroundColor: recommended ? "#ffddb8" : "#f5f5f5",
-          "&:hover": { backgroundColor: "#ffe0cc" },
+          px: 1,
+          py: 0.5,
+          borderRadius: 1.5,
+          backgroundColor: recommended ? "rgba(255,107,0,0.15)" : "#f8fafc",
+          color: recommended ? ACCENT : "#64748b",
+          "&:hover": {
+            backgroundColor: recommended ? "rgba(255,107,0,0.2)" : "#f1f5f9",
+          },
         }}
         onClick={() => void handleRecommend()}
       >
@@ -329,11 +332,12 @@ export default function BoardDetail() {
         sx={{
           cursor: "pointer",
           fontSize: 14,
-          px: 0.6,
-          py: 0.1,
-          borderRadius: "6px",
-          backgroundColor: "#f5f5f5",
-          "&:hover": { backgroundColor: "#e3f2fd" },
+          px: 1,
+          py: 0.5,
+          borderRadius: 1.5,
+          backgroundColor: "#f8fafc",
+          color: "#64748b",
+          "&:hover": { backgroundColor: "#f1f5f9" },
         }}
         onClick={() => void handleShare()}
       >
@@ -344,12 +348,14 @@ export default function BoardDetail() {
         sx={{
           cursor: reportSubmitted ? "default" : "pointer",
           fontSize: 14,
-          px: 0.6,
-          py: 0.1,
-          borderRadius: "6px",
-          color: reportSubmitted ? "#777" : "inherit",
-          backgroundColor: reportSubmitted ? "#efefef" : "#f5f5f5",
-          "&:hover": { backgroundColor: reportSubmitted ? "#efefef" : "#fdecea" },
+          px: 1,
+          py: 0.5,
+          borderRadius: 1.5,
+          color: reportSubmitted ? "#94a3b8" : "#64748b",
+          backgroundColor: reportSubmitted ? "#f1f5f9" : "#f8fafc",
+          "&:hover": {
+            backgroundColor: reportSubmitted ? "#f1f5f9" : "#fdecea",
+          },
         }}
         onClick={reportSubmitted ? undefined : () => void handleReport()}
       >
@@ -359,23 +365,58 @@ export default function BoardDetail() {
   );
 
   if (loadingPost && !post) {
-    return <Box sx={{ textAlign: "center", mt: 10 }}>로딩중...</Box>;
+    return (
+      <Box sx={{ textAlign: "center", py: 10, color: "#64748b" }}>
+        로딩중...
+      </Box>
+    );
   }
 
   if (!post) {
-    return <Box sx={{ textAlign: "center", mt: 10 }}>게시글이 없습니다.</Box>;
+    return (
+      <Box sx={{ textAlign: "center", py: 10, color: "#64748b" }}>
+        게시글이 없습니다.
+      </Box>
+    );
   }
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
-      <Paper sx={{ p: 3, position: "relative" }}>
+    <Box
+      sx={{
+        maxWidth: 1100,
+        mx: "auto",
+        py: 5,
+        px: { xs: 2, sm: 3 },
+      }}
+    >
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          position: "relative",
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fff",
+        }}
+      >
         {renderActionButtons()}
 
-        <Typography sx={{ fontSize: 25, fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
           <span>
             [{post.boardType === "NOTICE" ? "공지" : "일반"}] {post.title}
           </span>
-          <Typography component="span" sx={{ fontSize: 15, color: "#888" }}>
+          <Typography component="span" sx={{ fontSize: 15, color: "#64748b" }}>
             {post.commentCount > 0 && `[${post.commentCount}]`}
           </Typography>
         </Typography>
@@ -385,18 +426,19 @@ export default function BoardDetail() {
             mt: 3,
             display: "flex",
             justifyContent: "space-between",
-            color: "#666",
+            color: "#64748b",
           }}
         >
           <Typography sx={{ fontSize: 12 }}>
-            {post.authorNickname} | {post.createdAt ? formatDateTime(post.createdAt) : "-"}
+            {post.authorNickname} |{" "}
+            {post.createdAt ? formatDateTime(post.createdAt) : "-"}
           </Typography>
           <Typography sx={{ fontSize: 12 }}>
             조회 {post.viewCount} | 추천 {post.recommendCount}
           </Typography>
         </Box>
 
-        <Divider sx={{ my: 1 }} />
+        <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
         <Box
           sx={{
@@ -404,11 +446,12 @@ export default function BoardDetail() {
             lineHeight: 1.7,
             minHeight: 200,
             "& img": { maxWidth: "100%" },
+            "& a": { color: ACCENT },
           }}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ my: 3, borderColor: "rgba(0,0,0,0.06)" }} />
 
         <Box sx={{ mt: 1 }}>
           <Box
@@ -423,24 +466,32 @@ export default function BoardDetail() {
 
             <Box sx={{ display: "flex", gap: 2 }}>
               <Typography
-                sx={{ fontSize: 13, cursor: "pointer", color: sortType === "created" ? MAIN_COLOR : "#888" }}
+                sx={{
+                  fontSize: 13,
+                  cursor: "pointer",
+                  color: sortType === "created" ? ACCENT : "#94a3b8",
+                }}
                 onClick={() => setSortType("created")}
               >
-                등록순
+                ✓ 등록순
               </Typography>
 
               <Typography
-                sx={{ fontSize: 13, cursor: "pointer", color: sortType === "latest" ? MAIN_COLOR : "#888" }}
+                sx={{
+                  fontSize: 13,
+                  cursor: "pointer",
+                  color: sortType === "latest" ? ACCENT : "#94a3b8",
+                }}
                 onClick={() => setSortType("latest")}
               >
-                최신순
+                ✓ 최신순
               </Typography>
             </Box>
           </Box>
 
-          <Divider sx={{ mb: 1 }} />
+          <Divider sx={{ mb: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+          <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
             <TextField
               fullWidth
               multiline
@@ -457,15 +508,37 @@ export default function BoardDetail() {
                 }
               }}
               disabled={loadingSubmit}
-              sx={{ "& textarea": { fontSize: 13 } }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1.5,
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: ACCENT,
+                    borderWidth: 2,
+                  },
+                },
+                "& textarea": { fontSize: 14 },
+              }}
             />
             <Button
               variant="contained"
-              sx={{ bgcolor: MAIN_COLOR, whiteSpace: "nowrap", height: 32, fontSize: 12, px: 1.5 }}
+              sx={{
+                bgcolor: ACCENT,
+                whiteSpace: "nowrap",
+                height: 40,
+                fontSize: 14,
+                px: 2,
+                borderRadius: 1.5,
+                fontWeight: 600,
+                "&:hover": { bgcolor: "#e55f00" },
+              }}
               onClick={() => void submitComment()}
               disabled={loadingSubmit}
             >
-              {loadingSubmit ? <CircularProgress size={20} color="inherit" /> : "등록"}
+              {loadingSubmit ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "등록"
+              )}
             </Button>
           </Box>
 
@@ -474,7 +547,9 @@ export default function BoardDetail() {
               <CircularProgress />
             </Box>
           ) : comments.length === 0 ? (
-            <Typography sx={{ color: "#888", fontSize: 13 }}>아직 댓글이 없습니다.</Typography>
+            <Typography sx={{ color: "#94a3b8", fontSize: 13 }}>
+              아직 댓글이 없습니다.
+            </Typography>
           ) : (
             comments.map((c) => (
               <Box key={c.id} sx={{ py: 1.2 }}>
@@ -503,14 +578,26 @@ export default function BoardDetail() {
                       />
                       <Button
                         variant="contained"
-                        sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+                        sx={{
+                          bgcolor: ACCENT,
+                          height: 36,
+                          fontSize: 13,
+                          borderRadius: 1.5,
+                          fontWeight: 600,
+                          "&:hover": { bgcolor: "#e55f00" },
+                        }}
                         onClick={() => void updateComment(c.id)}
                       >
                         저장
                       </Button>
                       <Button
                         variant="outlined"
-                        sx={{ height: 32, fontSize: 12, borderColor: "#bbb", color: "#666" }}
+                        sx={{
+                          height: 32,
+                          fontSize: 12,
+                          borderColor: "#cbd5e1",
+                          color: "#64748b",
+                        }}
                         onClick={() => {
                           setEditingId(null);
                           setEditingText("");
@@ -572,7 +659,7 @@ export default function BoardDetail() {
                 <Typography
                   sx={{
                     fontSize: 12,
-                    color: MAIN_COLOR,
+                    color: ACCENT,
                     cursor: "pointer",
                     mt: 0.6,
                     width: "fit-content",
@@ -607,7 +694,15 @@ export default function BoardDetail() {
                     />
                     <Button
                       variant="contained"
-                      sx={{ bgcolor: MAIN_COLOR, whiteSpace: "nowrap", height: 32, fontSize: 12 }}
+                      sx={{
+                        bgcolor: ACCENT,
+                        whiteSpace: "nowrap",
+                        height: 36,
+                        fontSize: 13,
+                        borderRadius: 1.5,
+                        fontWeight: 600,
+                        "&:hover": { bgcolor: "#e55f00" },
+                      }}
                       onClick={() => void submitReply(c.id, replyText)}
                     >
                       등록
@@ -615,9 +710,9 @@ export default function BoardDetail() {
                     <Button
                       variant="text"
                       sx={{
-                        color: "#666",
+                        color: "#64748b",
                         whiteSpace: "nowrap",
-                        backgroundColor: "#f3f3f3",
+                        backgroundColor: "#f1f5f9",
                         height: 32,
                         fontSize: 12,
                       }}
@@ -640,8 +735,8 @@ export default function BoardDetail() {
                             p: 1,
                             py: 0.4,
                             borderRadius: 1,
-                            backgroundColor: "#fafafa",
-                            border: "1px solid #eee",
+                            backgroundColor: "#f8fafc",
+                            border: "1px solid rgba(0,0,0,0.06)",
                           }}
                         >
                           <Box
@@ -675,14 +770,21 @@ export default function BoardDetail() {
                                 />
                                 <Button
                                   variant="contained"
-                                  sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+                                  sx={{
+                                    bgcolor: ACCENT,
+                                    height: 36,
+                                    fontSize: 13,
+                                    borderRadius: 1.5,
+                                    fontWeight: 600,
+                                    "&:hover": { bgcolor: "#e55f00" },
+                                  }}
                                   onClick={() => void updateComment(r.id)}
                                 >
                                   저장
                                 </Button>
                                 <Button
                                   variant="outlined"
-                                  sx={{ height: 32, fontSize: 12 }}
+                                  sx={{ height: 32, fontSize: 12, borderColor: "#cbd5e1", color: "#64748b" }}
                                   onClick={() => {
                                     setEditingId(null);
                                     setEditingText("");
@@ -752,21 +854,61 @@ export default function BoardDetail() {
           )}
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1.5,
+            mt: 4,
+          }}
+        >
           {user && (user.id === post.authorId || user.role === "ROLE_ADMIN") && (
             <>
-              <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={() => navigate(`/board/edit/${id}`)}>
+              <Button
+                variant="contained"
+                sx={{
+                  height: 40,
+                  fontSize: 14,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  bgcolor: ACCENT,
+                  "&:hover": { bgcolor: "#e55f00" },
+                }}
+                onClick={() => navigate(`/board/edit/${id}`)}
+              >
                 수정
               </Button>
-              <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={() => void handleDelete()}>
+              <Button
+                variant="outlined"
+                color="error"
+                sx={{
+                  height: 40,
+                  fontSize: 14,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                }}
+                onClick={() => void handleDelete()}
+              >
                 삭제
               </Button>
             </>
           )}
 
           <Button
-            variant="contained"
-            sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+            variant="outlined"
+            sx={{
+              height: 40,
+              fontSize: 14,
+              borderRadius: 1.5,
+              fontWeight: 600,
+              borderColor: "rgba(0,0,0,0.2)",
+              color: "#64748b",
+              "&:hover": {
+                borderColor: ACCENT,
+                color: ACCENT,
+                bgcolor: "rgba(255,107,0,0.04)",
+              },
+            }}
             onClick={() => navigate("/board")}
           >
             목록으로

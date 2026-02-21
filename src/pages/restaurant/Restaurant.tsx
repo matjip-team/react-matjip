@@ -7,11 +7,10 @@ import "quill-table-better/dist/quill-table-better.css";
 import { registerBlogQuillModules } from "../blog/quillSetup";
 
 import {
-  Container,
+  Box,
   Card,
   CardContent,
   Typography,
-  Box,
   Chip,
   Button,
   Rating,
@@ -167,7 +166,7 @@ export default function Restaurant() {
   if (!store) return null;
 
   return (
-    <Container maxWidth="md" sx={{ mt: 5, mb: 8 }}>
+    <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
       {/* 이미지 카드 */}
       <Card sx={{ borderRadius: 4, overflow: "hidden" }}>
         <img
@@ -396,6 +395,6 @@ export default function Restaurant() {
           뒤로 가기
         </Button>
       </Box>
-    </Container>
+    </Box>
   );
 }
