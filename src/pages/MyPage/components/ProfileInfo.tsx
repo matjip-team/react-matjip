@@ -13,11 +13,15 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import { type ProfileResponse } from "../types/profile";
 import ImageViewerDialog from "../../common/component/ImageViewerDialog";
 import { API_BASE_URL } from "../../common/config/config";
 import { withdrawAccount } from "../api/mypageApi";
 import { useAuth } from "../../common/context/useAuth";
+
+const MAIN_COLOR = "#4F9FFA";
 
 interface Props {
   data: ProfileResponse;
@@ -73,99 +77,207 @@ export default function ProfileInfo({ data, onEdit }: Props) {
 
   return (
     <>
-      <Paper sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
-        <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-          <Typography variant="h6">회원 정보</Typography>
-
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
-            <Avatar
-              src={previewUrl}
-              onClick={() => setImageViewerOpen(true)}
+      <Paper
+        elevation={0}
+        sx={{
+          maxWidth: 560,
+          mx: "auto",
+          mt: 5,
+          mb: 4,
+          borderRadius: 3,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        {/* 프로필 헤더 */}
+        <Box
+          sx={{
+            background: `linear-gradient(135deg, ${MAIN_COLOR}08 0%, ${MAIN_COLOR}18 100%)`,
+            px: 4,
+            pt: 4,
+            pb: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Box
               sx={{
-                width: 100,
-                height: 100,
-                fontSize: 40,
-                cursor: "pointer",
-                border: "1px solid #e0e0e0",
-                "&:hover": { opacity: 0.9 },
+                position: "relative",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: -4,
+                  borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${MAIN_COLOR}40, ${MAIN_COLOR}10)`,
+                },
               }}
             >
-              {data.name?.charAt(0) ?? data.email?.charAt(0) ?? "?"}
-            </Avatar>
-            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-              <Typography variant="h6">{data.name || "-"}</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Avatar
+                src={previewUrl}
+                onClick={() => setImageViewerOpen(true)}
+                sx={{
+                  width: 88,
+                  height: 88,
+                  fontSize: 36,
+                  cursor: "pointer",
+                  border: "3px solid",
+                  borderColor: "background.paper",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                  position: "relative",
+                  transition: "transform 0.2s",
+                  "&:hover": { transform: "scale(1.02)" },
+                }}
+              >
+                {data.name?.charAt(0) ?? data.email?.charAt(0) ?? "?"}
+              </Avatar>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                sx={{ color: "text.primary", letterSpacing: "-0.02em" }}
+              >
+                {data.name || "-"}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, fontSize: "0.9rem" }}
+              >
                 {data.email || "-"}
               </Typography>
-              <Box sx={{ mt: 1 }}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => setImageViewerOpen(true)}
-                >
-                  사진보기
-                </Button>
-              </Box>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => setImageViewerOpen(true)}
+                sx={{
+                  mt: 1.5,
+                  color: MAIN_COLOR,
+                  fontWeight: 600,
+                  "&:hover": { bgcolor: `${MAIN_COLOR}12` },
+                }}
+              >
+                사진 보기
+              </Button>
             </Box>
           </Box>
+        </Box>
 
-          <ImageViewerDialog
-            open={imageViewerOpen}
-            onClose={() => setImageViewerOpen(false)}
-            imageUrl={previewUrl}
-            alt="프로필 사진"
-          />
+        <ImageViewerDialog
+          open={imageViewerOpen}
+          onClose={() => setImageViewerOpen(false)}
+          imageUrl={previewUrl}
+          alt="프로필 사진"
+        />
 
-          <Box sx={{ display: "grid", gap: 1.5 }}>
-            <InfoRow label="이메일" value={data.email} />
-            <InfoRow label="닉네임" value={data.nickname} />
+        {/* 상세 정보 */}
+        <Box sx={{ px: 4, py: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <InfoRow icon={<EmailOutlinedIcon sx={{ fontSize: 20 }} />} label="이메일" value={data.email} />
+            <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 20 }} />} label="닉네임" value={data.nickname} />
             {data.bio && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">
+              <Box
+                sx={{
+                  mt: 0.5,
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: "grey.50",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
                   자기소개
                 </Typography>
-                <Typography sx={{ mt: 0.5, whiteSpace: "pre-wrap" }}>
+                <Typography
+                  sx={{ mt: 1, whiteSpace: "pre-wrap", lineHeight: 1.7, fontSize: "0.9rem" }}
+                >
                   {data.bio}
                 </Typography>
               </Box>
             )}
           </Box>
 
+          {/* 액션 버튼 */}
           <Box
             sx={{
               display: "flex",
               justifyContent: "flex-end",
-              gap: 1,
-              mt: 3,
-              pt: 2,
-              borderTop: 1,
+              gap: 2,
+              mt: 4,
+              pt: 3,
+              borderTop: "1px solid",
               borderColor: "divider",
             }}
           >
             <Button
               variant="outlined"
               color="error"
-              startIcon={<PersonOffIcon />}
+              size="medium"
+              startIcon={<PersonOffIcon fontSize="small" />}
               onClick={handleWithdrawClick}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 600,
+              }}
             >
               회원탈퇴
             </Button>
             <Button
               variant="contained"
-              startIcon={<EditIcon />}
+              size="medium"
+              startIcon={<EditIcon fontSize="small" />}
               onClick={onEdit}
+              sx={{
+                borderRadius: 2,
+                bgcolor: MAIN_COLOR,
+                textTransform: "none",
+                fontWeight: 600,
+                px: 2.5,
+                "&:hover": { bgcolor: "#3d8ae6" },
+              }}
             >
-              수정
+              프로필 수정
             </Button>
           </Box>
         </Box>
       </Paper>
 
-      <Dialog open={withdrawOpen} onClose={handleWithdrawClose} maxWidth="xs" fullWidth>
-        <DialogTitle>회원탈퇴</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다. 비밀번호를 입력해주세요.
+      <Dialog
+        open={withdrawOpen}
+        onClose={handleWithdrawClose}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3, p: 0 },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: "1.25rem",
+            fontWeight: 700,
+            pt: 3,
+            px: 3,
+          }}
+        >
+          회원탈퇴
+        </DialogTitle>
+        <DialogContent sx={{ px: 3 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2.5, lineHeight: 1.7 }}
+          >
+            탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
+            <br />
+            비밀번호를 입력해주세요.
           </Typography>
           <TextField
             type="password"
@@ -179,15 +291,24 @@ export default function ProfileInfo({ data, onEdit }: Props) {
             helperText={withdrawError}
             fullWidth
             autoComplete="current-password"
+            sx={{
+              "& .MuiOutlinedInput-root": { borderRadius: 2 },
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleWithdrawClose}>취소</Button>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+          <Button
+            onClick={handleWithdrawClose}
+            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+          >
+            취소
+          </Button>
           <Button
             color="error"
             variant="contained"
             onClick={handleWithdrawSubmit}
             disabled={withdrawing}
+            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
           >
             {withdrawing ? "처리 중..." : "탈퇴"}
           </Button>
@@ -197,13 +318,46 @@ export default function ProfileInfo({ data, onEdit }: Props) {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <Box sx={{ display: "flex", gap: 2, alignItems: "baseline" }}>
-      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
-        {label}
-      </Typography>
-      <Typography>{value || "-"}</Typography>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        py: 1.5,
+        borderBottom: "1px solid",
+        borderColor: "grey.100",
+        "&:last-of-type": { borderBottom: "none" },
+      }}
+    >
+      {icon && (
+        <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center" }}>
+          {icon}
+        </Box>
+      )}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="caption" color="text.secondary" fontWeight={500}>
+          {label}
+        </Typography>
+        <Typography
+          sx={{
+            mt: 0.25,
+            fontSize: "0.95rem",
+            fontWeight: 500,
+          }}
+        >
+          {value || "-"}
+        </Typography>
+      </Box>
     </Box>
   );
 }

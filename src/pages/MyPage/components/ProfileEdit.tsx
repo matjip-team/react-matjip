@@ -7,6 +7,11 @@ import {
   Paper,
   Alert,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
+import NotesOutlinedIcon from "@mui/icons-material/NotesOutlined";
 
 import AvatarUpload from "./AvatarUpload";
 import { type ProfileResponse } from "../types/profile";
@@ -44,6 +49,19 @@ const EMPTY_FORM: ProfileResponseForm = {
   profileImageUrl: "",
   password: "",
   passwordConfirm: "",
+};
+
+const MAIN_COLOR = "#4F9FFA";
+
+const textFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 2,
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: MAIN_COLOR,
+      borderWidth: 2,
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": { color: MAIN_COLOR },
 };
 
 const toPreviewUrl = (url?: string) => {
@@ -173,28 +191,95 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
 
   return (
     <>
-      <Paper sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          maxWidth: 560,
+          mx: "auto",
+          mt: 5,
+          mb: 4,
+          borderRadius: 3,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Box
           onSubmit={handleSubmit}
           component="form"
-          sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}
+          sx={{ display: "flex", flexDirection: "column" }}
         >
-          <Typography variant="h6">회원 정보 수정</Typography>
-          {globalError && <Alert severity="error">{globalError}</Alert>}
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <AvatarUpload
-              imageUrl={previewUrl}
-              onChange={(file) => void handleFileChange(file)}
-            />
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => setImageViewerOpen(true)}
+          {/* 프로필 헤더 */}
+          <Box
+            sx={{
+              background: `linear-gradient(135deg, ${MAIN_COLOR}08 0%, ${MAIN_COLOR}18 100%)`,
+              px: 4,
+              pt: 4,
+              pb: 3,
+            }}
+          >
+            <Typography
+              variant="h5"
+              fontWeight={700}
+              sx={{ color: "text.primary", letterSpacing: "-0.02em", mb: 3 }}
             >
-              사진보기
-            </Button>
+              프로필 수정
+            </Typography>
+            {globalError && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2, borderRadius: 2 }}
+              >
+                {globalError}
+              </Alert>
+            )}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  position: "relative",
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    inset: -4,
+                    borderRadius: "50%",
+                    background: `linear-gradient(135deg, ${MAIN_COLOR}40, ${MAIN_COLOR}10)`,
+                  },
+                }}
+              >
+                <Box sx={{ position: "relative" }}>
+                  <AvatarUpload
+                    imageUrl={previewUrl}
+                    onChange={(file) => void handleFileChange(file)}
+                    size={88}
+                  />
+                </Box>
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => setImageViewerOpen(true)}
+                  sx={{
+                    color: MAIN_COLOR,
+                    fontWeight: 600,
+                    "&:hover": { bgcolor: `${MAIN_COLOR}12` },
+                  }}
+                >
+                  사진 보기
+                </Button>
+                {imageUploading && (
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    sx={{ mt: 1, color: "text.secondary" }}
+                  >
+                    이미지 업로드 중...
+                  </Typography>
+                )}
+              </Box>
+            </Box>
           </Box>
+
           <ImageViewerDialog
             open={imageViewerOpen}
             onClose={() => setImageViewerOpen(false)}
@@ -202,75 +287,178 @@ export default function ProfileEdit({ data, onBack, onSaved }: Props) {
             alt="프로필 사진"
           />
 
-          <TextField
-            label="이메일"
-            value={form.email}
-            disabled
-            fullWidth
-            required
-          />
+          {/* 폼 필드 */}
+          <Box sx={{ px: 4, py: 3 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {/* 계정 정보 */}
+              <Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
+                    color: "text.secondary",
+                  }}
+                >
+                  <PersonOutlineIcon sx={{ fontSize: 20 }} />
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    계정 정보
+                  </Typography>
+                </Box>
+                <TextField
+                  label="이메일"
+                  value={form.email}
+                  disabled
+                  fullWidth
+                  sx={textFieldSx}
+                />
+              </Box>
 
-          <TextField
-            label="비밀번호"
-            type="password"
-            value={form.password}
-            onChange={handleChange("password")}
-            error={!!fieldErrors.password}
-            helperText={fieldErrors.password}
-            autoComplete="new-password"
-          />
+              {/* 비밀번호 변경 */}
+              <Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
+                    color: "text.secondary",
+                  }}
+                >
+                  <LockOutlinedIcon sx={{ fontSize: 20 }} />
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    비밀번호 변경
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <TextField
+                    label="새 비밀번호"
+                    type="password"
+                    placeholder="변경하지 않으려면 비워두세요"
+                    value={form.password}
+                    onChange={handleChange("password")}
+                    error={!!fieldErrors.password}
+                    helperText={fieldErrors.password}
+                    autoComplete="new-password"
+                    fullWidth
+                    sx={textFieldSx}
+                  />
+                  <TextField
+                    label="비밀번호 확인"
+                    type="password"
+                    value={form.passwordConfirm}
+                    onChange={handleChange("passwordConfirm")}
+                    error={!!fieldErrors.passwordConfirm}
+                    helperText={fieldErrors.passwordConfirm}
+                    autoComplete="new-password"
+                    fullWidth
+                    sx={textFieldSx}
+                  />
+                </Box>
+              </Box>
 
-          <TextField
-            label="비밀번호 확인"
-            type="password"
-            value={form.passwordConfirm}
-            onChange={handleChange("passwordConfirm")}
-            error={!!fieldErrors.passwordConfirm}
-            helperText={fieldErrors.passwordConfirm}
-            autoComplete="new-password"
-          />
+              {/* 프로필 정보 */}
+              <Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
+                    color: "text.secondary",
+                  }}
+                >
+                  <BadgeOutlinedIcon sx={{ fontSize: 20 }} />
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    프로필
+                  </Typography>
+                </Box>
+                <TextField
+                  label="닉네임"
+                  value={form.nickname}
+                  onChange={handleChange("nickname")}
+                  error={!!fieldErrors.nickname}
+                  helperText={fieldErrors.nickname}
+                  fullWidth
+                  required
+                  sx={textFieldSx}
+                />
+              </Box>
 
-          <TextField
-            label="닉네임"
-            value={form.nickname}
-            onChange={handleChange("nickname")}
-            error={!!fieldErrors.nickname}
-            helperText={fieldErrors.nickname}
-            required
-          />
+              {/* 자기소개 */}
+              <Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
+                    color: "text.secondary",
+                  }}
+                >
+                  <NotesOutlinedIcon sx={{ fontSize: 20 }} />
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    자기소개
+                  </Typography>
+                </Box>
+                <TextField
+                  label="자기소개"
+                  placeholder="자신을 소개해 주세요"
+                  value={form.bio || ""}
+                  onChange={handleChange("bio")}
+                  error={!!fieldErrors.bio}
+                  helperText={fieldErrors.bio ?? `${form.bio?.length || 0} / 200`}
+                  multiline
+                  rows={4}
+                  fullWidth
+                  sx={textFieldSx}
+                />
+              </Box>
+            </Box>
 
-          <TextField
-            label="자기소개"
-            value={form.bio || ""}
-            onChange={handleChange("bio")}
-            error={!!fieldErrors.bio}
-            helperText={fieldErrors.bio}
-            multiline
-            rows={4}
-          />
-
-          <Typography
-            variant="caption"
-            sx={{ alignSelf: "flex-end", color: "text.secondary" }}
-          >
-            {form.bio?.length || 0} / 200
-          </Typography>
-
-          {imageUploading && (
-            <Typography sx={{ color: "#666", fontSize: 13 }}>
-              프로필 이미지 업로드 중...
-            </Typography>
-          )}
-
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-            {onBack && (
-              <Button variant="outlined" onClick={onBack}>
-                취소
+            {/* 액션 버튼 */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+                mt: 4,
+                pt: 3,
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              {onBack && (
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon fontSize="small" />}
+                  onClick={onBack}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
+                >
+                  취소
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                type="submit"
+                disabled={imageUploading}
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: MAIN_COLOR,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  px: 2.5,
+                  "&:hover": { bgcolor: "#3d8ae6" },
+                }}
+              >
+                저장
               </Button>
-            )}
-            <Button variant="contained" type="submit" disabled={imageUploading}>
-              저장
-            </Button>
+            </Box>
           </Box>
         </Box>
 
