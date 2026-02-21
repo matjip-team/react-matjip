@@ -18,6 +18,12 @@ instance.interceptors.response.use(
       _retry?: boolean;
     };
 
+    // 403 Forbidden: 권한 없음 → 세션 만료 처리
+    if (error.response?.status === 403) {
+      window.dispatchEvent(new CustomEvent("auth:session-expired"));
+      return Promise.reject(error);
+    }
+
     // AccessToken 만료 시 재발급
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -39,7 +45,7 @@ instance.interceptors.response.use(
       }
     }
 
-    // 토큰 만료가 아닌 다른 에러는 그대로 전달
+    // 그 외 에러는 그대로 전달
     return Promise.reject(error);
   },
 );

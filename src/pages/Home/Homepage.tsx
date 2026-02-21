@@ -6,7 +6,6 @@ import {
   CardContent,
   CardMedia,
   Chip,
-  Container,
   Pagination,
   Skeleton,
   TextField,
@@ -18,6 +17,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
+import { INPUT_HEIGHT } from "../common/utils/helperUtil";
 
 const categories = [
   { label: "전체", value: "전체" },
@@ -61,6 +61,8 @@ const S3_PUBLIC_BASE_URL =
   (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
   "https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com";
 
+const ACCENT = "#ff6b00";
+
 const toDisplayImageUrl = (value?: string | null): string | null => {
   const raw = value?.trim();
   if (!raw) return null;
@@ -72,7 +74,6 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const initialKeyword = searchParams.get("keyword") ?? "";
 
   const pageParam = Math.max(0, (Number(searchParams.get("page")) || 1) - 1);
   const keywordParam = searchParams.get("keyword") ?? "";
@@ -174,43 +175,84 @@ export default function HomePage() {
   };
 
   return (
-    <>
-      {/* 🔥 HERO 영역 + 검색창 */}
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "100vh",
+        backgroundColor: "#f8f9fb",
+      }}
+    >
       <Box
         sx={{
-          height: 420,
+          maxWidth: 1100,
+          mx: "auto",
+          py: { xs: 3, sm: 5 },
+          px: { xs: 2, sm: 3 },
+        }}
+      >
+      {/* HERO 영역 */}
+      <Box
+        sx={{
+          height: { xs: 320, sm: 360 },
           backgroundImage: "url('/images/hero-bg.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           position: "relative",
+          borderRadius: 2,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
           color: "#fff",
           textAlign: "center",
+          mb: 3,
+          overflow: "hidden",
         }}
       >
-        {/* 어두운 오버레이 */}
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            backgroundColor: "rgba(0,0,0,0.4)",
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.5))",
+            borderRadius: 2,
           }}
         />
 
-        <Box sx={{ position: "relative", zIndex: 2 }}>
-          <Typography variant="h3" fontWeight={800}>
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 2,
+            width: "100%",
+            px: { xs: 2, sm: 4 },
+            boxSizing: "border-box",
+          }}
+        >
+          <Typography
+            variant="h3"
+            fontWeight={700}
+            letterSpacing="-0.02em"
+            sx={{ fontSize: { xs: "1.75rem", sm: "2.25rem", md: "2.5rem" } }}
+          >
             오늘 뭐 먹지?
           </Typography>
-
-          <Typography mt={2}>
+          <Typography
+            mt={1.5}
+            sx={{ opacity: 0.95, fontSize: { xs: "0.95rem", sm: "1rem" } }}
+          >
             지역과 취향에 맞는 맛집을 찾아보세요
           </Typography>
 
-          {/* 검색창 */}
-          <Box sx={{ display: "flex", mt: 4 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              mt: 3,
+              gap: 1,
+              width: "100%",
+              maxWidth: 520,
+              mx: "auto",
+            }}
+          >
             <TextField
               placeholder="맛집명, 지역명을 검색해보세요"
               value={keyword}
@@ -221,13 +263,22 @@ export default function HomePage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") fetchRestaurants();
               }}
+              size="small"
               sx={{
-                width: 450,
+                flex: 1,
                 backgroundColor: "#fff",
-                borderRadius: 3,
+                borderRadius: 2,
+                boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                "& .MuiOutlinedInput-root": {
+                  height: INPUT_HEIGHT,
+                  minHeight: INPUT_HEIGHT,
+                  borderRadius: 2,
+                  fieldset: { borderColor: "transparent" },
+                  "&:hover fieldset": { borderColor: "rgba(0,0,0,0.12)" },
+                  "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: 1 },
+                },
               }}
             />
-
             <Button
               variant="contained"
               startIcon={<SearchIcon />}
@@ -247,10 +298,16 @@ export default function HomePage() {
                 fetchRestaurants({ page: 0 });
               }}
               sx={{
-                ml: 2,
-                px: 3,
-                backgroundColor: "#ff6b00",
-                "&:hover": { backgroundColor: "#e65f00" },
+                height: INPUT_HEIGHT,
+                minHeight: INPUT_HEIGHT,
+                px: 2.5,
+                borderRadius: 2,
+                backgroundColor: ACCENT,
+                boxShadow: "0 2px 12px rgba(255,107,0,0.35)",
+                "&:hover": {
+                  backgroundColor: "#e65f00",
+                  boxShadow: "0 4px 16px rgba(255,107,0,0.4)",
+                },
               }}
             >
               검색
@@ -259,201 +316,249 @@ export default function HomePage() {
         </Box>
       </Box>
 
-      {/* 🔥 기존 컨텐츠 */}
-      <Box sx={{ backgroundColor: "#f5f6f8", minHeight: "100vh", py: 6 }}>
-        <Container maxWidth="lg">
+      {/* 카테고리 */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: 1,
+          py: 0.5,
+          mb: 2,
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
+        }}
+      >
+        {categories.map((cat) => {
+          const isSelected = selectedCategory === cat.value;
+          return (
+            <Chip
+              key={cat.value}
+              label={cat.label}
+              clickable
+              onClick={() => {
+                setSelectedCategory(cat.value);
+                setPage(0);
+                setSearchParams(
+                  (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set("category", cat.value);
+                    next.set("page", "1");
+                    const kw = prev.get("keyword");
+                    if (kw) next.set("keyword", kw);
+                    return next;
+                  },
+                  { replace: true },
+                );
+              }}
+              sx={{
+                py: 1,
+                px: 2,
+                fontWeight: 500,
+                fontSize: "0.8125rem",
+                borderRadius: 1.5,
+                backgroundColor: isSelected ? "rgba(0,0,0,0.06)" : "transparent",
+                color: isSelected ? "text.primary" : "text.secondary",
+                border: "none",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor: "rgba(0,0,0,0.04)",
+                  color: "text.primary",
+                },
+              }}
+            />
+          );
+        })}
+      </Box>
 
-          {/* 카테고리 */}
-          <Box sx={{ textAlign: "center", mb: 5 }}>
-            {categories.map((cat) => (
-              <Chip
-                key={cat.value}
-                label={cat.label}
-                clickable
-                onClick={() => {
-                  setSelectedCategory(cat.value);
-                  setPage(0);
-                  setSearchParams(
-                    (prev) => {
-                      const next = new URLSearchParams(prev);
-                      next.set("category", cat.value);
-                      next.set("page", "1");
-                      const kw = prev.get("keyword");
-                      if (kw) next.set("keyword", kw);
-                      return next;
-                    },
-                    { replace: true },
-                  );
-                }}
-                sx={{
-                  m: 1,
-                  px: 2,
-                  fontWeight: 600,
-                  borderRadius: 3,
-                  backgroundColor:
-                    selectedCategory === cat.value ? "#ff6b00" : "#fff",
-                  color: selectedCategory === cat.value ? "#fff" : "#444",
-                  boxShadow: selectedCategory === cat.value ? 3 : 1,
-                }}
+      {/* 맛집 카드 */}
+      <Box
+        sx={{
+          display: "grid",
+          gap: 3,
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(3, 1fr)",
+          },
+        }}
+      >
+        {loading
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton
+                key={index}
+                variant="rectangular"
+                height={260}
+                sx={{ borderRadius: 2 }}
               />
-            ))}
-          </Box>
-
-          {/* 카드 영역 */}
-          <Box
-            sx={{
-              display: "grid",
-              gap: 4,
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-              },
-            }}
-          >
-            {loading
-              ? Array.from({ length: 6 }).map((_, index) => (
-                  <Skeleton
-                    key={index}
-                    variant="rectangular"
-                    height={250}
-                    sx={{ borderRadius: 4 }}
-                  />
-                ))
-              : stores.map((store) => (
-                  <Card
-                    key={store.id}
-                    sx={{
-                      borderRadius: 4,
-                      overflow: "hidden",
-                      border: "1px solid #e6e8ec",
-                      transition: "0.3s",
-                      boxShadow: 2,
-                      "&:hover": {
-                        transform: "translateY(-8px)",
-                        boxShadow: 6,
-                      },
-                    }}
-                  >
-                    <CardActionArea
-                      onClick={() =>
-                        navigate(`/restaurant/${store.id}`, {
-                          state: {
-                            fromHomepage: true,
-                            page,
-                            keyword,
-                            category: selectedCategory,
-                          },
-                        })
-                      }
-                    >
-                      <CardMedia
-                        component="img"
-                        height="200"
-                        image={toDisplayImageUrl(store.imageUrl) ?? "/images/world.jpg"}
-                        sx={{
-                          width: "100%",
-                          display: "block",
-                          objectFit: "cover",
-                          borderTopLeftRadius: 16,
-                          borderTopRightRadius: 16,
-                        }}
-                        onError={(e) => {
-                          const img = e.currentTarget as HTMLImageElement;
-                          if (img.src.includes("/images/world.jpg")) return;
-                          img.src = "/images/world.jpg";
-                        }}
-                      />
-
-                      <CardContent>
-                        <Typography variant="h6" fontWeight={700}>
-                          {store.name}
-                        </Typography>
-
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          gutterBottom
-                        >
-                          {store.address}
-                        </Typography>
-
-                        {/* 좋아요 */}
-                        <Box
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleLike(store.id);
-                          }}
-                          sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            alignItems: "center",
-                            mt: 1,
-                            cursor: "pointer",
-                            color: store.liked ? "#ff6b00" : "#bbb",
-                            transition: "0.2s",
-                            "&:hover": {
-                              transform: "scale(1.1)",
-                            },
-                          }}
-                        >
-                          <FavoriteIcon sx={{ fontSize: 18 }} />
-                          <Typography sx={{ ml: 0.5 }}>
-                            {store.likeCount}
-                          </Typography>
-                        </Box>
-
-                        <Chip
-                          label={store.category}
-                          size="small"
-                          sx={{
-                            mt: 2,
-                            backgroundColor: "#fff3e6",
-                            color: "#ff6b00",
-                            fontWeight: 600,
-                          }}
-                        />
-                      </CardContent>
-                    </CardActionArea>
-                  </Card>
-                ))}
-          </Box>
-
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
-              <Pagination
-                count={totalPages}
-                page={page + 1}
-                onChange={(_, value) => {
-                  const newPage = value - 1;
-                  setPage(newPage);
-                  setSearchParams(
-                    (prev) => {
-                      const next = new URLSearchParams(prev);
-                      next.set("page", String(value));
-                      return next;
-                    },
-                    { replace: true },
-                  );
-                }}
+            ))
+          : stores.map((store) => (
+              <Card
+                key={store.id}
+                elevation={0}
                 sx={{
-                  "& .Mui-selected": {
-                    backgroundColor: "#ff6b00 !important",
-                    color: "#fff",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  transition: "all 0.25s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 12px 24px rgba(0,0,0,0.08)",
                   },
                 }}
-              />
-            </Box>
-          )}
+              >
+                <CardActionArea
+                  onClick={() =>
+                    navigate(`/restaurant/${store.id}`, {
+                      state: {
+                        fromHomepage: true,
+                        page,
+                        keyword,
+                        category: selectedCategory,
+                      },
+                    })
+                  }
+                >
+                  <CardMedia
+                    component="img"
+                    height="180"
+                    image={toDisplayImageUrl(store.imageUrl) ?? "/images/world.jpg"}
+                    sx={{
+                      width: "100%",
+                      display: "block",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      const img = e.currentTarget as HTMLImageElement;
+                      if (img.src.includes("/images/world.jpg")) return;
+                      img.src = "/images/world.jpg";
+                    }}
+                  />
 
-          {!loading && stores.length === 0 && (
-            <Typography textAlign="center" mt={8} color="text.secondary">
-              검색 결과가 없습니다.
-            </Typography>
-          )}
-        </Container>
+                  <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={600}
+                        sx={{
+                          lineHeight: 1.4,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 1,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {store.name}
+                      </Typography>
+                      <Box
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLike(store.id);
+                        }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          flexShrink: 0,
+                          cursor: "pointer",
+                          color: store.liked ? ACCENT : "action.disabled",
+                          transition: "color 0.2s",
+                          "&:hover": { color: ACCENT },
+                        }}
+                      >
+                        <FavoriteIcon sx={{ fontSize: 20 }} />
+                        <Typography variant="body2" sx={{ ml: 0.5 }}>
+                          {store.likeCount}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        mt: 0.5,
+                        fontSize: "0.8rem",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {store.address}
+                    </Typography>
+                    <Chip
+                      label={store.category}
+                      size="small"
+                      sx={{
+                        mt: 1.5,
+                        height: 24,
+                        fontSize: "0.75rem",
+                        backgroundColor: "rgba(255,107,0,0.08)",
+                        color: ACCENT,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            ))}
       </Box>
-    </>
+
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 5, mb: 2 }}>
+          <Pagination
+            count={totalPages}
+            page={page + 1}
+            onChange={(_, value) => {
+              const newPage = value - 1;
+              setPage(newPage);
+              setSearchParams(
+                (prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("page", String(value));
+                  return next;
+                },
+                { replace: true },
+              );
+            }}
+            color="primary"
+            sx={{
+              "& .MuiPaginationItem-root": {
+                borderRadius: 1,
+              },
+              "& .Mui-selected": {
+                backgroundColor: `${ACCENT} !important`,
+                color: "#fff !important",
+                "&:hover": { backgroundColor: "#e65f00 !important" },
+              },
+            }}
+          />
+        </Box>
+      )}
+
+      {!loading && stores.length === 0 && (
+        <Box
+          sx={{
+            py: 8,
+            textAlign: "center",
+            color: "text.secondary",
+          }}
+        >
+          <Typography variant="body1">
+            검색 결과가 없습니다.
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.8 }}>
+            다른 키워드나 카테고리로 검색해 보세요
+          </Typography>
+        </Box>
+      )}
+      </Box>
+    </Box>
   );
 }

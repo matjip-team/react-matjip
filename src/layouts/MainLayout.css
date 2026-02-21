@@ -112,27 +112,30 @@ body,
 .header-auth {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.header-greeting {
-  font-size: 13px;
-  color: var(--text-tertiary);
-  font-weight: 500;
-}
-
-.header-logout {
-  font-size: 13px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  transition: background var(--transition), color var(--transition);
-}
-
-.header-logout:hover {
-  background: var(--hover-bg);
+.header-user-name {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
+}
+
+.mypage-logout {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  margin-top: 4px;
+  padding-top: 10px !important;
+  font-weight: 600 !important;
+  color: #dc2626 !important;
+}
+
+.mypage-logout:hover {
+  background: rgba(220, 38, 38, 0.08) !important;
+  color: #b91c1c !important;
+}
+
+.mypage-logout .MuiSvgIcon-root {
+  color: inherit;
 }
 
 .header-avatar {
@@ -149,7 +152,7 @@ body,
 }
 
 .header-login-btn {
-  padding: 10px 22px;
+  padding: 8px 20px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -158,14 +161,13 @@ body,
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
-  box-shadow: 0 1px 3px rgba(255, 107, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+  transition: background var(--transition), box-shadow var(--transition);
 }
 
 .header-login-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
+  background: #e65f00;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
 }
 
 /* 헤더 반응형 */
@@ -192,7 +194,7 @@ body,
     gap: 20px;
   }
 
-  .header-greeting {
+  .header-user-name {
     display: none;
   }
 }
@@ -260,7 +262,6 @@ body,
 .content {
   flex: 1;
   width: 100%;
-  padding-bottom: 28px;
   box-sizing: border-box;
 }
 
@@ -503,6 +504,42 @@ body,
   margin: -10px 0 -14px;
 }
 
+/* 관리자 트리거: 배지 스타일 + 주황 강조 */
+.admin-trigger {
+  display: inline-flex !important;
+  align-items: center;
+  padding: 6px 12px !important;
+  margin: -6px 0 -6px 4px !important;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.12) 0%, rgba(255, 107, 0, 0.06) 100%);
+  color: #c2410c !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border: 1px solid rgba(255, 107, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.admin-trigger:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.18) 0%, rgba(255, 107, 0, 0.1) 100%) !important;
+  border-color: rgba(255, 107, 0, 0.4);
+  color: #9a3412 !important;
+}
+
+.admin-trigger.active {
+  background: linear-gradient(135deg, #ff6b00 0%, #e65f00 100%) !important;
+  color: #fff !important;
+  border-color: #ff6b00;
+}
+
+.admin-trigger.active:hover {
+  background: linear-gradient(135deg, #e65f00 0%, #cc5500 100%) !important;
+  border-color: #e65f00;
+}
+
+.admin-trigger.active::after {
+  display: none !important;
+}
+
 .admin-dropdown .nav-submenu {
   opacity: 0;
   visibility: hidden;
@@ -546,13 +583,12 @@ body,
   white-space: nowrap;
   transition: background var(--transition);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  display: inline-flex;
+  align-items: center;
 }
 
 .nav-submenu span:last-child {
   border-bottom: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .nav-submenu span:hover {
@@ -566,6 +602,50 @@ body,
 
 .nav-submenu span.active::after {
   display: none;
+}
+
+/* 관리자 서브메뉴 전용 */
+.admin-submenu {
+  min-width: 200px;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 12px 48px rgba(15, 23, 42, 0.12) !important;
+}
+
+.admin-submenu-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475569;
+  background: linear-gradient(180deg, rgba(255, 107, 0, 0.06) 0%, rgba(255, 107, 0, 0.02) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.admin-submenu-header span {
+  padding: 0;
+  border: none;
+  cursor: default;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.admin-submenu-header .MuiSvgIcon-root {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #475569;
+  opacity: 0.85;
+}
+
+.admin-submenu > span {
+  padding: 10px 16px;
 }
 
 /* ===== 마이페이지 드롭다운 (호버 시 펼침) ===== */
@@ -594,12 +674,13 @@ body,
   top: 100%;
   right: 0;
   margin-top: 4px;
-  min-width: 180px;
-  padding: 8px 0;
+  min-width: 200px;
+  padding: 0;
+  overflow: hidden;
   background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: var(--radius-sm);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 48px rgba(15, 23, 42, 0.12);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -615,11 +696,42 @@ body,
   transform: translateY(0);
 }
 
+.mypage-submenu-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475569;
+  background: linear-gradient(180deg, rgba(255, 107, 0, 0.06) 0%, rgba(255, 107, 0, 0.02) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mypage-submenu-header span {
+  padding: 0;
+  border: none;
+  cursor: default;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.mypage-submenu-header .MuiSvgIcon-root {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #475569;
+  opacity: 0.85;
+}
+
 .mypage-submenu-item {
   display: flex;
   align-items: center;
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
   cursor: pointer;

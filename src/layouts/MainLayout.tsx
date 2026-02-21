@@ -1,12 +1,18 @@
-﻿import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Snackbar, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import ForumIcon from "@mui/icons-material/Forum";
+import ArticleIcon from "@mui/icons-material/Article";
+import PeopleIcon from "@mui/icons-material/People";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import PreviewIcon from "@mui/icons-material/Preview";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ContentPasteSearchIcon from "@mui/icons-material/ContentPasteSearch";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import LogoutIcon from "@mui/icons-material/Logout";
 import BlogFeaturedCarousel from "../components/BlogFeaturedCarousel/BlogFeaturedCarousel";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
@@ -36,6 +42,13 @@ export default function MainLayout() {
     window.addEventListener("show-toast", handleShowToast);
     return () => window.removeEventListener("show-toast", handleShowToast);
   }, []);
+
+  const adminMenuItems = [
+    { label: "신청 접수", path: "/admin/restaurant-requests", icon: AssignmentIcon },
+    { label: "커뮤니티 관리", path: "/admin/board", icon: ForumIcon },
+    { label: "블로그 관리", path: "/admin/blog", icon: ArticleIcon },
+    { label: "회원관리", path: "/admin/user", icon: PeopleIcon },
+  ];
 
   const mypageTabs = [
     { label: "찜한 식당", path: "/auth/mypage?tab=0", icon: FavoriteIcon },
@@ -85,7 +98,12 @@ export default function MainLayout() {
               placement="bottom"
             >
               <span
-                className={location.pathname === "/board" ? "active" : ""}
+                className={
+                  location.pathname === "/board" ||
+                  location.pathname.startsWith("/board/")
+                    ? "active"
+                    : ""
+                }
                 onClick={() => navigate("/board")}
               >
                 커뮤니티
@@ -118,69 +136,45 @@ export default function MainLayout() {
               </span>
             </Tooltip>
             {isAdmin && (
-              <div className="nav-dropdown admin-dropdown">
-                <Tooltip title="관리자 전용 메뉴" arrow placement="bottom">
+              <div className="nav-dropdown admin-dropdown">                
                   <span
-                    className={
+                    className={`admin-trigger ${
                       location.pathname.startsWith("/admin") ? "active" : ""
-                    }
+                    }`}
                   >
+                    <AdminPanelSettingsIcon
+                      sx={{ fontSize: 18, mr: 0.5, opacity: 0.9 }}
+                    />
                     관리자
                     <ExpandMoreIcon
                       sx={{
                         fontSize: 18,
-                        verticalAlign: "middle",
-                        ml: 0.5,
                         transition: "transform 0.2s",
                       }}
                       className="admin-chevron"
                     />
-                  </span>
-                </Tooltip>
+                  </span>               
                 <div className="nav-submenu admin-submenu">
-                  <Tooltip
-                    title="맛집 등록 신청을 검토합니다"
-                    arrow
-                    placement="right"
-                  >
-                    <span onClick={() => navigate("/admin/restaurant-requests")}>
-                      신청 접수
-                    </span>
-                  </Tooltip>
-                  <Tooltip
-                    title="커뮤니티 게시글을 관리합니다"
-                    arrow
-                    placement="right"
-                  >
-                    <span onClick={() => navigate("/admin/board")}>
-                      커뮤니티 관리
-                    </span>
-                  </Tooltip>
-                  <Tooltip
-                    title="블로그 글을 관리합니다"
-                    arrow
-                    placement="right"
-                  >
-                    <span onClick={() => navigate("/admin/blog")}>
-                      블로그 관리
-                    </span>
-                  </Tooltip>
-                  <Tooltip
-                    title="회원 정보를 관리합니다"
-                    arrow
-                    placement="right"
-                  >
-                    <span
-                      className={
-                        location.pathname.startsWith("/admin/user")
-                          ? "active"
-                          : ""
-                      }
-                      onClick={() => navigate("/admin/user")}
-                    >
-                      회원관리
-                    </span>
-                  </Tooltip>
+                  <div className="admin-submenu-header">
+                    <AdminPanelSettingsIcon sx={{ fontSize: 16 }} />
+                    <span>관리자 메뉴</span>
+                  </div>
+                  {adminMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive =
+                      location.pathname === item.path ||
+                      location.pathname.startsWith(item.path + "/");
+                    return (
+                      <span
+                        key={item.path}
+                        className={isActive ? "active" : ""}
+                        onClick={() => navigate(item.path)}
+                      >
+                        <Icon sx={{ fontSize: 18, mr: 1.5, opacity: 0.85 }} />
+                        {item.label}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -189,23 +183,24 @@ export default function MainLayout() {
           <div className="header-auth">
             {user ? (
               <>
-                <span className="header-greeting">
+                <span className="header-user-name">
                   안녕하세요, {user?.name ?? ""}님
-                </span>
-                <span className="header-logout" onClick={logout}>
-                  로그아웃
                 </span>
                 <div className="mypage-dropdown">
                   <div className="mypage-dropdown-trigger" title="마이페이지">
                     <Avatar
                       src={toAvatarUrl(user?.profileImageUrl)}
                       alt={user?.name}
-                      sx={{ width: 36, height: 36 }}
+                      sx={{ width: 32, height: 32 }}
                     >
                       {!user?.profileImageUrl && <PersonIcon />}
                     </Avatar>
                   </div>
                   <div className="mypage-submenu">
+                    <div className="mypage-submenu-header">
+                      <PersonIcon sx={{ fontSize: 16 }} />
+                      <span>마이페이지</span>
+                    </div>
                     {mypageTabs.map((item) => {
                       const tabId = item.path.split("tab=")[1];
                       const isActive =
@@ -223,6 +218,13 @@ export default function MainLayout() {
                         </span>
                       );
                     })}
+                    <span
+                      className="mypage-submenu-item mypage-logout"
+                      onClick={logout}
+                    >
+                      <LogoutIcon sx={{ fontSize: 18, mr: 1.5, flexShrink: 0 }} />
+                      로그아웃
+                    </span>
                   </div>
                 </div>
               </>

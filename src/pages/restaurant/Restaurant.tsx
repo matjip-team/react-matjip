@@ -8,15 +8,14 @@ import { registerBlogQuillModules } from "../blog/quillSetup";
 
 import {
   Box,
-  Card,
-  CardContent,
+  Paper,
   Typography,
   Chip,
   Button,
   Rating,
   TextField,
   Divider,
-  IconButton
+  IconButton,
 } from "@mui/material";
 
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -52,6 +51,8 @@ interface RestaurantDetail {
 const S3_PUBLIC_BASE_URL =
   (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
   "https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com";
+
+const ACCENT = "#ff6b00";
 
 const toDisplayImageUrl = (value?: string | null): string | null => {
   const raw = value?.trim();
@@ -167,9 +168,17 @@ export default function Restaurant() {
 
   return (
     <Box sx={{ maxWidth: 1100, mx: "auto", py: 5, px: { xs: 2, sm: 3 } }}>
-      {/* 이미지 카드 */}
-      <Card sx={{ borderRadius: 4, overflow: "hidden" }}>
-        <img
+      {/* 이미지 */}
+      <Box
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+        }}
+      >
+        <Box
+          component="img"
           src={toDisplayImageUrl(store.imageUrl) ?? "/images/world.jpg"}
           alt={store.name}
           onError={(e) => {
@@ -177,206 +186,341 @@ export default function Restaurant() {
             if (img.src.includes("/images/world.jpg")) return;
             img.src = "/images/world.jpg";
           }}
-          style={{ width: "100%", height: 360, objectFit: "cover" }}
+          sx={{ width: "100%", height: { xs: 240, sm: 320 }, objectFit: "cover", display: "block" }}
         />
-      </Card>
+      </Box>
 
       {/* 가게 정보 */}
-      <Card sx={{ mt: 4, borderRadius: 4 }}>
-        <CardContent>
-          <Typography variant="h4" fontWeight={700}>
-            {store.name}
-          </Typography>
+      <Paper
+        elevation={0}
+        sx={{
+          mt: 4,
+          p: 4,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fff",
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
+            mb: 0.5,
+          }}
+        >
+          {store.name}
+        </Typography>
 
-          <Box sx={{ mt: 2 }}>
-            {store.categories.map((c) => (
-              <Chip key={c} label={c} sx={{ mr: 1 }} color="primary" />
-            ))}
-          </Box>
-
-          <Typography color="text.secondary" sx={{ mt: 2 }}>
-            {store.address}
-          </Typography>
-
-          {store.phone && (
-            <Typography color="text.secondary" sx={{ mt: 1 }}>
-               📞{store.phone}
-            </Typography>
-          )}
-
-          <Box
-            sx={{
-              mt: 3,
-              "& .ql-editor": { padding: 0 },
-              "& .ql-editor img": { maxWidth: "100%", height: "auto" },
-              "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
-              "& .ql-editor table": {
-                width: "100%",
-                borderCollapse: "collapse",
-                margin: "12px 0",
-              },
-              "& .ql-editor td, & .ql-editor th": {
-                border: "1px solid #d9d9d9",
-                padding: "8px 10px",
-                verticalAlign: "top",
-              },
-            }}
-          >
-            <ReactQuill
-              theme="bubble"
-              readOnly
-              modules={{ toolbar: false }}
-              value={descriptionHtml}
+        <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 0.8 }}>
+          {store.categories.map((c) => (
+            <Chip
+              key={c}
+              label={c}
+              size="small"
+              sx={{
+                height: 26,
+                fontSize: 12,
+                fontWeight: 600,
+                bgcolor: ACCENT,
+                color: "#fff",
+                "& .MuiChip-label": { px: 1.5 },
+              }}
             />
-          </Box>
+          ))}
+        </Box>
 
-          <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 2 }}>
-            <Rating value={store.averageRating} precision={0.5} readOnly />
-            <Typography>
-              {store.averageRating}점 ({store.reviewCount} 리뷰)
-            </Typography>
-          </Box>
+        <Typography sx={{ mt: 2, fontSize: 14, color: "#64748b" }}>
+          📍 {store.address}
+        </Typography>
 
-          <Button
-            variant={store.liked ? "contained" : "outlined"}
-            color="primary"
-            startIcon={<FavoriteIcon />}
-            sx={{ mt: 3, borderRadius: 3 }}
-            onClick={toggleLike}
-          >
-            좋아요 {store.likeCount}
-          </Button>
-        </CardContent>
-      </Card>
+        {store.phone && (
+          <Typography sx={{ mt: 0.5, fontSize: 14, color: "#64748b" }}>
+            📞 {store.phone}
+          </Typography>
+        )}
+
+        <Box
+          sx={{
+            mt: 3,
+            fontSize: 15,
+            lineHeight: 1.7,
+            color: "#334155",
+            "& .ql-editor": { padding: 0 },
+            "& .ql-editor img": { maxWidth: "100%", height: "auto" },
+            "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
+            "& .ql-editor table": {
+              width: "100%",
+              borderCollapse: "collapse",
+              margin: "12px 0",
+            },
+            "& .ql-editor td, & .ql-editor th": {
+              border: "1px solid #e2e8f0",
+              padding: "8px 10px",
+              verticalAlign: "top",
+            },
+          }}
+        >
+          <ReactQuill
+            theme="bubble"
+            readOnly
+            modules={{ toolbar: false }}
+            value={descriptionHtml}
+          />
+        </Box>
+
+        <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+          <Rating
+            value={store.averageRating}
+            precision={0.5}
+            readOnly
+            sx={{
+              "& .MuiRating-iconFilled": { color: ACCENT },
+              "& .MuiRating-iconHover": { color: ACCENT },
+            }}
+          />
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            {store.averageRating}점 · 리뷰 {store.reviewCount}개
+          </Typography>
+        </Box>
+
+        <Button
+          variant={store.liked ? "contained" : "outlined"}
+          startIcon={<FavoriteIcon />}
+          sx={{
+            mt: 3,
+            borderRadius: 1.5,
+            fontWeight: 600,
+            textTransform: "none",
+            ...(store.liked
+              ? { bgcolor: ACCENT, "&:hover": { bgcolor: "#e55f00" } }
+              : {
+                  borderColor: ACCENT,
+                  color: ACCENT,
+                  "&:hover": { borderColor: "#e55f00", color: "#e55f00", bgcolor: "rgba(255,107,0,0.04)" },
+                }),
+          }}
+          onClick={toggleLike}
+        >
+          좋아요 {store.likeCount}
+        </Button>
+      </Paper>
 
       {/* 리뷰 작성 */}
-      <Card sx={{ mt: 5, borderRadius: 4 }}>
-        <CardContent>
-          <Typography variant="h6" fontWeight={600}>
-            리뷰 작성
+      <Paper
+        elevation={0}
+        sx={{
+          mt: 4,
+          p: 4,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fff",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, color: "#1a1a1a", mb: 0.5 }}
+        >
+          리뷰 작성
+        </Typography>
+
+        {hasMyReview && (
+          <Typography sx={{ mt: 1, fontSize: 14, color: "#64748b" }}>
+            이미 이 맛집에 리뷰를 작성하셨습니다. 수정은 아래 리뷰 목록에서 할 수 있습니다.
           </Typography>
+        )}
 
-          {hasMyReview && (
-            <Typography color="text.secondary" sx={{ mt: 1, fontSize: 14 }}>
-              이미 이 맛집에 리뷰를 작성하셨습니다. 수정은 아래 리뷰 목록에서 할 수 있습니다.
-            </Typography>
-          )}
-
+        <Box sx={{ mt: 2 }}>
           <Rating
             value={myRating}
             onChange={(_, value) => setMyRating(value)}
-            sx={{ mt: 2 }}
             disabled={hasMyReview}
+            sx={{
+              "& .MuiRating-iconFilled": { color: ACCENT },
+              "& .MuiRating-iconHover": { color: ACCENT },
+            }}
           />
+        </Box>
 
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            sx={{ mt: 2 }}
-            value={reviewText}
-            onChange={(e) => setReviewText(e.target.value)}
-            placeholder={hasMyReview ? "이미 리뷰를 작성하셨습니다." : "리뷰를 작성해주세요."}
-            disabled={hasMyReview}
-          />
+        <TextField
+          fullWidth
+          multiline
+          rows={4}
+          sx={{
+            mt: 2,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 1.5,
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: ACCENT,
+                borderWidth: 2,
+              },
+            },
+          }}
+          value={reviewText}
+          onChange={(e) => setReviewText(e.target.value)}
+          placeholder={hasMyReview ? "이미 리뷰를 작성하셨습니다." : "리뷰를 작성해주세요."}
+          disabled={hasMyReview}
+        />
 
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ mt: 2, borderRadius: 3 }}
-            onClick={submitReview}
-            disabled={hasMyReview}
-          >
-            리뷰 등록
-          </Button>
-        </CardContent>
-      </Card>
+        <Button
+          variant="contained"
+          sx={{
+            mt: 2,
+            borderRadius: 1.5,
+            fontWeight: 600,
+            textTransform: "none",
+            bgcolor: ACCENT,
+            "&:hover": { bgcolor: "#e55f00" },
+          }}
+          onClick={submitReview}
+          disabled={hasMyReview}
+        >
+          리뷰 등록
+        </Button>
+      </Paper>
 
       {/* 리뷰 목록 */}
-      <Card sx={{ mt: 5, borderRadius: 4 }}>
-        <CardContent>
-          <Typography variant="h6" fontWeight={600}>
-            리뷰
+      <Paper
+        elevation={0}
+        sx={{
+          mt: 4,
+          p: 4,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fff",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, color: "#1a1a1a", mb: 2 }}
+        >
+          리뷰 {store.reviews.length > 0 && `(${store.reviews.length})`}
+        </Typography>
+
+        {store.reviews.length === 0 && (
+          <Typography sx={{ py: 4, textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
+            아직 작성된 리뷰가 없습니다.
           </Typography>
+        )}
 
-          {store.reviews.length === 0 && (
-            <Typography sx={{ mt: 2 }}>
-              아직 작성된 리뷰가 없습니다.
-            </Typography>
-          )}
+        {store.reviews.map((review, index) => (
+          <Box key={review.id}>
+            {index > 0 && <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />}
 
-          {store.reviews.map((review) => (
-            <Box key={review.id} sx={{ mt: 3 }}>
-              <Divider sx={{ mb: 2 }} />
-
-              <Typography fontWeight={600}>
-                {review.nickname}
-              </Typography>
-
-              <Rating value={review.rating} readOnly size="small" />
-
-              {editingId === review.id ? (
-                <>
-                  <Rating
-                    value={editRating}
-                    onChange={(_, value) => setEditRating(value)}
-                    sx={{ mt: 1 }}
-                  />
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={3}
-                    sx={{ mt: 1 }}
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                  />
-                  <Button
-                    variant="contained"
-                    sx={{ mt: 1 }}
-                    onClick={() => saveEdit(review.id)}
-                  >
-                    저장
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Typography sx={{ mt: 1 }}>
-                    {review.content}
-                  </Typography>
-
-                  {review.mine && (
-                    <Box sx={{ mt: 1 }}>
-                      <IconButton
-                        color="primary"
-                        onClick={() => {
-                          setEditingId(review.id);
-                          setEditRating(review.rating);
-                          setEditText(review.content);
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 600, color: "#1a1a1a", mb: 0.5 }}>
+                  {review.nickname}
+                </Typography>
+                <Rating
+                  value={review.rating}
+                  readOnly
+                  size="small"
+                  sx={{ "& .MuiRating-iconFilled": { color: ACCENT } }}
+                />
+                {editingId === review.id ? (
+                  <Box sx={{ mt: 2 }}>
+                    <Rating
+                      value={editRating}
+                      onChange={(_, value) => setEditRating(value)}
+                      sx={{
+                        mb: 1,
+                        "& .MuiRating-iconFilled": { color: ACCENT },
+                        "& .MuiRating-iconHover": { color: ACCENT },
+                      }}
+                    />
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      size="small"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      sx={{
+                        "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                      }}
+                    />
+                    <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          borderRadius: 1.5,
+                          fontWeight: 600,
+                          bgcolor: ACCENT,
+                          "&:hover": { bgcolor: "#e55f00" },
                         }}
+                        onClick={() => saveEdit(review.id)}
                       >
-                        <EditIcon />
-                      </IconButton>
-
-                      <IconButton
-                        color="error"
-                        onClick={() => deleteReview(review.id)}
+                        저장
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ borderRadius: 1.5 }}
+                        onClick={() => setEditingId(null)}
                       >
-                        <DeleteIcon />
-                      </IconButton>
+                        취소
+                      </Button>
                     </Box>
-                  )}
-                </>
-              )}
+                  </Box>
+                ) : (
+                  <>
+                    <Typography sx={{ mt: 1, fontSize: 14, color: "#475569", lineHeight: 1.6 }}>
+                      {review.content}
+                    </Typography>
+
+                    {review.mine && (
+                      <Box sx={{ mt: 1, display: "flex", gap: 0.5 }}>
+                        <IconButton
+                          size="small"
+                          sx={{ color: "#64748b", "&:hover": { color: ACCENT } }}
+                          onClick={() => {
+                            setEditingId(review.id);
+                            setEditRating(review.rating);
+                            setEditText(review.content);
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+
+                        <IconButton
+                          size="small"
+                          sx={{ color: "#64748b", "&:hover": { color: "#dc2626" } }}
+                          onClick={() => deleteReview(review.id)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </>
+                )}
+              </Box>
             </Box>
-          ))}
-        </CardContent>
-      </Card>
+          </Box>
+        ))}
+      </Paper>
 
       {/* 뒤로 가기 */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
+          sx={{
+            borderRadius: 1.5,
+            fontWeight: 600,
+            borderColor: "rgba(0,0,0,0.2)",
+            color: "#64748b",
+            "&:hover": {
+              borderColor: ACCENT,
+              color: ACCENT,
+              bgcolor: "rgba(255,107,0,0.04)",
+            },
+          }}
           onClick={() => {
             if (fromMyPageTab !== undefined) {
               navigate(`/auth/mypage?tab=${fromMyPageTab}`, { replace: true });
@@ -390,7 +534,6 @@ export default function Restaurant() {
               navigate(-1);
             }
           }}
-          sx={{ borderRadius: 2 }}
         >
           뒤로 가기
         </Button>
