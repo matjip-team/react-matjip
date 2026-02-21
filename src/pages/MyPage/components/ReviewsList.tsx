@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -29,6 +30,7 @@ import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
 import { renderCategories } from "../components/categoryUtils";
 
 export default function ReviewList() {
+  const navigate = useNavigate();
   /* 🔎 필터 상태 */
   const [keyword, setKeyword] = useState("");
   const [minRating, setMinRating] = useState(0);
@@ -155,7 +157,20 @@ export default function ReviewList() {
             key={review.id}
             size={{ xs: 12, sm: 6, md: 6 }} // ✅ 3열 유지
           >
-            <Card sx={{ borderRadius: 3, height: "100%" }}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                height: "100%",
+                cursor: review.restaurantId ? "pointer" : "default",
+                "&:hover": review.restaurantId
+                  ? { bgcolor: "action.hover" }
+                  : {},
+              }}
+              onClick={() => {
+                if (review.restaurantId)
+                  navigate(`/restaurant/${review.restaurantId}`);
+              }}
+            >
               <CardContent
                 sx={{
                   display: "flex",
@@ -179,7 +194,7 @@ export default function ReviewList() {
                 >
                   <CardMedia
                     component="img"
-                    image="/images/hero-bg.jpg"
+                    image={review.imageUrl ?? "/images/hero-bg.jpg"}
                     alt={review.restaurantName}
                     sx={{
                       width: "100%",
@@ -251,7 +266,14 @@ export default function ReviewList() {
                       {review.content}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", gap: 0.3, flexWrap: "wrap", mt: 0.5 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 0.3,
+                      flexWrap: "wrap",
+                      mt: 0.5,
+                    }}
+                  >
                     {renderCategories(review.categories)}
                   </Box>
                   <Box
@@ -306,7 +328,10 @@ export default function ReviewList() {
                       <Box sx={{ ml: "auto", display: "flex" }}>
                         <IconButton
                           size="small"
-                          onClick={() => toggleLike(review.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLike(review.id);
+                          }}
                         >
                           {review.liked ? (
                             <FavoriteIcon fontSize="small" color="error" />
@@ -315,14 +340,20 @@ export default function ReviewList() {
                           )}
                         </IconButton>
 
-                        <IconButton size="small">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <ChatBubbleOutlineIcon fontSize="small" />
                           <Typography variant="caption" color="text.secondary">
-                            (3)
+                            {review.reviewCount}
                           </Typography>
                         </IconButton>
 
-                        <IconButton size="small">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <ReportOutlinedIcon fontSize="small" />
                         </IconButton>
                       </Box>

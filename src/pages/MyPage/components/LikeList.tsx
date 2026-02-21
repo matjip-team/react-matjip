@@ -21,6 +21,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 
+import { useNavigate } from "react-router-dom";
 import { type LikesPage } from "../types/likes";
 import React, { useEffect, useState } from "react";
 import { useQueryErrorHandler } from "../hooks/useQueryErrorHandler";
@@ -44,6 +45,7 @@ const RatingStars = ({ rating }: { rating: number }) => (
 );
 
 export default function LikeList() {
+  const navigate = useNavigate();
   /* 🔎 필터 상태 */
   const [keyword, setKeyword] = useState("");
   const [minRating, setMinRating] = useState(0);
@@ -206,11 +208,20 @@ export default function LikeList() {
       <Grid container spacing={2}>
         {filteredLikes.map((item) => (
           <Grid key={item.id} size={{ xs: 12, sm: 4, md: 4 }}>
-            <Card sx={{ borderRadius: 3 }}>
+            <Card
+              sx={{
+                borderRadius: 3,
+                cursor: item.restaurantId ? "pointer" : "default",
+                "&:hover": item.restaurantId ? { bgcolor: "action.hover" } : {},
+              }}
+              onClick={() => {
+                if (item.restaurantId) navigate(`/restaurant/${item.restaurantId}`);
+              }}
+            >
               <CardMedia
                 component="img"
                 height="140"
-                image="/images/hero-bg.jpg"
+                image={item.imageUrl ?? "/images/hero-bg.jpg"}
                 alt={item.restaurantName}
               />
               <CardContent>
@@ -255,7 +266,10 @@ export default function LikeList() {
                   </Typography>
                 </Box>
               </CardContent>
-              <CardActions sx={{ justifyContent: "space-between" }}>
+              <CardActions
+                sx={{ justifyContent: "space-between" }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Box sx={{ display: "flex", gap: 0.5 }}>
                   <VisibilityIcon fontSize="small" />
                   <Typography variant="caption">{item.views}</Typography>

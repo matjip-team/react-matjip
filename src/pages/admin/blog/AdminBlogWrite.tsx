@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
-  ButtonGroup,
+  // ButtonGroup,
   Card,
   CardContent,
   TextField,
@@ -44,15 +44,15 @@ interface ValidationErrorResponse {
 
 export default function AdminBlogWrite() {
   const navigate = useNavigate();
-  const MAIN_COLOR = "#ff6b00";
+  const MAIN_COLOR = "#4F9FFA";
   const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
 
-  const categories = [
-    { key: "후기", label: "후기" },
-    { key: "공지", label: "공지" },
-  ];
-
-  const [category, setCategory] = useState("후기");
+  // const categories = [
+  //   { key: "후기", label: "후기" },
+  //   { key: "공지", label: "공지" },
+  // ];
+  // const category = "후기";
+  // const [category, setCategory] = useState("후기");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -72,19 +72,22 @@ export default function AdminBlogWrite() {
 
   const hasMediaContent = (html: string) => /<(img|video|iframe)\b/i.test(html);
 
-  const insertMediaToEditor = useCallback((fileUrl: string, fileType: string) => {
-    const quill = quillRef.current?.getEditor();
-    if (!quill) return;
-    const range = quill.getSelection(true);
-    const index = range ? range.index : quill.getLength();
-    if (fileType.startsWith("video/")) {
-      quill.insertEmbed(index, "video", fileUrl, "user");
+  const insertMediaToEditor = useCallback(
+    (fileUrl: string, fileType: string) => {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) return;
+      const range = quill.getSelection(true);
+      const index = range ? range.index : quill.getLength();
+      if (fileType.startsWith("video/")) {
+        quill.insertEmbed(index, "video", fileUrl, "user");
+        quill.setSelection(index + 1);
+        return;
+      }
+      quill.insertEmbed(index, "image", fileUrl, "user");
       quill.setSelection(index + 1);
-      return;
-    }
-    quill.insertEmbed(index, "image", fileUrl, "user");
-    quill.setSelection(index + 1);
-  }, []);
+    },
+    [],
+  );
 
   const handleMediaUpload = useCallback(
     async (file: File) => {
@@ -125,29 +128,35 @@ export default function AdminBlogWrite() {
     () => ({
       toolbar: {
         container: [
-          [{ header: 1 }, { header: 2 }],
+          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ font: [] }],
           ["bold", "italic", "underline", "strike"],
-          ["link", "image", "video", "code-block", "formula"],
           [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
           [{ indent: "-1" }, { indent: "+1" }],
-          [{ direction: "rtl" }],
-          [{ size: ["small", false, "large", "huge"] }],
-          [{ color: [] }, { background: [] }],
-          [{ font: [] }],
           [{ align: [] }],
+          [{ color: [] }, { background: [] }],
           ["table-better"],
-          ["clean"],
           [{ direction: "rtl" }],
-          [{ header: [1, 2, 3, 4, 5, 6, false] }],
-          [{ size: ["small", false, "large", "huge"] }],
-          [{ script: "sub" }, { script: "super" }],
+          //[{ script: "sub" }, { script: "super" }],
+          //["link", "image", "video", "code-block", "formula"],
+          ["link", "image", "video"],
+          ["clean"],
         ],
         handlers: { image: handleToolbarMedia },
       },
       table: false,
       "table-better": {
         language: "en_US",
-        menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+        menus: [
+          "column",
+          "row",
+          "merge",
+          "table",
+          "cell",
+          "wrap",
+          "copy",
+          "delete",
+        ],
         toolbarTable: true,
       },
       keyboard: { bindings: QuillTableBetter.keyboardBindings },
@@ -162,7 +171,9 @@ export default function AdminBlogWrite() {
 
   const handleThumbnailPick = () => thumbnailInputRef.current?.click();
 
-  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -184,7 +195,8 @@ export default function AdminBlogWrite() {
       console.error(error);
       const uploadStep = (error as HttpErrorLike)?.uploadStep;
       if (uploadStep === "presign") alert("로그인이 필요합니다.");
-      else if (uploadStep === "s3-put") alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
+      else if (uploadStep === "s3-put")
+        alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
       else alert("썸네일 업로드에 실패했습니다.");
     } finally {
       setThumbnailUploading(false);
@@ -223,7 +235,8 @@ export default function AdminBlogWrite() {
         content: html,
         contentHtml: html,
         contentDelta: delta ? JSON.stringify(delta) : null,
-        blogType: category === "공지" ? "NOTICE" : "REVIEW",
+        // blogType: category === "공지" ? "NOTICE" : "REVIEW",
+        blogType: "REVIEW",
         imageUrl: thumbnailUrl || null,
       });
       navigate("/admin/blog");
@@ -246,11 +259,14 @@ export default function AdminBlogWrite() {
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Card>
           <CardContent>
-            <Typography variant="h5" sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}>
+            <Typography
+              variant="h5"
+              sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}
+            >
               글 작성 (관리자)
             </Typography>
             <Box component="form" onSubmit={handleSubmit}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+              {/* <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
                 <ButtonGroup size="small">
                   {categories.map((c) => (
@@ -269,7 +285,7 @@ export default function AdminBlogWrite() {
                     </Button>
                   ))}
                 </ButtonGroup>
-              </Box>
+              </Box> */}
               <TextField
                 fullWidth
                 placeholder="제목을 입력하세요"
@@ -282,9 +298,26 @@ export default function AdminBlogWrite() {
                 helperText={errors.title?.[0]}
                 sx={{ mb: 3 }}
               />
-              <Box sx={{ mb: 3, p: 1.5, border: "1px solid #eee", borderRadius: 1 }}>
-                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>썸네일 이미지</Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
+              <Box
+                sx={{
+                  mb: 3,
+                  p: 1.5,
+                  border: "1px solid #eee",
+                  borderRadius: 1,
+                }}
+              >
+                <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 1 }}>
+                  썸네일 이미지
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    mb: 1,
+                  }}
+                >
                   <Button
                     variant="outlined"
                     onClick={handleThumbnailPick}
@@ -335,8 +368,15 @@ export default function AdminBlogWrite() {
                 sx={{
                   mb: 2,
                   "& .ql-toolbar.ql-snow": { borderRadius: "4px 4px 0 0" },
-                  "& .ql-container.ql-snow": { minHeight: 360, borderRadius: "0 0 4px 4px" },
-                  "& .ql-editor": { minHeight: 320, fontSize: 15, lineHeight: 1.6 },
+                  "& .ql-container.ql-snow": {
+                    minHeight: 360,
+                    borderRadius: "0 0 4px 4px",
+                  },
+                  "& .ql-editor": {
+                    minHeight: 320,
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                  },
                 }}
               >
                 <ReactQuill
@@ -368,7 +408,14 @@ export default function AdminBlogWrite() {
                 >
                   취소
                 </Button>
-                <Button type="submit" variant="contained" sx={{ bgcolor: MAIN_COLOR, "&:hover": { bgcolor: MAIN_COLOR } }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{
+                    bgcolor: MAIN_COLOR,
+                    "&:hover": { bgcolor: MAIN_COLOR },
+                  }}
+                >
                   등록
                 </Button>
               </Box>
