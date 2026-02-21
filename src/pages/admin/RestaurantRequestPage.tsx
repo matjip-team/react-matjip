@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Pagination,
   Snackbar,
   Stack,
   Typography,
@@ -19,6 +20,7 @@ type RestaurantRequestItem = {
   name: string;
   address: string;
   imageUrl?: string | null;
+  representativeImageUrl?: string | null;
   hasBusinessLicenseFile: boolean;
   approvalStatus: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
   createdAt: string;
@@ -40,6 +42,11 @@ export default function RestaurantRequestPage() {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<RestaurantRequestItem[]>([]);
   const [toast, setToast] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<"PENDING" | "APPROVED">(
+    "PENDING",
+  );
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
 
   const isAdmin = useMemo(() => {
     const role = user?.role ?? "";
@@ -89,6 +96,31 @@ export default function RestaurantRequestPage() {
     void fetchRequests();
   }, [fetchRequests]);
 
+  const filteredItems = useMemo(
+    () => items.filter((item) => item.approvalStatus === selectedStatus),
+    [items, selectedStatus],
+  );
+
+  const pageCount = useMemo(
+    () => Math.max(1, Math.ceil(filteredItems.length / pageSize)),
+    [filteredItems.length],
+  );
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedStatus]);
+
+  useEffect(() => {
+    if (page > pageCount) {
+      setPage(pageCount);
+    }
+  }, [page, pageCount]);
+
 
   if (!user) {
     return (
@@ -108,45 +140,46 @@ export default function RestaurantRequestPage() {
 
   return (
     <Box sx={{ maxWidth: 980, mx: "auto", mt: 5 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-        맛집 등록 신청 접수
-      </Typography>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+        spacing={1}
+        sx={{ mb: 2 }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          맛집 등록 신청 접수
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant={selectedStatus === "PENDING" ? "contained" : "outlined"}
+            color="warning"
+            onClick={() => setSelectedStatus("PENDING")}
+          >
+            승인대기
+          </Button>
+          <Button
+            variant={selectedStatus === "APPROVED" ? "contained" : "outlined"}
+            color="success"
+            onClick={() => setSelectedStatus("APPROVED")}
+          >
+            승인완료
+          </Button>
+        </Stack>
+      </Stack>
 
       {loading && <Typography sx={{ color: "#666", mb: 2 }}>목록 불러오는 중...</Typography>}
 
-      {!loading && items.length === 0 && <Alert severity="info">신청 내역이 없습니다.</Alert>}
+      {!loading && filteredItems.length === 0 && (
+        <Alert severity="info">선택한 상태의 신청 내역이 없습니다.</Alert>
+      )}
 
       <Stack spacing={2}>
-        {items.map((item) => (
+        {pagedItems.map((item) => (
           <Card key={item.id} sx={{ border: "1px solid #eee" }}>
             <CardContent>
               <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flex: 1 }}>
-                  <Box
-                    sx={{
-                      width: 120,
-                      minWidth: 120,
-                      height: 90,
-                      borderRadius: 1,
-                      overflow: "hidden",
-                      border: "1px solid #eee",
-                      bgcolor: "#f7f7f7",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {item.imageUrl ? (
-                      <Box
-                        component="img"
-                        src={item.imageUrl}
-                        alt={`${item.name} 대표사진`}
-                        sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    ) : (
-                      <Typography sx={{ fontSize: 12, color: "#999" }}>대표사진 없음</Typography>
-                    )}
-                  </Box>
                   <Box>
                   <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
                     <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{item.name}</Typography>
@@ -167,7 +200,11 @@ export default function RestaurantRequestPage() {
                 <Stack direction={{ xs: "row", md: "column" }} spacing={1}>
                   <Button
                     variant="outlined"
-                    onClick={() => navigate(`/admin/restaurant-requests/${item.id}`)}
+                    onClick={() =>
+                      navigate(`/admin/restaurant-requests/${item.id}`, {
+                        state: { imageUrl: item.imageUrl ?? item.representativeImageUrl ?? null },
+                      })
+                    }
                   >
                     상세보기
                   </Button>
@@ -177,6 +214,15 @@ export default function RestaurantRequestPage() {
           </Card>
         ))}
       </Stack>
+
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+        <Pagination
+          page={page}
+          count={filteredItems.length === 0 ? 1 : pageCount}
+          disabled={filteredItems.length === 0}
+          onChange={(_, value) => setPage(value)}
+        />
+      </Box>
 
       <Snackbar
         open={Boolean(toast)}

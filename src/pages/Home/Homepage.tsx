@@ -38,6 +38,7 @@ interface Restaurant {
   imageUrl?: string;
   likeCount: number;
   liked: boolean;
+  approvalStatus?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 }
 
 interface PageResponse<T> {
@@ -53,6 +54,18 @@ type SearchParams = {
   keyword?: string;
   page?: number;
   size?: number;
+  status?: "APPROVED";
+};
+
+const S3_PUBLIC_BASE_URL =
+  (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
+  "https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com";
+
+const toDisplayImageUrl = (value?: string | null): string | null => {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("/")) return raw;
+  return `${S3_PUBLIC_BASE_URL}/${raw.replace(/^\/+/, "")}`;
 };
 
 export default function HomePage() {
@@ -89,6 +102,7 @@ export default function HomePage() {
         const params: SearchParams = {
           page: usePage,
           size: 9,
+          status: "APPROVED",
         };
 
       if (selectedCategory !== "전체") {
@@ -103,7 +117,10 @@ export default function HomePage() {
       const res = await axios.get("/api/restaurants", { params });
       const data: PageResponse<Restaurant> = res.data.data;
 
-      setStores(data.content);
+      const approvedOnly = (data.content ?? []).filter(
+        (item) => !item.approvalStatus || item.approvalStatus === "APPROVED",
+      );
+      setStores(approvedOnly);
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error("맛집 조회 실패", error);
@@ -309,6 +326,7 @@ export default function HomePage() {
                     sx={{
                       borderRadius: 4,
                       overflow: "hidden",
+                      border: "1px solid #e6e8ec",
                       transition: "0.3s",
                       boxShadow: 2,
                       "&:hover": {
@@ -332,7 +350,19 @@ export default function HomePage() {
                       <CardMedia
                         component="img"
                         height="200"
-                        image={store.imageUrl ?? "/images/world.jpg"}
+                        image={toDisplayImageUrl(store.imageUrl) ?? "/images/world.jpg"}
+                        sx={{
+                          width: "100%",
+                          display: "block",
+                          objectFit: "cover",
+                          borderTopLeftRadius: 16,
+                          borderTopRightRadius: 16,
+                        }}
+                        onError={(e) => {
+                          const img = e.currentTarget as HTMLImageElement;
+                          if (img.src.includes("/images/world.jpg")) return;
+                          img.src = "/images/world.jpg";
+                        }}
                       />
 
                       <CardContent>

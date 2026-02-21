@@ -17,6 +17,7 @@ interface PresignedUploadResponse<T> {
 }
 
 const PRESIGNED_URL_ENDPOINT = "/api/restaurants/licenses/presigned-url";
+const LICENSE_VIEW_URL_ENDPOINT = "/api/restaurants/licenses/view-url";
 const RESTAURANT_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/restaurants/images/presigned-url";
 const BOARD_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/boards/images/presigned-url";
 
@@ -53,6 +54,30 @@ export const uploadBusinessLicenseFile = async (file: File): Promise<string> => 
   return fileKey;
 };
 
+export const getBusinessLicenseFileViewUrl = async (fileKey: string): Promise<string> => {
+  const normalizedFileKey = (() => {
+    const raw = (fileKey ?? "").trim();
+    if (!raw) return raw;
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const url = new URL(raw);
+        return decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  })();
+
+  const response = await axios.post(LICENSE_VIEW_URL_ENDPOINT, { fileKey: normalizedFileKey });
+  const body = response.data as { data?: string; message?: string | null } | undefined;
+  const url = body?.data ?? (typeof body?.message === "string" ? body.message : null);
+  if (!url) {
+    throw new Error("LICENSE_VIEW_URL_NOT_FOUND");
+  }
+  return url;
+};
+
 const unwrapImageResponse = (payload: unknown): { uploadUrl: string; assetUrl: string } => {
   const body = payload as PresignedUploadResponse<PresignedImageUploadPayload>;
   const data = body?.data;
@@ -61,7 +86,10 @@ const unwrapImageResponse = (payload: unknown): { uploadUrl: string; assetUrl: s
     throw new Error("Invalid presigned image upload response");
   }
 
-  const assetUrl = data.fileUrl ?? data.fileKey;
+  const assetUrl =
+    data.fileUrl ??
+    (data.uploadUrl ? data.uploadUrl.split("?")[0] : undefined) ??
+    data.fileKey;
   if (!assetUrl) {
     throw new Error("Invalid presigned image upload response");
   }

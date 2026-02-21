@@ -7,6 +7,7 @@ import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
 import { useState, useRef, useEffect } from "react";
 import { API_BASE_URL } from "../pages/common/config/config";
+import axios from "../pages/common/axios";
 
 const toAvatarUrl = (url?: string) => {
   if (!url) return undefined;
@@ -21,6 +22,7 @@ export default function MainLayout() {
   const { user, logout } = useAuth();
   const [toast, setToast] = useState("");
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const adminMenuRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
@@ -46,6 +48,40 @@ export default function MainLayout() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setPendingRequestCount(0);
+      return;
+    }
+
+    let mounted = true;
+    const fetchPendingCount = async () => {
+      try {
+        const res = await axios.get("/api/admin/restaurants", {
+          params: { status: "PENDING" },
+        });
+        const list = (res.data?.data as unknown[]) ?? [];
+        if (mounted) {
+          setPendingRequestCount(Array.isArray(list) ? list.length : 0);
+        }
+      } catch {
+        if (mounted) {
+          setPendingRequestCount(0);
+        }
+      }
+    };
+
+    void fetchPendingCount();
+    const interval = window.setInterval(() => {
+      void fetchPendingCount();
+    }, 30000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
+  }, [isAdmin, location.pathname]);
 
   const myHandleClick = () => {
     navigate("/auth/mypage");
@@ -119,6 +155,9 @@ export default function MainLayout() {
                       }}
                     >
                       신청 접수
+                      {pendingRequestCount > 0 && (
+                        <strong className="admin-request-badge">{pendingRequestCount}</strong>
+                      )}
                     </span>
                     <span
                       onClick={() => {

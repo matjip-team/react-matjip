@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -7,27 +7,40 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Snackbar,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
+import ReactQuill, { Quill } from "react-quill-new";
+import "react-quill-new/dist/quill.bubble.css";
+import "react-quill-new/dist/quill.snow.css";
+import "quill-table-better/dist/quill-table-better.css";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { useAuth } from "../common/context/useAuth";
+import { registerBlogQuillModules } from "../blog/quillSetup";
 import {
   cancelRestaurantRequest,
   getMyRestaurantRequestDetail,
   getMyRestaurantRequestLicenseViewUrl,
   type RestaurantApprovalStatus,
   type RestaurantMyRequestDetail,
+  updateMyRestaurantRequest,
 } from "./api/restaurantRequestApi";
+
+registerBlogQuillModules(Quill);
 
 const STATUS_META: Record<
   RestaurantApprovalStatus,
   { label: string; color: "warning" | "success" | "error" | "default" }
 > = {
-  PENDING: { label: "확인 대기", color: "warning" },
+  PENDING: { label: "승인 대기", color: "warning" },
   APPROVED: { label: "승인 완료", color: "success" },
   REJECTED: { label: "반려", color: "error" },
   CANCELLED: { label: "철회", color: "default" },
@@ -45,6 +58,18 @@ interface HttpErrorLike {
     };
   };
 }
+
+type EditFormState = {
+  name: string;
+  address: string;
+  phone: string;
+  description: string;
+  categoryText: string;
+  latitude: number | null;
+  longitude: number | null;
+  imageUrl: string;
+};
+
 
 const formatDateTime = (value?: string | null) => {
   if (!value) {
@@ -82,6 +107,38 @@ const getStatusGuide = (status: RestaurantApprovalStatus) => {
   };
 };
 
+const S3_PUBLIC_BASE_URL =
+  (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
+  "https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com";
+
+const toDisplayImageUrl = (value?: string | null): string | null => {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("/")) return raw;
+  return `${S3_PUBLIC_BASE_URL}/${raw.replace(/^\/+/, "")}`;
+};
+
+const CATEGORY_OPTIONS = [
+  "한식",
+  "양식",
+  "고기/구이",
+  "씨푸드",
+  "일중/세계음식",
+  "비건",
+  "카페/디저트",
+];
+
+const buildEditForm = (data: RestaurantMyRequestDetail): EditFormState => ({
+  name: data.name ?? "",
+  address: data.address ?? "",
+  phone: data.phone ?? "",
+  description: data.description ?? "",
+  categoryText: data.categoryNames?.join(", ") ?? "",
+  latitude: data.latitude ?? null,
+  longitude: data.longitude ?? null,
+  imageUrl: data.imageUrl ?? data.representativeImageUrl ?? "",
+});
+
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
@@ -95,13 +152,27 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export default function MyRestaurantRequestDetailPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
 
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [licenseOpening, setLicenseOpening] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [detail, setDetail] = useState<RestaurantMyRequestDetail | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [editForm, setEditForm] = useState<EditFormState>({
+    name: "",
+    address: "",
+    phone: "",
+    description: "",
+    categoryText: "",
+    latitude: null,
+    longitude: null,
+    imageUrl: "",
+  });
   const [toast, setToast] = useState("");
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +181,10 @@ export default function MyRestaurantRequestDetailPage() {
 
   const requestId = useMemo(() => Number(id), [id]);
   const hasValidRequestId = Number.isInteger(requestId) && requestId > 0;
+  const imageUrlFromState = (location.state as { imageUrl?: string | null } | null)?.imageUrl ?? null;
+  const displayImageUrl = toDisplayImageUrl(
+    detail?.imageUrl ?? detail?.representativeImageUrl ?? imageUrlFromState ?? null,
+  );
 
   const fetchDetail = useCallback(async () => {
     if (!user || !hasValidRequestId) {
@@ -120,6 +195,9 @@ export default function MyRestaurantRequestDetailPage() {
       setLoading(true);
       const data = await getMyRestaurantRequestDetail(requestId);
       setDetail(data);
+      const nextForm = buildEditForm(data);
+      setIsEditMode(false);
+      setEditForm(nextForm);
     } catch (error: unknown) {
       if (error instanceof Error && error.message === "REQUEST_NOT_FOUND") {
         setToast("신청 내역을 찾을 수 없습니다.");
@@ -206,6 +284,55 @@ export default function MyRestaurantRequestDetailPage() {
       }
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!detail) return;
+    if (detail.approvalStatus !== "PENDING") {
+      setToast("승인 대기 상태에서만 수정할 수 있습니다.");
+      return;
+    }
+
+    if (!editForm.name.trim()) {
+      setToast("가게명을 입력해 주세요.");
+      return;
+    }
+
+    if (!editForm.address.trim()) {
+      setToast("주소를 입력해 주세요.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await updateMyRestaurantRequest(detail.id, {
+        name: editForm.name.trim(),
+        address: editForm.address.trim(),
+        phone: editForm.phone.trim() || null,
+        description: editForm.description.trim() || null,
+        imageUrl: editForm.imageUrl.trim() || null,
+        latitude: editForm.latitude,
+        longitude: editForm.longitude,
+        categoryNames: editForm.categoryText
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+      });
+      setToast("신청 내용이 수정되었습니다.");
+      setIsEditMode(false);
+      await fetchDetail();
+    } catch (error: unknown) {
+      const status = (error as HttpErrorLike)?.response?.status;
+      if (status === 400) {
+        setToast("승인 대기 상태 신청만 수정할 수 있습니다.");
+      } else if (status === 401 || status === 403) {
+        setToast("로그인이 필요합니다.");
+      } else {
+        setToast("신청 수정에 실패했습니다.");
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -307,7 +434,51 @@ export default function MyRestaurantRequestDetailPage() {
   }
 
   const statusGuide = detail ? getStatusGuide(detail.approvalStatus) : null;
-  const displayDescription = detail?.description?.trim() ? detail.description.trim() : "-";
+  const previewName = isEditMode ? editForm.name : detail?.name ?? "";
+  const previewAddress = isEditMode ? editForm.address : detail?.address ?? "";
+  const previewPhone = isEditMode ? editForm.phone : detail?.phone ?? "";
+  const previewCategories = isEditMode
+    ? editForm.categoryText
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean)
+    : (detail?.categoryNames ?? []);
+  const previewImageUrl = toDisplayImageUrl(
+    isEditMode ? editForm.imageUrl : (detail?.imageUrl ?? detail?.representativeImageUrl ?? null),
+  );
+  const selectedEditCategories = useMemo(
+    () =>
+      editForm.categoryText
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean),
+    [editForm.categoryText],
+  );
+
+  const toggleEditCategory = (category: string) => {
+    const next = selectedEditCategories.includes(category)
+      ? selectedEditCategories.filter((c) => c !== category)
+      : [...selectedEditCategories, category];
+    setEditForm((prev) => ({ ...prev, categoryText: next.join(", ") }));
+  };
+  const displayDescription = isEditMode
+    ? editForm.description.trim()
+    : detail?.description?.trim()
+      ? detail.description.trim()
+      : "";
+  const descriptionHtml = useMemo(() => {
+    const raw = displayDescription;
+    if (!raw) return "<p>-</p>";
+    const hasHtml = /<[^>]+>/.test(raw);
+    if (hasHtml) return raw;
+    const escaped = raw
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+    return `<p>${escaped.replace(/\n/g, "<br/>")}</p>`;
+  }, [displayDescription]);
 
   return (
     <Box sx={{ maxWidth: 940, mx: "auto", mt: 5 }}>
@@ -379,33 +550,176 @@ export default function MyRestaurantRequestDetailPage() {
             <Divider sx={{ my: 2 }} />
 
             <Typography sx={{ fontWeight: 700, mb: 1 }}>신청 정보</Typography>
+            {isEditMode ? (
+              <Stack spacing={2}>
+                <TextField
+                  label="가게명"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                  fullWidth
+                  required
+                />
+                <TextField
+                  label="주소"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, address: e.target.value }))}
+                  fullWidth
+                  required
+                />
+                <Box
+                  ref={mapContainerRef}
+                  sx={{
+                    width: "100%",
+                    height: 250,
+                    borderRadius: 1,
+                    border: "1px solid #e8e8e8",
+                    overflow: "hidden",
+                    backgroundColor: "#fafafa",
+                  }}
+                />
+                <Box>
+                  <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
+                    지도에서 크게 보기
+                  </Button>
+                </Box>
+                <TextField
+                  label="전화번호"
+                  value={editForm.phone}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      phone: e.target.value.replace(/[^0-9-]/g, "").slice(0, 13),
+                    }))
+                  }
+                  fullWidth
+                  placeholder="숫자와 - 입력 (예: 02-123-4567)"
+                  inputProps={{ inputMode: "tel", pattern: "[0-9-]*", maxLength: 13 }}
+                  helperText="숫자와 하이픈(-)만 입력 가능합니다."
+                />
+                <Stack spacing={1}>
+                  <Typography sx={{ fontWeight: 700, fontSize: 14 }}>카테고리</Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {CATEGORY_OPTIONS.map((category) => {
+                      const selected = selectedEditCategories.includes(category);
+                      return (
+                        <Chip
+                          key={category}
+                          clickable
+                          label={category}
+                          onClick={() => toggleEditCategory(category)}
+                          sx={{
+                            borderRadius: 1.2,
+                            fontWeight: 600,
+                            bgcolor: selected ? "#ff8a3d" : "#fff",
+                            color: selected ? "#fff" : "#444",
+                            border: `1px solid ${selected ? "#ff8a3d" : "#ddd"}`,
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+                </Stack>
+              </Stack>
+            ) : (
+              <Stack spacing={0.9}>
+                <InfoRow label="주소" value={detail.address || "-"} />
+                <Box
+                  ref={mapContainerRef}
+                  sx={{
+                    mt: 0.5,
+                    width: "100%",
+                    height: 250,
+                    borderRadius: 1,
+                    border: "1px solid #e8e8e8",
+                    overflow: "hidden",
+                    backgroundColor: "#fafafa",
+                  }}
+                />
+                <Box sx={{ pl: { xs: 0, sm: 12.5 } }}>
+                  <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
+                    지도에서 크게 보기
+                  </Button>
+                </Box>
+                <InfoRow label="전화번호" value={detail.phone || "-"} />
+                <InfoRow
+                  label="카테고리"
+                  value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"}
+                />
+              </Stack>
+            )}
             <Stack spacing={0.9}>
-              <InfoRow label="주소" value={detail.address || "-"} />
-              <InfoRow label="전화번호" value={detail.phone || "-"} />
-              <InfoRow
-                label="카테고리"
-                value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"}
-              />
-              <Box sx={{ pl: { xs: 0, sm: 12.5 } }}>
-                <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
-                  지도에서 크게 보기
-                </Button>
-              </Box>
-              <InfoRow label="설명" value={displayDescription} />
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
+                <Typography sx={{ width: { xs: "100%", sm: 100 }, color: "#666", fontSize: 14 }}>
+                  대표사진
+                </Typography>
+                <Box sx={{ flex: 1 }}>
+                  {displayImageUrl ? (
+                    <Box
+                      component="img"
+                      src={displayImageUrl}
+                      alt="대표사진"
+                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                        const img = e.currentTarget;
+                        if (img.src.includes("/images/world.jpg")) return;
+                        img.src = "/images/world.jpg";
+                      }}
+                      sx={{
+                        width: 240,
+                        maxWidth: "100%",
+                        height: 150,
+                        objectFit: "cover",
+                        borderRadius: 1,
+                        border: "1px solid #e8e8e8",
+                      }}
+                    />
+                  ) : (
+                    <Typography sx={{ color: "#222", fontSize: 14 }}>없음</Typography>
+                  )}
+                </Box>
+              </Stack>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
+                <Typography sx={{ width: { xs: "100%", sm: 100 }, color: "#666", fontSize: 14 }}>
+                  설명
+                </Typography>
+                <Box
+                  sx={{
+                    flex: 1,
+                    "& .ql-editor": { padding: 0 },
+                    "& .ql-editor img": { maxWidth: "100%", height: "auto" },
+                    "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
+                    "& .ql-editor table": {
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      margin: "12px 0",
+                    },
+                    "& .ql-editor td, & .ql-editor th": {
+                      border: "1px solid #d9d9d9",
+                      padding: "8px 10px",
+                      verticalAlign: "top",
+                    },
+                  }}
+                >
+                  {isEditMode ? (
+                    <ReactQuill
+                      theme="snow"
+                      value={editForm.description}
+                      onChange={(value) => setEditForm((prev) => ({ ...prev, description: value }))}
+                      modules={{
+                        toolbar: [
+                          [{ header: [1, 2, false] }],
+                          ["bold", "italic", "underline"],
+                          [{ list: "ordered" }, { list: "bullet" }],
+                          ["link", "image"],
+                          ["clean"],
+                        ],
+                      }}
+                    />
+                  ) : (
+                    <ReactQuill theme="bubble" readOnly modules={{ toolbar: false }} value={descriptionHtml} />
+                  )}
+                </Box>
+              </Stack>
             </Stack>
-
-            <Box
-              ref={mapContainerRef}
-              sx={{
-                mt: 2,
-                width: "100%",
-                height: 250,
-                borderRadius: 1,
-                border: "1px solid #e8e8e8",
-                overflow: "hidden",
-                backgroundColor: "#fafafa",
-              }}
-            />
 
             {detail.approvalStatus === "REJECTED" && (
               <Alert severity="error" sx={{ mt: 2 }}>
@@ -420,7 +734,40 @@ export default function MyRestaurantRequestDetailPage() {
             )}
 
             <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate("/register/requests")}>닫기</Button>
+              <Button variant="outlined" onClick={() => navigate("/register/requests")}>목록으로</Button>
+              <Button variant="outlined" onClick={() => setIsPreviewOpen(true)}>
+                미리보기
+              </Button>
+              {detail.approvalStatus === "PENDING" && !isEditMode && (
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    navigate(`/register?editRequestId=${detail.id}`)
+                  }
+                >
+                  수정
+                </Button>
+              )}
+              {detail.approvalStatus === "PENDING" && isEditMode && (
+                <>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setEditForm(buildEditForm(detail));
+                    }}
+                  >
+                    수정 취소
+                  </Button>
+                  <Button
+                    variant="contained"
+                    disabled={saving}
+                    onClick={() => void handleSaveEdit()}
+                  >
+                    {saving ? "저장 중..." : "수정 저장"}
+                  </Button>
+                </>
+              )}
               {detail.approvalStatus === "PENDING" && (
                 <Button
                   color="error"
@@ -443,6 +790,91 @@ export default function MyRestaurantRequestDetailPage() {
         onClose={() => setToast("")}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
+
+      <Dialog
+        open={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>맛집 소개 미리보기</DialogTitle>
+        <DialogContent dividers>
+          {detail?.approvalStatus !== "APPROVED" && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              현재 승인 전 상태입니다. 실제 맛집 소개 페이지에는 아직 노출되지 않습니다.
+            </Alert>
+          )}
+          <Stack spacing={2}>
+            <Card sx={{ borderRadius: 3, overflow: "hidden", border: "1px solid #ececec" }}>
+              <Box
+                component="img"
+                src={previewImageUrl || "/images/world.jpg"}
+                alt="미리보기 대표사진"
+                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                  const img = e.currentTarget;
+                  if (img.src.includes("/images/world.jpg")) return;
+                  img.src = "/images/world.jpg";
+                }}
+                sx={{
+                  width: "100%",
+                  height: { xs: 220, sm: 300 },
+                  objectFit: "cover",
+                }}
+              />
+            </Card>
+
+            <Card sx={{ borderRadius: 3, border: "1px solid #ececec" }}>
+              <CardContent>
+                <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                  {previewName || "-"}
+                </Typography>
+
+                <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {(previewCategories.length ? previewCategories : ["-"]).map((category) => (
+                    <Chip key={category} label={category} color="primary" size="small" />
+                  ))}
+                </Box>
+
+                <Typography sx={{ color: "#666", mt: 2 }}>
+                  {previewAddress || "-"}
+                </Typography>
+                <Typography sx={{ color: "#666", mt: 0.5 }}>
+                  전화번호: {previewPhone || "-"}
+                </Typography>
+
+                <Box
+                  sx={{
+                    mt: 2,
+                    "& .ql-editor": { padding: 0 },
+                    "& .ql-editor img": { maxWidth: "100%", height: "auto" },
+                    "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
+                    "& .ql-editor table": {
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      margin: "12px 0",
+                    },
+                    "& .ql-editor td, & .ql-editor th": {
+                      border: "1px solid #d9d9d9",
+                      padding: "8px 10px",
+                      verticalAlign: "top",
+                    },
+                  }}
+                >
+                  <ReactQuill
+                    theme="bubble"
+                    readOnly
+                    modules={{ toolbar: false }}
+                    value={descriptionHtml}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsPreviewOpen(false)}>닫기</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
