@@ -1,6 +1,19 @@
-﻿import { useState } from "react";
+﻿import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  Grid,
+  TextField,
+  Typography,
+  Alert,
+} from "@mui/material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { useState } from "react";
 import axios from "../common/axios";
-import { useAuth } from "../common/context/useAuth.ts"; //사용자정보
+import { useAuth } from "../common/context/useAuth";
 
 type Place = {
   name: string;
@@ -22,8 +35,6 @@ export default function AIRecommendPage() {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔥 로그인 상태 확인 (예: localStorage, API 등)
-
   const getRecommendation = async () => {
     if (!question.trim()) return;
 
@@ -36,7 +47,7 @@ export default function AIRecommendPage() {
         "http://localhost:8000/recommend/",
         {
           question,
-          user_id: user?.id, // 비로그인 시 null 전달
+          user_id: user?.id,
         }
       );
 
@@ -51,7 +62,7 @@ export default function AIRecommendPage() {
   };
 
   const logUserChoice = async (place: Place) => {
-    if (!user) return; // 비로그인 시 로그 기록 안함
+    if (!user) return;
 
     try {
       await axios.post("http://localhost:8080/user-history", {
@@ -65,55 +76,129 @@ export default function AIRecommendPage() {
   };
 
   return (
-    <div style={{ padding: "40px" }}>
-      <h1>🤖 AI 맛집 추천</h1>
+    <Container maxWidth="md" sx={{ mt: 6, mb: 10 }}>
+      {/* 타이틀 */}
+      <Box display="flex" alignItems="center" mb={4}>
+        <AutoAwesomeIcon sx={{ mr: 1, color: "#FF7A00" }} />
+        <Typography variant="h4" fontWeight="bold" sx={{ color: "#FF7A00" }}>
+          AI 맛집 추천
+        </Typography>
+      </Box>
 
+      {/* 로그인 안내 */}
       {user === null && (
-        <p style={{ color: "gray" }}>
+        <Alert
+          severity="info"
+          sx={{
+            mb: 3,
+            backgroundColor: "#FFF3E6",
+            color: "#FF7A00",
+          }}
+        >
           로그인하면 더 정확한 추천을 받을 수 있어요 😉
-        </p>
+        </Alert>
       )}
 
-      <input
-        type="text"
-        value={question}
-        placeholder="예: 강남 파스타 맛집"
-        onChange={(e) => setQuestion(e.target.value)}
-        style={{ padding: "8px", width: "300px", marginRight: "8px" }}
-      />
-
-      <button
-        onClick={getRecommendation}
-        disabled={!question.trim() || loading}
-        style={{ padding: "8px 16px", cursor: loading ? "not-allowed" : "pointer" }}
+      {/* 검색 카드 */}
+      <Card
+        sx={{
+          p: 3,
+          mb: 4,
+          borderRadius: 3,
+        }}
       >
-        {loading ? "추천 중..." : "추천받기"}
-      </button>
+        <Box display="flex" gap={2}>
+          <TextField
+            fullWidth
+            label="어디를 찾고 있나요?"
+            placeholder="예: 강남 파스타 맛집"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+          />
 
-      {comment && <h3 style={{ marginTop: "20px" }}>{comment}</h3>}
-
-      <div style={{ marginTop: "20px" }}>
-        {places.map((p, i) => (
-          <div
-            key={i}
-            onClick={() => logUserChoice(p)}
-            style={{
-              cursor: user ? "pointer" : "default",
-              border: "1px solid #ddd",
-              padding: "12px",
-              marginBottom: "10px",
-              borderRadius: "8px",
-              transition: "background 0.2s",
+          <Button
+            variant="contained"
+            size="large"
+            onClick={getRecommendation}
+            disabled={!question.trim() || loading}
+            sx={{
+              backgroundColor: "#FF7A00",
+              "&:hover": {
+                backgroundColor: "#E66E00",
+              },
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#f9f9f9")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
           >
-            <h3>{p.name}</h3>
-            <p>{p.address}</p>
-            <p>{p.category}</p>
-          </div>
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: "#fff" }} />
+            ) : (
+              "추천받기"
+            )}
+          </Button>
+        </Box>
+      </Card>
+
+      {/* AI 코멘트 */}
+      {comment && (
+        <Alert
+          severity="success"
+          sx={{
+            mb: 4,
+            backgroundColor: "#FFF3E6",
+            color: "#FF7A00",
+          }}
+        >
+          {comment}
+        </Alert>
+      )}
+
+      {/* 결과 리스트 */}
+      <Grid container spacing={3}>
+        {places.map((p, i) => (
+          <Grid size={12} key={i}>
+            <Card
+              onClick={() => logUserChoice(p)}
+              sx={{
+                cursor: user ? "pointer" : "default",
+                transition: "all 0.2s ease",
+                borderRadius: 3,
+                "&:hover": {
+                  transform: user ? "translateY(-4px)" : "none",
+                  boxShadow: 6,
+                },
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{ color: "#FF7A00" }}
+                >
+                  {p.name}
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  {p.address}
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "inline-block",
+                    mt: 2,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 10,
+                    backgroundColor: "#FF7A00",
+                    color: "#fff",
+                  }}
+                >
+                  {p.category}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Container>
   );
 }
