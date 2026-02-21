@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+﻿import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, Badge, Snackbar, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -23,6 +23,15 @@ export default function MainLayout() {
   const adminMenuRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
+
+  useEffect(() => {
+    const handleShowToast = (e: Event) => {
+      const message = (e as CustomEvent<{ message: string }>).detail?.message;
+      if (message) setToast(message);
+    };
+    window.addEventListener("show-toast", handleShowToast);
+    return () => window.removeEventListener("show-toast", handleShowToast);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -92,26 +101,6 @@ export default function MainLayout() {
             >
               AI 서비스
             </span>
-
-            {user && (
-              <>
-                <span
-                  className={location.pathname === "/register" ? "active" : ""}
-                  onClick={() => navigate("/register")}
-                >
-                  맛집 등록
-                </span>
-
-                <span
-                  className={
-                    location.pathname === "/register/requests" ? "active" : ""
-                  }
-                  onClick={() => navigate("/register/requests")}
-                >
-                  내 신청내역
-                </span>
-              </>
-            )}
 
             {isAdmin && (
               <div className="nav-dropdown" ref={adminMenuRef}>
@@ -235,4 +224,4 @@ export default function MainLayout() {
       />
     </div>
   );
-}
+} 

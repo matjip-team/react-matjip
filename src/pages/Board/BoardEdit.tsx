@@ -221,18 +221,7 @@ export default function BoardEdit() {
                     }}
                     onClick={() => setBoardType("REVIEW")}
                   >
-                    후기
-                  </Button>
-                  <Button
-                    variant={boardType === "NOTICE" ? "contained" : "outlined"}
-                    sx={{
-                      bgcolor: boardType === "NOTICE" ? MAIN_COLOR : "#fff",
-                      color: boardType === "NOTICE" ? "#fff" : MAIN_COLOR,
-                      borderColor: MAIN_COLOR,
-                    }}
-                    onClick={() => setBoardType("NOTICE")}
-                  >
-                    공지
+                    일반
                   </Button>
                 </ButtonGroup>
               </Box>

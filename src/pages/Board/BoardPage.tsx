@@ -31,7 +31,7 @@ import { boardTheme } from "./theme/boardTheme";
 
 // 타입 정의
 
-type CategoryType = "ALL" | "공지" | "후기";
+type CategoryType = "ALL" | "공지" | "일반";
 
 interface Board {
   id: number;
@@ -46,6 +46,8 @@ interface Board {
   commentCount: number;
   hasImage?: boolean;
   hasVideo?: boolean;
+  hidden?: boolean;
+  reportCount?: number;
 }
 
 // 메인 컴포넌트
@@ -97,8 +99,11 @@ export default function BoardPage() {
 
       const data = res.data.data;
 
-      const notices = (data.notices ?? []).filter(Boolean);
-      const contents = (data.contents ?? []).filter(Boolean);
+      const isVisibleBoard = (item: Board | null | undefined): item is Board =>
+        item != null && item.hidden !== true;
+
+      const notices = (data.notices ?? []).filter(isVisibleBoard);
+      const contents = (data.contents ?? []).filter(isVisibleBoard);
 
       if (category === "ALL") {
         setPosts([...notices, ...contents]);
@@ -127,7 +132,7 @@ export default function BoardPage() {
   // 글 타입 레이블 변환
   const getBoardLabel = (post: Board) => {
     if (post.boardType === "NOTICE") return "공지";
-    if (post.boardType === "REVIEW") return "후기";
+    if (post.boardType === "REVIEW") return "일반";
     return "-";
   };
 
@@ -257,7 +262,7 @@ export default function BoardPage() {
 
         {/* 카테고리 */}
         <Box sx={{ display: "flex", gap: 0.5, mb: 1, alignItems: "center" }}>
-          {["ALL", "공지", "후기"].map((c) => (
+          {["ALL", "공지", "일반"].map((c) => (
             <Button
               key={c}
               size="small"

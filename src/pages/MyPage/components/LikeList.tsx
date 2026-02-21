@@ -215,7 +215,8 @@ export default function LikeList() {
                 "&:hover": item.restaurantId ? { bgcolor: "action.hover" } : {},
               }}
               onClick={() => {
-                if (item.restaurantId) navigate(`/restaurant/${item.restaurantId}`);
+                if (item.restaurantId)
+                  navigate(`/restaurant/${item.restaurantId}`, { state: { fromMyPageTab: 0 } });
               }}
             >
               <CardMedia

@@ -1,7 +1,7 @@
 import QuillTableBetter from "quill-table-better";
 import ImageResize from "quill-image-resize";
 
-const BLOG_QUILL_REGISTER_KEY = "__ADMIN_BLOG_QUILL_MODULES_REGISTERED__";
+const QUILL_REGISTER_KEY = "__QUILL_COMMON_MODULES_REGISTERED__";
 
 interface QuillRegistrar {
   register: (...args: unknown[]) => void;
@@ -10,11 +10,11 @@ interface QuillRegistrar {
 export function registerAdminBlogQuillModules(Quill: unknown) {
   const quill = Quill as QuillRegistrar;
   const globalObj = globalThis as Record<string, unknown>;
-  if (globalObj[BLOG_QUILL_REGISTER_KEY]) {
+  if (globalObj[QUILL_REGISTER_KEY]) {
     return;
   }
 
   quill.register({ "modules/table-better": QuillTableBetter }, true);
   quill.register("modules/imageResize", ImageResize);
-  globalObj[BLOG_QUILL_REGISTER_KEY] = true;
+  globalObj[QUILL_REGISTER_KEY] = true;
 }

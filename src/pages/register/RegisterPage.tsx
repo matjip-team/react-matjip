@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Divider,
   Snackbar,
   Stack,
@@ -14,7 +15,7 @@ import {
 } from "@mui/material";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
-import { uploadBusinessLicenseFile } from "./api/registerFileUpload";
+import { uploadBusinessLicenseFile, uploadRestaurantRepresentativeImage } from "./api/registerFileUpload";
 
 type FormState = {
   name: string;
@@ -23,8 +24,9 @@ type FormState = {
   longitude: string;
   phone: string;
   description: string;
-  categories: string;
+  categories: string[];
   businessLicenseFileKey: string;
+  imageUrl: string;
 };
 
 type PlaceItem = {
@@ -48,9 +50,20 @@ const initialForm: FormState = {
   longitude: "",
   phone: "",
   description: "",
-  categories: "",
+  categories: [],
   businessLicenseFileKey: "",
+  imageUrl: "",
 };
+
+const CATEGORY_OPTIONS = [
+  "한식",
+  "양식",
+  "고기/구이",
+  "씨푸드",
+  "일중/세계음식",
+  "비건",
+  "카페/디저트",
+];
 
 const ACCEPTED_LICENSE_TYPES = [
   "application/pdf",
@@ -61,6 +74,16 @@ const ACCEPTED_LICENSE_TYPES = [
 ];
 
 const MAX_LICENSE_FILE_SIZE = 10 * 1024 * 1024;
+const ACCEPTED_REPRESENTATIVE_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+];
+const MAX_REPRESENTATIVE_IMAGE_SIZE = 10 * 1024 * 1024;
+
+const getHttpStatus = (error: unknown): number | undefined =>
+  (error as HttpErrorLike)?.response?.status;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -71,6 +94,8 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [licenseUploading, setLicenseUploading] = useState(false);
   const [licenseFileName, setLicenseFileName] = useState("");
+  const [representativeUploading, setRepresentativeUploading] = useState(false);
+  const [representativeImageName, setRepresentativeImageName] = useState("");
   const [toast, setToast] = useState("");
 
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -80,23 +105,19 @@ export default function RegisterPage() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const markerRef = useRef<kakao.maps.Marker | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const categoryNames = useMemo(
-    () =>
-      form.categories
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean),
-    [form.categories],
-  );
+  const licenseFileInputRef = useRef<HTMLInputElement | null>(null);
+  const representativeImageInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (!window.kakao || !window.kakao.maps) return;
+    if (!window.kakao || !window.kakao.maps) {
+      return;
+    }
 
     kakao.maps.load(() => {
       const container = mapContainerRef.current;
-      if (!container) return;
+      if (!container) {
+        return;
+      }
 
       const map = new kakao.maps.Map(container, {
         center: new kakao.maps.LatLng(37.5665, 126.978),
@@ -111,9 +132,28 @@ export default function RegisterPage() {
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
     };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const phoneWithHyphen = e.target.value.replace(/[^0-9-]/g, "").slice(0, 13);
+    setForm((prev) => ({ ...prev, phone: phoneWithHyphen }));
+  };
+
+  const toggleCategory = (category: string) => {
+    setForm((prev) => {
+      const exists = prev.categories.includes(category);
+      return {
+        ...prev,
+        categories: exists
+          ? prev.categories.filter((value) => value !== category)
+          : [...prev.categories, category],
+      };
+    });
+  };
+
   const moveMapToPlace = (place: PlaceItem) => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map) {
+      return;
+    }
 
     const position = new kakao.maps.LatLng(place.lat, place.lng);
     map.setCenter(position);
@@ -179,7 +219,15 @@ export default function RegisterPage() {
       setToast("로그인이 필요합니다.");
       return;
     }
-    fileInputRef.current?.click();
+    licenseFileInputRef.current?.click();
+  };
+
+  const handleRepresentativeImageButtonClick = () => {
+    if (!user) {
+      setToast("로그인이 필요합니다.");
+      return;
+    }
+    representativeImageInputRef.current?.click();
   };
 
   const handleLicenseFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,7 +259,7 @@ export default function RegisterPage() {
       setLicenseFileName(file.name);
       setToast("사업자등록증 파일 업로드가 완료되었습니다.");
     } catch (error: unknown) {
-      const status = (error as HttpErrorLike)?.response?.status;
+      const status = getHttpStatus(error);
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else {
@@ -223,10 +271,53 @@ export default function RegisterPage() {
     }
   };
 
+  const handleRepresentativeImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!ACCEPTED_REPRESENTATIVE_IMAGE_TYPES.includes(file.type)) {
+      setToast("PNG, JPG, WEBP 이미지 파일만 업로드할 수 있습니다.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_REPRESENTATIVE_IMAGE_SIZE) {
+      setToast("대표사진은 10MB 이하만 가능합니다.");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      setRepresentativeUploading(true);
+      const imageUrl = await uploadRestaurantRepresentativeImage(file);
+
+      setForm((prev) => ({
+        ...prev,
+        imageUrl,
+      }));
+      setRepresentativeImageName(file.name);
+      setToast("대표사진 업로드가 완료되었습니다.");
+    } catch (error: unknown) {
+      const status = getHttpStatus(error);
+      if (status === 401 || status === 403) {
+        setToast("로그인이 필요합니다.");
+      } else {
+        setToast("대표사진 업로드에 실패했습니다.");
+      }
+    } finally {
+      setRepresentativeUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const validate = () => {
     if (!form.name.trim()) return "가게명을 입력해 주세요.";
     if (!form.address.trim()) return "주소를 선택해 주세요.";
     if (!form.latitude || !form.longitude) return "주소 검색 후 위치를 선택해 주세요.";
+    if (form.categories.length === 0) return "카테고리를 1개 이상 선택해 주세요.";
+    if (!form.imageUrl.trim()) return "대표사진을 업로드해 주세요.";
     if (!form.businessLicenseFileKey.trim()) return "사업자등록증 파일을 업로드해 주세요.";
 
     const lat = Number(form.latitude);
@@ -236,6 +327,7 @@ export default function RegisterPage() {
     }
     if (lat < -90 || lat > 90) return "위도는 -90 ~ 90 범위여야 합니다.";
     if (lng < -180 || lng > 180) return "경도는 -180 ~ 180 범위여야 합니다.";
+
     return null;
   };
 
@@ -247,7 +339,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (licenseUploading) {
+    if (licenseUploading || representativeUploading) {
       setToast("파일 업로드가 끝난 뒤 등록해 주세요.");
       return;
     }
@@ -268,18 +360,20 @@ export default function RegisterPage() {
         phone: form.phone.trim() || null,
         description: form.description.trim() || null,
         businessLicenseFileKey: form.businessLicenseFileKey,
-        categoryNames,
+        imageUrl: form.imageUrl.trim() || null,
+        categoryNames: form.categories,
       });
 
-      setToast("등록 요청이 접수되었습니다. 관리자 승인 후 노출됩니다.");
+      setToast("등록 요청이 접수되었습니다. 관리자 확인 후 노출됩니다.");
       setForm(initialForm);
       setSearchKeyword("");
       setSearchResults([]);
       setSelectedPlaceId(null);
       setLicenseFileName("");
+      setRepresentativeImageName("");
       navigate("/register/requests");
     } catch (error: unknown) {
-      const status = (error as HttpErrorLike)?.response?.status;
+      const status = getHttpStatus(error);
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else if (status === 404 || status === 405) {
@@ -298,6 +392,7 @@ export default function RegisterPage() {
         <Alert severity="warning" sx={{ mb: 2, border: `1px solid ${ACCENT}` }}>
           맛집 등록은 로그인 후 이용할 수 있습니다.
         </Alert>
+
         <Stack direction="row" spacing={1}>
           <Button
             variant="contained"
@@ -363,8 +458,14 @@ export default function RegisterPage() {
                   label="주소/상호 검색"
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSearchPlace();
+                    }
+                  }}
                   fullWidth
-                  placeholder="예: 강남 갈비"
+                  placeholder="예) 강남 갈비"
                 />
                 <Button
                   type="button"
@@ -413,6 +514,51 @@ export default function RegisterPage() {
 
               <Stack spacing={1}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  대표사진 (필수)
+                </Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleRepresentativeImageButtonClick}
+                    disabled={representativeUploading}
+                    sx={{ borderColor: ACCENT, color: ACCENT, minWidth: 160 }}
+                  >
+                    {representativeUploading ? "업로드 중..." : "대표사진 업로드"}
+                  </Button>
+                  <Typography sx={{ fontSize: 13, color: "#666" }}>
+                    {representativeImageName || "선택된 대표사진 없음"}
+                  </Typography>
+                </Stack>
+                <Typography sx={{ fontSize: 12, color: "#999" }}>
+                  허용: PNG, JPG, WEBP (최대 10MB)
+                </Typography>
+                {form.imageUrl && (
+                  <Box
+                    component="img"
+                    src={form.imageUrl}
+                    alt="대표사진 미리보기"
+                    sx={{
+                      width: 220,
+                      maxWidth: "100%",
+                      height: 140,
+                      objectFit: "cover",
+                      borderRadius: 1,
+                      border: "1px solid #eee",
+                    }}
+                  />
+                )}
+                <input
+                  ref={representativeImageInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  style={{ display: "none" }}
+                  onChange={handleRepresentativeImageChange}
+                />
+              </Stack>
+
+              <Stack spacing={1}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                   사업자등록증 첨부 (임시 보관)
                 </Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
@@ -433,7 +579,7 @@ export default function RegisterPage() {
                   허용: PDF, PNG, JPG, WEBP (최대 10MB, 14일 후 자동 삭제)
                 </Typography>
                 <input
-                  ref={fileInputRef}
+                  ref={licenseFileInputRef}
                   type="file"
                   accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
                   style={{ display: "none" }}
@@ -444,22 +590,39 @@ export default function RegisterPage() {
               <TextField
                 label="전화번호"
                 value={form.phone}
-                onChange={handleChange("phone")}
+                onChange={handlePhoneChange}
                 fullWidth
-                placeholder="예: 02-123-4567"
+                placeholder="숫자와 - 입력 (예: 02-123-4567)"
+                inputProps={{ inputMode: "tel", pattern: "[0-9-]*", maxLength: 13 }}
+                helperText="숫자와 하이픈(-)만 입력 가능합니다."
               />
 
-              <TextField
-                label="카테고리"
-                value={form.categories}
-                onChange={handleChange("categories")}
-                fullWidth
-                placeholder="예: 한식, 고깃집, 해장국"
-                helperText="쉼표(,)로 구분해 입력하세요"
-              />
+              <Stack spacing={1}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>카테고리</Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {CATEGORY_OPTIONS.map((category) => {
+                    const selected = form.categories.includes(category);
+                    return (
+                      <Chip
+                        key={category}
+                        clickable
+                        label={category}
+                        onClick={() => toggleCategory(category)}
+                        sx={{
+                          borderRadius: 1.2,
+                          fontWeight: 600,
+                          bgcolor: selected ? ACCENT : "#fff",
+                          color: selected ? "#fff" : "#444",
+                          border: `1px solid ${selected ? ACCENT : "#ddd"}`,
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+              </Stack>
 
               <TextField
-                label="설명"
+                label="식당 정보글을 작성해주세요"
                 value={form.description}
                 onChange={handleChange("description")}
                 fullWidth

@@ -1,20 +1,15 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
-  CircularProgress,
   IconButton,
   MenuItem,
   Pagination,
   Paper,
   Select,
   Snackbar,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -40,19 +35,6 @@ import {
 } from "./api/adminBoardApi";
 import { boardTheme } from "./theme/boardTheme";
 
-interface SummaryCard {
-  label: string;
-  value: number;
-  color: string;
-}
-
-type SortType =
-  | "LATEST"
-  | "OLDEST"
-  | "VIEW_DESC"
-  | "RECOMMEND_DESC"
-  | "COMMENT_DESC";
-
 const statusOptions: Array<{ value: AdminBoardStatusFilter; label: string }> = [
   { value: "ALL", label: "전체" },
   { value: "NOTICE", label: "공지" },
@@ -60,6 +42,13 @@ const statusOptions: Array<{ value: AdminBoardStatusFilter; label: string }> = [
   { value: "HIDDEN", label: "숨김" },
   { value: "REPORTED", label: "신고" },
 ];
+
+type SortType =
+  | "LATEST"
+  | "OLDEST"
+  | "VIEW_DESC"
+  | "RECOMMEND_DESC"
+  | "COMMENT_DESC";
 
 const uniqueById = (items: AdminBoardListItem[]): AdminBoardListItem[] => {
   const map = new Map<number, AdminBoardListItem>();
@@ -124,15 +113,17 @@ const mediaIcon = (item: AdminBoardListItem) => {
   return <ChatBubbleOutlineIcon sx={{ fontSize: 16, color: "#9e9e9e", mr: 0.8 }} />;
 };
 
-export default function AdminBoardPage() {
+export default function BoardPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const initialStatus = (searchParams.get("status") as AdminBoardStatusFilter) || "ALL";
+
+  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
   const [rawItems, setRawItems] = useState<AdminBoardListItem[]>([]);
 
-  const [statusFilter, setStatusFilter] = useState<AdminBoardStatusFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<AdminBoardStatusFilter>(initialStatus);
   const [searchType, setSearchType] = useState<BoardSearchType>("TITLE_CONTENT");
   const [keyword, setKeyword] = useState("");
   const [appliedKeyword, setAppliedKeyword] = useState("");
@@ -144,7 +135,6 @@ export default function AdminBoardPage() {
   useEffect(() => {
     const run = async () => {
       setLoading(true);
-      setError("");
       try {
         const serverType =
           statusFilter === "NOTICE" ? "NOTICE" : statusFilter === "REVIEW" ? "REVIEW" : undefined;
@@ -159,8 +149,7 @@ export default function AdminBoardPage() {
 
         setRawItems(uniqueById([...(data.notices ?? []), ...(data.contents ?? [])]));
       } catch {
-        setRawItems([]);
-        setError("관리자 보드 데이터를 불러오지 못했습니다.");
+        setToast("관리자 게시글을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
       }
@@ -173,21 +162,6 @@ export default function AdminBoardPage() {
     const byStatus = applyStatusFilter(rawItems, statusFilter);
     return [...byStatus].sort((a, b) => compareBySort(a, b, sortType));
   }, [rawItems, statusFilter, sortType]);
-
-  const summaryCards = useMemo<SummaryCard[]>(() => {
-    const total = filteredItems.length;
-    const notice = filteredItems.filter((item) => item.boardType === "NOTICE").length;
-    const review = filteredItems.filter((item) => item.boardType === "REVIEW").length;
-    const hidden = filteredItems.filter((item) => item.hidden).length;
-    const reported = filteredItems.filter((item) => (item.reportCount ?? 0) > 0).length;
-
-    return [
-      { label: "전체 게시글", value: total, color: "#424242" },
-      { label: "공지", value: notice, color: "#ef6c00" },
-      { label: "일반", value: review, color: "#1565c0" },
-      { label: "숨김/신고", value: hidden + reported, color: "#c62828" },
-    ];
-  }, [filteredItems]);
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / size));
   const currentPage = Math.min(page, totalPages);
@@ -205,6 +179,14 @@ export default function AdminBoardPage() {
   const handleStatusChange = (next: AdminBoardStatusFilter) => {
     setStatusFilter(next);
     setPage(1);
+
+    if (next === "ALL") {
+      searchParams.delete("status");
+      setSearchParams(searchParams, { replace: true });
+      return;
+    }
+
+    setSearchParams({ status: next }, { replace: true });
   };
 
   return (
@@ -213,62 +195,28 @@ export default function AdminBoardPage() {
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
             justifyContent: "space-between",
+            alignItems: "center",
             mb: 2,
             gap: 1,
             flexWrap: "wrap",
           }}
         >
           <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#ff6b00" }}>
-            커뮤니티 관리자 보드
+            관리자 게시글 목록
           </Typography>
 
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" onClick={() => navigate("/admin/board/reports")}>신고 검토</Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" onClick={() => navigate("/admin/board")}>대시보드</Button>
             <Button
               variant="contained"
               sx={{ bgcolor: "#ff6b00", "&:hover": { bgcolor: "#e65f00" } }}
               onClick={() => navigate("/admin/board/write")}
             >
-              관리자 글 작성
+              관리자 작성
             </Button>
-          </Stack>
+          </Box>
         </Box>
-
-        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
-
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Box
-            sx={{
-              mb: 2,
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, minmax(0, 1fr))",
-                md: "repeat(4, minmax(0, 1fr))",
-              },
-              gap: 2,
-            }}
-          >
-            {summaryCards.map((card) => (
-              <Box key={card.label}>
-                <Card variant="outlined" sx={{ borderColor: "#ececec" }}>
-                  <CardContent>
-                    <Typography sx={{ color: "#777", fontSize: 13 }}>{card.label}</Typography>
-                    <Typography sx={{ fontSize: 30, fontWeight: 800, color: card.color }}>
-                      {card.value}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Box>
-            ))}
-          </Box>
-        )}
 
         <Paper variant="outlined" sx={{ borderColor: "#ececec", p: 1.5, mb: 1.5 }}>
           <Box sx={{ display: "flex", gap: 0.7, flexWrap: "wrap", mb: 1.2 }}>

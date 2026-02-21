@@ -19,9 +19,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await axios.post<ApiResponse<null>>("/api/auth/logout");
       setUser(null);
+      window.dispatchEvent(new CustomEvent("show-toast", { detail: { message: "로그아웃 되었습니다." } }));
       navigate("/auth/login");
     } catch (err) {
       console.error("Logout error:", err);
+      setUser(null);
+      window.dispatchEvent(new CustomEvent("show-toast", { detail: { message: "로그아웃 되었습니다." } }));
+      navigate("/auth/login");
     }
   };
 
@@ -71,6 +75,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     fetchUser();
   }, []);
+
+  // accessToken 없음/만료(401 + refresh 실패) 시 로그아웃 처리
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      window.dispatchEvent(new CustomEvent("show-toast", { detail: { message: "로그아웃 되었습니다." } }));
+      navigate("/auth/login");
+    };
+    window.addEventListener("auth:session-expired", handleSessionExpired);
+    return () => window.removeEventListener("auth:session-expired", handleSessionExpired);
+  }, [navigate]);
 
   if (loading) return <div>Loading...</div>;
 

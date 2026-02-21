@@ -17,9 +17,6 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import axios from "../common/axios";
 // import { useAuth } from "../common/context/useAuth";
 import { ThemeProvider } from "@mui/material/styles";
@@ -47,19 +44,6 @@ interface BlogPost {
   mediaUrls?: string[] | null;
 }
 
-interface DeltaInsertObject {
-  image?: unknown;
-  video?: unknown;
-}
-
-interface DeltaOp {
-  insert?: string | DeltaInsertObject;
-}
-
-interface DeltaLike {
-  ops?: DeltaOp[];
-}
-
 interface BlogLikePayload extends Omit<BlogPost, "hasImage" | "hasVideo"> {
   hasImage?: unknown;
   hasVideo?: unknown;
@@ -73,26 +57,6 @@ const normalizeBlog = (blog: BlogLikePayload): BlogPost => ({
   hasImage: toBoolean(blog?.hasImage),
   hasVideo: toBoolean(blog?.hasVideo),
 });
-
-const parseDelta = (rawDelta: unknown): DeltaLike | null => {
-  if (!rawDelta) return null;
-  if (typeof rawDelta === "object") return rawDelta as DeltaLike;
-  if (typeof rawDelta !== "string") return null;
-  try {
-    return JSON.parse(rawDelta) as DeltaLike;
-  } catch {
-    return null;
-  }
-};
-
-const hasEmbedInDelta = (rawDelta: unknown, embedType: "image" | "video") => {
-  const delta = parseDelta(rawDelta);
-  const ops = Array.isArray(delta?.ops) ? delta.ops : [];
-  return ops.some((op) => {
-    if (typeof op?.insert !== "object" || op.insert === null) return false;
-    return Boolean((op.insert as DeltaInsertObject)?.[embedType]);
-  });
-};
 
 const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
 
@@ -154,36 +118,6 @@ export default function BlogPage() {
     if (post.blogType === "NOTICE") return "공지";
     if (post.blogType === "REVIEW") return "후기";
     return "-";
-  };
-
-  const hasImageContent = (post: BlogPost) => {
-    if (post.hasImage) return true;
-    const content = getPostHtml(post);
-    return (
-      /<img[\s>]/i.test(content) ||
-      hasEmbedInDelta(post.contentDelta, "image") ||
-      Boolean(post.imageUrl?.trim()) ||
-      /image/i.test(post.mediaType ?? "") ||
-      (Array.isArray(post.mediaUrls) &&
-        post.mediaUrls.some((url) =>
-          /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(url),
-        ))
-    );
-  };
-
-  const hasVideoContent = (post: BlogPost) => {
-    if (post.hasVideo) return true;
-    const content = getPostHtml(post);
-    return (
-      /<(video|iframe)[\s>]/i.test(content) ||
-      hasEmbedInDelta(post.contentDelta, "video") ||
-      Boolean(post.videoUrl?.trim()) ||
-      /video/i.test(post.mediaType ?? "") ||
-      (Array.isArray(post.mediaUrls) &&
-        post.mediaUrls.some((url) =>
-          /\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url),
-        ))
-    );
   };
 
   const getThumbnailUrl = (post: BlogPost) => {
@@ -335,9 +269,6 @@ export default function BlogPage() {
           >
             {posts.map((post) => {
               const type = getBlogType(post);
-              const showImageIcon = hasImageContent(post);
-              const showVideoIcon = hasVideoContent(post);
-              const showDefaultBubble = !showImageIcon && !showVideoIcon;
               const thumbnailUrl = getThumbnailUrl(post);
 
               return (
@@ -418,27 +349,10 @@ export default function BlogPage() {
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 0.9,
                         mb: 1,
                         "&:hover .blog-title": { textDecoration: "underline" },
                       }}
                     >
-                      {showDefaultBubble && (
-                        <ChatBubbleOutlineIcon
-                          sx={{ fontSize: 18, color: "#9e9e9e" }}
-                        />
-                      )}
-                      {showImageIcon && (
-                        <ImageOutlinedIcon
-                          sx={{ fontSize: 18, color: "#2e7d32" }}
-                        />
-                      )}
-                      {showVideoIcon && (
-                        <VideocamOutlinedIcon
-                          sx={{ fontSize: 18, color: "#1565c0" }}
-                        />
-                      )}
-
                       <Typography
                         className="blog-title"
                         sx={{

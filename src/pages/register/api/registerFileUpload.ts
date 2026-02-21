@@ -1,19 +1,30 @@
 import axios from "../../common/axios";
 import rawAxios from "axios";
 
-interface PresignedUploadPayload {
+interface PresignedLicenseUploadPayload {
   uploadUrl: string;
   fileKey: string;
 }
 
-interface PresignedUploadResponse {
-  data?: PresignedUploadPayload;
+interface PresignedImageUploadPayload {
+  uploadUrl: string;
+  fileUrl?: string;
+  fileKey?: string;
+}
+
+interface PresignedUploadResponse<T> {
+  data?: T;
 }
 
 const PRESIGNED_URL_ENDPOINT = "/api/restaurants/licenses/presigned-url";
+const RESTAURANT_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/restaurants/images/presigned-url";
+const BOARD_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/boards/images/presigned-url";
 
-const unwrapResponse = (payload: unknown): PresignedUploadPayload => {
-  const body = payload as PresignedUploadResponse;
+const getHttpStatus = (error: unknown): number | undefined =>
+  (error as { response?: { status?: number } })?.response?.status;
+
+const unwrapLicenseResponse = (payload: unknown): PresignedLicenseUploadPayload => {
+  const body = payload as PresignedUploadResponse<PresignedLicenseUploadPayload>;
   const data = body?.data;
 
   if (!data?.uploadUrl || !data?.fileKey) {
@@ -31,7 +42,7 @@ export const uploadBusinessLicenseFile = async (file: File): Promise<string> => 
     contentType,
   });
 
-  const { uploadUrl, fileKey } = unwrapResponse(presignedResponse.data);
+  const { uploadUrl, fileKey } = unwrapLicenseResponse(presignedResponse.data);
 
   await rawAxios.put(uploadUrl, file, {
     headers: {
@@ -40,4 +51,56 @@ export const uploadBusinessLicenseFile = async (file: File): Promise<string> => 
   });
 
   return fileKey;
+};
+
+const unwrapImageResponse = (payload: unknown): { uploadUrl: string; assetUrl: string } => {
+  const body = payload as PresignedUploadResponse<PresignedImageUploadPayload>;
+  const data = body?.data;
+
+  if (!data?.uploadUrl) {
+    throw new Error("Invalid presigned image upload response");
+  }
+
+  const assetUrl = data.fileUrl ?? data.fileKey;
+  if (!assetUrl) {
+    throw new Error("Invalid presigned image upload response");
+  }
+
+  return {
+    uploadUrl: data.uploadUrl,
+    assetUrl,
+  };
+};
+
+export const uploadRestaurantRepresentativeImage = async (file: File): Promise<string> => {
+  const contentType = file.type || "image/png";
+
+  let presignedResponse;
+  try {
+    presignedResponse = await axios.post(RESTAURANT_IMAGE_PRESIGNED_URL_ENDPOINT, {
+      fileName: file.name,
+      contentType,
+    });
+  } catch (error: unknown) {
+    const status = getHttpStatus(error);
+    if (status !== 404 && status !== 405) {
+      throw error;
+    }
+
+    // Fallback: 공용 이미지 presigned endpoint
+    presignedResponse = await axios.post(BOARD_IMAGE_PRESIGNED_URL_ENDPOINT, {
+      fileName: file.name,
+      contentType,
+    });
+  }
+
+  const { uploadUrl, assetUrl } = unwrapImageResponse(presignedResponse.data);
+
+  await rawAxios.put(uploadUrl, file, {
+    headers: {
+      "Content-Type": contentType,
+    },
+  });
+
+  return assetUrl;
 };

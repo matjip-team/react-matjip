@@ -10,9 +10,15 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import axios from "../common/axios";
-import { useAuth } from "../common/context/useAuth";
-import { formatDateTime } from "../common/utils/helperUtil";
+import axios from "../../common/axios";
+import { useAuth } from "../../common/context/useAuth";
+import { formatDateTime } from "../../common/utils/helperUtil";
+import {
+  fetchAdminBoardDetail,
+  hideAdminBoard,
+  isAdminEndpointUnsupported,
+  restoreAdminBoard,
+} from "./api/adminBoardApi";
 
 interface CommentNode {
   id: number;
@@ -30,6 +36,7 @@ interface BoardPostDetail {
   boardType: "NOTICE" | "REVIEW" | string;
   title: string;
   content: string;
+  contentHtml?: string;
   authorNickname?: string;
   createdAt?: string;
   viewCount: number;
@@ -38,6 +45,8 @@ interface BoardPostDetail {
   recommended?: boolean;
   imageUrl?: string;
   authorId?: number;
+  hidden?: boolean;
+  reportCount?: number;
 }
 
 interface HttpErrorLike {
@@ -69,6 +78,7 @@ export default function BoardDetail() {
   const [loadingPost, setLoadingPost] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState("");
 
   const fetchPost = async () => {
@@ -76,12 +86,18 @@ export default function BoardDetail() {
 
     try {
       setLoadingPost(true);
-      const res = await axios.get(`/api/boards/${id}`);
-      const data = res.data?.data as BoardPostDetail;
-      setPost(data);
-      setRecommended(Boolean(data?.recommended));
+      const data = await fetchAdminBoardDetail(id);
+      setPost(data as BoardPostDetail);
+      setRecommended(Boolean((data as { recommended?: boolean }).recommended));
     } catch {
-      setToast("게시글 정보를 불러오지 못했습니다.");
+      try {
+        const res = await axios.get(`/api/boards/${id}`);
+        const data = res.data?.data as BoardPostDetail;
+        setPost(data);
+        setRecommended(Boolean(data?.recommended));
+      } catch {
+        setToast("게시글 정보를 불러오지 못했습니다.");
+      }
     } finally {
       setLoadingPost(false);
     }
@@ -114,13 +130,38 @@ export default function BoardDetail() {
 
   const canEditComment = (node: CommentNode) => {
     if (!user) return false;
-    if (user.role === "ROLE_ADMIN") return true;
+    if (user.role === "ROLE_ADMIN" || user.role === "ADMIN") return true;
 
     const ownerId = node.authorId ?? node.userId;
     if (ownerId != null && user.id === ownerId) return true;
     if (node.authorNickname && user.nickname === node.authorNickname) return true;
 
     return false;
+  };
+
+  const runAdminAction = async (action: () => Promise<unknown>, successMessage: string) => {
+    try {
+      setActionLoading(true);
+      await action();
+      setToast(successMessage);
+      await fetchPost();
+    } catch (error: unknown) {
+      if (isAdminEndpointUnsupported(error)) {
+        setToast("관리자 전용 API가 아직 준비되지 않았습니다.");
+      } else {
+        setToast("관리자 기능 처리 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleHideToggle = async () => {
+    if (!post) return;
+    await runAdminAction(
+      () => (post.hidden ? restoreAdminBoard(post.id) : hideAdminBoard(post.id)),
+      post.hidden ? "게시글을 복구했습니다." : "게시글을 숨김 처리했습니다.",
+    );
   };
 
   const handleRecommend = async () => {
@@ -192,7 +233,7 @@ export default function BoardDetail() {
     try {
       await axios.delete(`/api/boards/${id}`);
       setToast("게시글을 삭제했습니다.");
-      navigate("/board");
+      navigate("/admin/board");
     } catch {
       setToast("삭제 권한이 없습니다.");
     }
@@ -366,6 +407,9 @@ export default function BoardDetail() {
     return <Box sx={{ textAlign: "center", mt: 10 }}>게시글이 없습니다.</Box>;
   }
 
+  const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
+  const canManagePost = Boolean(user && (isAdmin || user.id === post.authorId));
+
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
       <Paper sx={{ p: 3, position: "relative" }}>
@@ -391,8 +435,11 @@ export default function BoardDetail() {
           <Typography sx={{ fontSize: 12 }}>
             {post.authorNickname} | {post.createdAt ? formatDateTime(post.createdAt) : "-"}
           </Typography>
+
           <Typography sx={{ fontSize: 12 }}>
             조회 {post.viewCount} | 추천 {post.recommendCount}
+            {post.hidden ? " | 숨김" : ""}
+            {(post.reportCount ?? 0) > 0 ? ` | 신고 ${post.reportCount}` : ""}
           </Typography>
         </Box>
 
@@ -405,7 +452,7 @@ export default function BoardDetail() {
             minHeight: 200,
             "& img": { maxWidth: "100%" },
           }}
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: post.contentHtml ?? post.content }}
         />
 
         <Divider sx={{ my: 3 }} />
@@ -644,14 +691,7 @@ export default function BoardDetail() {
                             border: "1px solid #eee",
                           }}
                         >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              width: "100%",
-                            }}
-                          >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
                             <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
                               {r.authorNickname ?? "익명"}
                             </Typography>
@@ -753,10 +793,22 @@ export default function BoardDetail() {
         </Box>
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-          {user && (user.id === post.authorId || user.role === "ROLE_ADMIN") && (
+          {canManagePost && (
             <>
-              <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={() => navigate(`/board/edit/${id}`)}>
+              <Button
+                variant="contained"
+                sx={{ height: 32, fontSize: 12 }}
+                onClick={() => navigate(`/admin/board/edit/${id}`)}
+              >
                 수정
+              </Button>
+              <Button
+                variant="contained"
+                sx={{ height: 32, fontSize: 12 }}
+                onClick={() => void handleHideToggle()}
+                disabled={actionLoading}
+              >
+                {post.hidden ? "복구" : "숨김"}
               </Button>
               <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={() => void handleDelete()}>
                 삭제
@@ -767,7 +819,7 @@ export default function BoardDetail() {
           <Button
             variant="contained"
             sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
-            onClick={() => navigate("/board")}
+            onClick={() => navigate("/admin/board")}
           >
             목록으로
           </Button>

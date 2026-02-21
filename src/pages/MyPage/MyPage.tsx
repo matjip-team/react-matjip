@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import BottomNavigation from "@mui/material/BottomNavigation";
@@ -19,10 +20,21 @@ import { unwrapData } from "../common/utils/helperUtil";
 import { ThemeProvider } from "@mui/material/styles";
 import myPageTheme from "../common/theme/mypage";
 import RegisterPage from "../register/RegisterPage";
-import RestaurantMyRequestsPage from "../register/RestaurantMyRequestsPage";
+import MyRestaurantRequestListPage from "../register/MyRestaurantRequestListPage";
 
 export default function MyPage() {
-  const [value, setValue] = React.useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [value, setValue] = React.useState(() =>
+    tabParam !== null ? Math.min(Math.max(0, Number(tabParam) || 0), 4) : 0,
+  );
+
+  // URL tab 파라미터 변경 시 동기화
+  React.useEffect(() => {
+    if (tabParam !== null) {
+      setValue(Math.min(Math.max(0, Number(tabParam) || 0), 4));
+    }
+  }, [tabParam]);
   const [profile, setProfile] = React.useState<ProfileResponse | null>(null);
   const [profileViewMode, setProfileViewMode] = React.useState<"info" | "edit">("info");
 
@@ -60,7 +72,7 @@ export default function MyPage() {
       case 2:
         return <RegisterPage />;
       case 3:
-        return <RestaurantMyRequestsPage />;
+        return <MyRestaurantRequestListPage />;
       case 4:
         if (!profile) return <div>loading...</div>;
         if (profileViewMode === "edit") {
@@ -110,7 +122,10 @@ export default function MyPage() {
         >
           <BottomNavigation
             value={value}
-            onChange={(_e, newValue) => setValue(newValue)}
+            onChange={(_e, newValue) => {
+              setValue(newValue);
+              setSearchParams({ tab: String(newValue) }, { replace: true });
+            }}
             showLabels
           >
             <BottomNavigationAction label="찜한식당" icon={<FavoriteIcon />} />
