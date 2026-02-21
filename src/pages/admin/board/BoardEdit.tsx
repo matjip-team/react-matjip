@@ -1,65 +1,113 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  Alert,
   Box,
   Button,
   ButtonGroup,
   Card,
   CardContent,
+  CircularProgress,
+  FormControlLabel,
+  Snackbar,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import axios from "../common/axios";
-import { boardTheme } from "./theme/boardTheme";
+import {
+  fetchAdminBoardDetail,
+  hideAdminBoard,
+  isAdminEndpointUnsupported,
+  restoreAdminBoard,
+  updateAdminBoard,
+  type BoardType,
+} from "./api/adminBoardApi";
 import { uploadBoardImage } from "./api/boardImageUpload";
+import { boardTheme } from "./theme/boardTheme";
 
-type BoardType = "NOTICE" | "REVIEW";
-
-interface BoardDetailData {
-  title?: string;
-  content?: string;
-  boardType?: BoardType;
+interface ValidationField {
+  field?: string;
+  messages?: string[];
 }
 
-interface HttpErrorLike {
+interface ErrorEnvelope {
   response?: {
     status?: number;
-    data?: ValidationErrorResponse;
+    data?: {
+      code?: string;
+      fields?: ValidationField[];
+      error?: {
+        code?: string;
+        fields?: ValidationField[];
+      };
+    };
   };
   uploadStep?: "presign" | "s3-put";
 }
 
-interface ValidationErrorField {
-  field: string;
-  messages: string[];
-}
+const htmlToText = (html: string): string => {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent?.trim() ?? "";
+};
 
-interface ValidationErrorResponse {
-  code?: string;
-  fields?: ValidationErrorField[];
-}
+const parseValidationErrors = (error: unknown): Record<string, string> => {
+  const payload = (error as ErrorEnvelope)?.response?.data;
+  const fields = payload?.fields ?? payload?.error?.fields ?? [];
+  const map: Record<string, string> = {};
+  fields.forEach((item) => {
+    const key = item.field;
+    const message = item.messages?.[0];
+    if (key && message) map[key] = message;
+  });
+  return map;
+};
 
 export default function BoardEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const MAIN_COLOR = "#ff6b00";
 
-  const [boardType, setBoardType] = useState<BoardType>("REVIEW");
+  const [boardType, setBoardType] = useState<BoardType>("NOTICE");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [originHidden, setOriginHidden] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState("");
+  const [warning, setWarning] = useState("");
 
   const quillRef = useRef<ReactQuill | null>(null);
 
-  const extractPlainText = (html: string) => {
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    return div.textContent?.trim() ?? "";
-  };
+  useEffect(() => {
+    if (!id) return;
+
+    const run = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchAdminBoardDetail(id);
+        setTitle(data.title ?? "");
+        setContent(data.contentHtml ?? data.content ?? "");
+        setBoardType(data.boardType === "NOTICE" ? "NOTICE" : "REVIEW");
+        const isHidden = Boolean(data.hidden);
+        setHidden(isHidden);
+        setOriginHidden(isHidden);
+        setWarning("");
+      } catch {
+        setWarning("게시글 정보를 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void run();
+  }, [id]);
 
   const insertEmbedToEditor = useCallback((fileUrl: string, type: "image" | "video") => {
     const quill = quillRef.current?.getEditor();
@@ -72,57 +120,52 @@ export default function BoardEdit() {
     quill.setSelection(index + 1);
   }, []);
 
-  const handleMediaUpload = useCallback(
+  const uploadMedia = useCallback(
     async (file: File, mediaType: "image" | "video") => {
       try {
-        setIsUploadingMedia(true);
+        setUploading(true);
         const fileUrl = await uploadBoardImage(file);
         insertEmbedToEditor(fileUrl, mediaType);
       } catch (error: unknown) {
-        console.error(error);
-        const status = (error as HttpErrorLike)?.response?.status;
-        const uploadStep = (error as HttpErrorLike)?.uploadStep;
+        const uploadStep = (error as ErrorEnvelope)?.uploadStep;
+        const status = (error as ErrorEnvelope)?.response?.status;
 
         if (uploadStep === "presign" && (status === 401 || status === 403)) {
-          alert("로그인이 필요합니다.");
-        } else if (uploadStep === "s3-put" && status === 403) {
-          alert("S3 업로드 권한 또는 CORS 설정을 확인해 주세요.");
-        } else {
-          alert(mediaType === "video" ? "영상 업로드에 실패했습니다." : "이미지 업로드에 실패했습니다.");
+          setToast("로그인이 필요합니다.");
+          return;
         }
+
+        if (uploadStep === "s3-put" && status === 403) {
+          setToast("S3 업로드 권한 또는 CORS 설정을 확인해주세요.");
+          return;
+        }
+
+        setToast(mediaType === "video" ? "동영상 업로드에 실패했습니다." : "이미지 업로드에 실패했습니다.");
       } finally {
-        setIsUploadingMedia(false);
+        setUploading(false);
       }
     },
     [insertEmbedToEditor],
   );
 
-  const handleToolbarFile = useCallback(
+  const onToolbarFile = useCallback(
     (accept: string, mediaType: "image" | "video") => {
       const input = document.createElement("input");
-      input.setAttribute("type", "file");
-      input.setAttribute("accept", accept);
+      input.type = "file";
+      input.accept = accept;
       input.click();
 
       input.onchange = () => {
         const file = input.files?.[0];
         if (file) {
-          void handleMediaUpload(file, mediaType);
+          void uploadMedia(file, mediaType);
         }
       };
     },
-    [handleMediaUpload],
+    [uploadMedia],
   );
 
-  const handleToolbarImage = useCallback(() => {
-    handleToolbarFile("image/*", "image");
-  }, [handleToolbarFile]);
-
-  const handleToolbarVideo = useCallback(() => {
-    handleToolbarFile("video/*", "video");
-  }, [handleToolbarFile]);
-
-  const quillModules = useMemo(
+  const modules = useMemo(
     () => ({
       toolbar: {
         container: [
@@ -133,166 +176,199 @@ export default function BoardEdit() {
           ["clean"],
         ],
         handlers: {
-          image: handleToolbarImage,
-          video: handleToolbarVideo,
+          image: () => onToolbarFile("image/*", "image"),
+          video: () => onToolbarFile("video/*", "video"),
         },
       },
     }),
-    [handleToolbarImage, handleToolbarVideo],
+    [onToolbarFile],
   );
 
-  useEffect(() => {
-    axios.get(`/api/boards/${id}`).then((res) => {
-      const data = (res.data?.data ?? {}) as BoardDetailData;
-      setTitle(data.title ?? "");
-      setBoardType(data.boardType === "NOTICE" ? "NOTICE" : "REVIEW");
-      setContent(data.content ?? "");
-    });
-  }, [id]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const html = content;
-    const text = extractPlainText(content);
+  const validate = (): boolean => {
+    const nextErrors: Record<string, string> = {};
 
     if (!title.trim()) {
-      setErrors({ title: ["제목을 입력해 주세요."] });
-      return;
+      nextErrors.title = "제목을 입력해주세요.";
+    } else if (title.trim().length < 2) {
+      nextErrors.title = "제목은 2자 이상이어야 합니다.";
     }
 
-    if (title.trim().length < 2) {
-      setErrors({ title: ["제목은 최소 2자 이상 입력해 주세요."] });
-      return;
+    if (!htmlToText(content)) {
+      nextErrors.content = "본문을 입력해주세요.";
     }
 
-    if (!text) {
-      setErrors({ content: ["내용을 입력해 주세요."] });
-      return;
-    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
-    if (isUploadingMedia) {
-      alert("미디어 업로드가 끝난 뒤 다시 시도해 주세요.");
-      return;
-    }
+  const syncHiddenState = async () => {
+    if (!id || hidden === originHidden) return;
 
-    try {
-      await axios.put(`/api/boards/${id}`, {
-        title,
-        content: html,
-        boardType,
-      });
-
-      navigate(`/board/${id}`);
-    } catch (error: unknown) {
-      const res = (error as HttpErrorLike)?.response?.data;
-      if (res?.code === "VALIDATION_ERROR") {
-        const fieldErrors: Record<string, string[]> = {};
-        (res.fields ?? []).forEach((f) => {
-          fieldErrors[f.field] = f.messages;
-        });
-        setErrors(fieldErrors);
-      } else {
-        alert("글 수정에 실패했습니다.");
-      }
+    if (hidden) {
+      await hideAdminBoard(id);
+    } else {
+      await restoreAdminBoard(id);
     }
   };
 
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!id) return;
+
+    if (!validate()) return;
+    if (uploading) {
+      setToast("미디어 업로드가 끝난 후 다시 시도해주세요.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateAdminBoard(id, {
+        title: title.trim(),
+        content,
+        boardType,
+      });
+
+      try {
+        await syncHiddenState();
+      } catch (error: unknown) {
+        if (isAdminEndpointUnsupported(error)) {
+          setToast("숨김/복구 API가 아직 준비되지 않았습니다. 본문 수정은 완료되었습니다.");
+        } else {
+          setToast("본문 수정은 완료되었지만 숨김 상태 반영에 실패했습니다.");
+        }
+      }
+
+      navigate(`/admin/board/${id}`, { replace: true });
+    } catch (error: unknown) {
+      const fieldErrors = parseValidationErrors(error);
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors);
+      } else {
+        setToast("게시글 수정에 실패했습니다.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <ThemeProvider theme={boardTheme}>
-      <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
-        <Card>
+      <Box sx={{ maxWidth: 980, mx: "auto", mt: 4, px: 1 }}>
+        {warning ? <Alert severity="warning" sx={{ mb: 2 }}>{warning}</Alert> : null}
+
+        <Card variant="outlined" sx={{ borderColor: "#ececec" }}>
           <CardContent>
-            <Typography variant="h5" sx={{ mb: 3, color: MAIN_COLOR, fontWeight: 700 }}>
-              글 수정
+            <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#ff6b00", mb: 2 }}>
+              관리자 글 수정
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Typography sx={{ mr: 2, fontWeight: 600 }}>말머리</Typography>
-
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                <Typography sx={{ fontWeight: 700 }}>말머리</Typography>
                 <ButtonGroup size="small">
-                  <Button
-                    variant={boardType === "REVIEW" ? "contained" : "outlined"}
-                    sx={{
-                      bgcolor: boardType === "REVIEW" ? MAIN_COLOR : "#fff",
-                      color: boardType === "REVIEW" ? "#fff" : MAIN_COLOR,
-                      borderColor: MAIN_COLOR,
-                    }}
-                    onClick={() => setBoardType("REVIEW")}
-                  >
-                    후기
-                  </Button>
                   <Button
                     variant={boardType === "NOTICE" ? "contained" : "outlined"}
                     sx={{
-                      bgcolor: boardType === "NOTICE" ? MAIN_COLOR : "#fff",
-                      color: boardType === "NOTICE" ? "#fff" : MAIN_COLOR,
-                      borderColor: MAIN_COLOR,
+                      bgcolor: boardType === "NOTICE" ? "#ff6b00" : "#fff",
+                      color: boardType === "NOTICE" ? "#fff" : "#ff6b00",
+                      borderColor: "#ff6b00",
                     }}
                     onClick={() => setBoardType("NOTICE")}
                   >
                     공지
                   </Button>
+                  <Button
+                    variant={boardType === "REVIEW" ? "contained" : "outlined"}
+                    sx={{
+                      bgcolor: boardType === "REVIEW" ? "#ff6b00" : "#fff",
+                      color: boardType === "REVIEW" ? "#fff" : "#ff6b00",
+                      borderColor: "#ff6b00",
+                    }}
+                    onClick={() => setBoardType("REVIEW")}
+                  >
+                    일반
+                  </Button>
                 </ButtonGroup>
+
+                <Box sx={{ flex: 1 }} />
+
+                <FormControlLabel
+                  control={<Switch checked={hidden} onChange={(_, value) => setHidden(value)} />}
+                  label={hidden ? "숨김" : "노출"}
+                />
               </Box>
 
               <TextField
                 fullWidth
-                placeholder="제목을 입력하세요"
                 value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setErrors((prev) => ({ ...prev, title: [] }));
+                placeholder="제목"
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  if (errors.title) {
+                    setErrors((prev) => ({ ...prev, title: "" }));
+                  }
                 }}
-                error={!!errors.title}
-                helperText={errors.title?.[0]}
-                sx={{ mb: 3 }}
+                error={Boolean(errors.title)}
+                helperText={errors.title}
+                sx={{ mb: 2 }}
               />
 
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 <ReactQuill
                   ref={quillRef}
                   theme="snow"
                   value={content}
                   onChange={(value) => {
                     setContent(value);
-                    setErrors((prev) => ({ ...prev, content: [] }));
+                    if (errors.content) {
+                      setErrors((prev) => ({ ...prev, content: "" }));
+                    }
                   }}
-                  modules={quillModules}
-                  style={{ height: "400px", marginBottom: "45px" }}
+                  modules={modules}
+                  style={{ height: 420, marginBottom: 45 }}
                 />
-
-                {errors.content && (
-                  <Typography color="error" sx={{ mt: 1 }}>
-                    {errors.content[0]}
+                {errors.content ? (
+                  <Typography sx={{ color: "#d32f2f", fontSize: 13, mt: 0.5 }}>{errors.content}</Typography>
+                ) : null}
+                {uploading ? (
+                  <Typography sx={{ color: "#777", fontSize: 13, mt: 0.5 }}>
+                    미디어 업로드 중입니다...
                   </Typography>
-                )}
-
-                {isUploadingMedia && (
-                  <Typography sx={{ mt: 1, color: "#666", fontSize: 13 }}>
-                    이미지/영상 업로드 중입니다...
-                  </Typography>
-                )}
+                ) : null}
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                <Button variant="outlined" onClick={() => navigate(`/admin/board/${id}`)}>취소</Button>
                 <Button
-                  variant="outlined"
-                  sx={{ mr: 1, color: MAIN_COLOR, borderColor: MAIN_COLOR }}
-                  onClick={() => navigate(-1)}
+                  type="submit"
+                  variant="contained"
+                  sx={{ bgcolor: "#ff6b00", "&:hover": { bgcolor: "#e65f00" } }}
+                  disabled={saving}
                 >
-                  취소
-                </Button>
-
-                <Button type="submit" variant="contained" sx={{ bgcolor: MAIN_COLOR }}>
-                  저장
+                  {saving ? <CircularProgress size={18} color="inherit" /> : "저장"}
                 </Button>
               </Box>
             </Box>
           </CardContent>
         </Card>
       </Box>
+
+      <Snackbar
+        open={Boolean(toast)}
+        autoHideDuration={2200}
+        onClose={() => setToast("")}
+        message={toast}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </ThemeProvider>
   );
 }

@@ -1,13 +1,24 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "../common/axios";
-import { Box, Button, Typography, Paper, Divider, Snackbar, TextField, CircularProgress } from "@mui/material";
-import { useAuth } from "../../pages/common/context/useAuth";
-import { formatDateTime } from "../common/utils/helperUtil";
-
-export interface User {
-  role: string;
-}
+﻿import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  Paper,
+  Snackbar,
+  TextField,
+  Typography,
+} from "@mui/material";
+import axios from "../../common/axios";
+import { useAuth } from "../../common/context/useAuth";
+import { formatDateTime } from "../../common/utils/helperUtil";
+import {
+  fetchAdminBoardDetail,
+  hideAdminBoard,
+  isAdminEndpointUnsupported,
+  restoreAdminBoard,
+} from "./api/adminBoardApi";
 
 interface CommentNode {
   id: number;
@@ -25,6 +36,7 @@ interface BoardPostDetail {
   boardType: "NOTICE" | "REVIEW" | string;
   title: string;
   content: string;
+  contentHtml?: string;
   authorNickname?: string;
   createdAt?: string;
   viewCount: number;
@@ -33,6 +45,8 @@ interface BoardPostDetail {
   recommended?: boolean;
   imageUrl?: string;
   authorId?: number;
+  hidden?: boolean;
+  reportCount?: number;
 }
 
 interface HttpErrorLike {
@@ -40,49 +54,126 @@ interface HttpErrorLike {
     status?: number;
   };
 }
-// 게시글 상세 페이지
 
 export default function BoardDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  const [post, setPost] = useState<BoardPostDetail | null>(null);
-  const [toast, setToast] = useState("");
-  const [recommended, setRecommended] = useState(false);
+  const { user } = useAuth();
 
   const MAIN_COLOR = "#ff6b00";
 
-  // 로그인사용자 정보  가져오기
-  const { user } = useAuth();
-  
-
-    // 댓글/대댓글 상태
+  const [post, setPost] = useState<BoardPostDetail | null>(null);
   const [comments, setComments] = useState<CommentNode[]>([]);
+
   const [sortType, setSortType] = useState<"created" | "latest">("latest");
+  const [recommended, setRecommended] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
-  
-  // 로딩 상태
+
+  const [loadingPost, setLoadingPost] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-    // 액션 핸들러
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState("");
+
+  const fetchPost = async () => {
+    if (!id) return;
+
+    try {
+      setLoadingPost(true);
+      const data = await fetchAdminBoardDetail(id);
+      setPost(data as BoardPostDetail);
+      setRecommended(Boolean((data as { recommended?: boolean }).recommended));
+    } catch {
+      try {
+        const res = await axios.get(`/api/boards/${id}`);
+        const data = res.data?.data as BoardPostDetail;
+        setPost(data);
+        setRecommended(Boolean(data?.recommended));
+      } catch {
+        setToast("게시글 정보를 불러오지 못했습니다.");
+      }
+    } finally {
+      setLoadingPost(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    if (!id) return;
+
+    try {
+      setLoadingComments(true);
+      const res = await axios.get(`/api/boards/${id}/comments`, {
+        params: { sort: sortType },
+      });
+      setComments((res.data?.data as CommentNode[]) ?? []);
+    } catch {
+      setComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchPost();
+    void fetchComments();
+  }, [id, sortType]);
+
+  useEffect(() => {
+    setReportSubmitted(false);
+  }, [id]);
+
+  const canEditComment = (node: CommentNode) => {
+    if (!user) return false;
+    if (user.role === "ROLE_ADMIN" || user.role === "ADMIN") return true;
+
+    const ownerId = node.authorId ?? node.userId;
+    if (ownerId != null && user.id === ownerId) return true;
+    if (node.authorNickname && user.nickname === node.authorNickname) return true;
+
+    return false;
+  };
+
+  const runAdminAction = async (action: () => Promise<unknown>, successMessage: string) => {
+    try {
+      setActionLoading(true);
+      await action();
+      setToast(successMessage);
+      await fetchPost();
+    } catch (error: unknown) {
+      if (isAdminEndpointUnsupported(error)) {
+        setToast("관리자 전용 API가 아직 준비되지 않았습니다.");
+      } else {
+        setToast("관리자 기능 처리 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleHideToggle = async () => {
+    if (!post) return;
+    await runAdminAction(
+      () => (post.hidden ? restoreAdminBoard(post.id) : hideAdminBoard(post.id)),
+      post.hidden ? "게시글을 복구했습니다." : "게시글을 숨김 처리했습니다.",
+    );
+  };
 
   const handleRecommend = async () => {
+    if (!id) return;
+
     try {
-      // 서버 토글
       await axios.post(`/api/boards/${id}/recommendations`);
-
-      // ✅ 서버가 계산한 최신값으로 다시 덮어쓰기
       const res = await axios.get(`/api/boards/${id}`);
-      const data = res.data.data;
-
+      const data = res.data?.data as BoardPostDetail;
       setPost(data);
-      setRecommended(data.recommended);
-
-      setToast(data.recommended ? "추천되었습니다 👍" : "추천이 취소되었습니다.");
+      setRecommended(Boolean(data?.recommended));
+      setToast(data?.recommended ? "추천했습니다." : "추천을 취소했습니다.");
     } catch (e: unknown) {
       const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
@@ -93,72 +184,75 @@ export default function BoardDetail() {
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("링크가 복사되었습니다!");
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setToast("링크가 복사되었습니다.");
+    } catch {
+      setToast("링크 복사에 실패했습니다.");
+    }
   };
 
-  const handleReport = () => {
-    alert("신고 클릭!");
+  const handleReport = async () => {
+    if (!id) return;
+
+    if (reportSubmitted) {
+      setToast("이미 신고한 게시글입니다.");
+      return;
+    }
+
+    if (!user) {
+      setToast("로그인이 필요합니다.");
+      return;
+    }
+
+    const reason = window.prompt("신고 사유를 입력해주세요.");
+    if (!reason || !reason.trim()) return;
+
+    try {
+      await axios.post(`/api/boards/${id}/reports`, { reason: reason.trim() });
+      setReportSubmitted(true);
+      setToast("신고가 접수되었습니다.");
+    } catch (e: unknown) {
+      const status = (e as HttpErrorLike)?.response?.status;
+      if (status === 401 || status === 403) {
+        setToast("로그인이 필요합니다.");
+      } else if (status === 409) {
+        setReportSubmitted(true);
+        setToast("이미 신고한 게시글입니다.");
+      } else {
+        setToast("신고 처리 중 오류가 발생했습니다.");
+      }
+    }
   };
 
-// 게시글 삭제 함수
   const handleDelete = async () => {
+    if (!id) return;
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
     try {
       await axios.delete(`/api/boards/${id}`);
-      alert("삭제되었습니다.");
-      navigate("/board");
+      setToast("게시글을 삭제했습니다.");
+      navigate("/admin/board");
     } catch {
-      alert("삭제 권한이 없습니다.");
+      setToast("삭제 권한이 없습니다.");
     }
   };
 
-    // 댓글 API 함수들
-
-  // 댓글 목록 조회
-  const fetchComments = async () => {
-    try {
-      setLoadingComments(true);
-      const res = await axios.get(`/api/boards/${id}/comments`, {
-        params: {
-          sort: sortType,
-        },
-      });
-
-      const commentsData = res.data.data ?? [];
-      console.log("댓글 데이터:", commentsData);
-      console.log("로그인 사용자:", user);
-      setComments(commentsData);
-    } catch {
-      // 댓글은 비로그인도 볼 수 있게 할 수도 있어서 alert 안 띄움
-      setComments([]);
-
-        // 게시글 삭제 처리
-    } finally {
-      setLoadingComments(false);
-    }
-  };
-
-
-  // 새 댓글 등록
   const submitComment = async () => {
+    if (!id) return;
     if (!newComment.trim()) {
-      setToast("댓글을 입력해주세요.");
+      setToast("댓글을 입력해 주세요.");
       return;
     }
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/boards/${id}/comments`, {
-        content: newComment,
-      });
-
+      await axios.post(`/api/boards/${id}/comments`, { content: newComment });
       setNewComment("");
       await fetchComments();
       await fetchPost();
-      setToast("댓글이 등록되었습니다.");
+      setToast("댓글을 등록했습니다.");
     } catch (e: unknown) {
       const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
@@ -171,26 +265,21 @@ export default function BoardDetail() {
     }
   };
 
-
-  // 대댓글 등록
   const submitReply = async (parentId: number, content: string) => {
+    if (!id) return;
     if (!content.trim()) {
-      setToast("답글을 입력해주세요.");
+      setToast("답글을 입력해 주세요.");
       return;
     }
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/boards/${id}/comments`, {
-        content: content,
-        parentId: parentId,
-      });
-
+      await axios.post(`/api/boards/${id}/comments`, { content, parentId });
       setReplyText("");
       setReplyTo(null);
       await fetchComments();
       await fetchPost();
-      setToast("답글이 등록되었습니다.");
+      setToast("답글을 등록했습니다.");
     } catch (e: unknown) {
       const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
@@ -203,25 +292,21 @@ export default function BoardDetail() {
     }
   };
 
-
-  // 댓글 수정
   const updateComment = async (commentId: number) => {
+    if (!id) return;
     if (!editingText.trim()) {
-      setToast("내용을 입력해주세요.");
+      setToast("내용을 입력해 주세요.");
       return;
     }
 
     try {
       setLoadingSubmit(true);
-      await axios.put(`/api/boards/${id}/comments/${commentId}`, {
-        content: editingText,
-      });
-
+      await axios.put(`/api/boards/${id}/comments/${commentId}`, { content: editingText });
       setEditingId(null);
       setEditingText("");
       await fetchComments();
       await fetchPost();
-      setToast("댓글이 수정되었습니다.");
+      setToast("댓글을 수정했습니다.");
     } catch (e: unknown) {
       const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
@@ -234,17 +319,16 @@ export default function BoardDetail() {
     }
   };
 
-
-  // 댓글 삭제
   const deleteComment = async (commentId: number) => {
-    if (!confirm("댓글을 삭제할까요?")) return;
+    if (!id) return;
+    if (!window.confirm("댓글을 삭제할까요?")) return;
 
     try {
       setLoadingSubmit(true);
       await axios.delete(`/api/boards/${id}/comments/${commentId}`);
       await fetchComments();
       await fetchPost();
-      setToast("댓글이 삭제되었습니다.");
+      setToast("댓글을 삭제했습니다.");
     } catch (e: unknown) {
       const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
@@ -256,15 +340,6 @@ export default function BoardDetail() {
       setLoadingSubmit(false);
     }
   };
-
-  // 게시글 상세 조회
-  const fetchPost = async () => {
-    const res = await axios.get(`/api/boards/${id}`);
-    setPost(res.data.data);
-    setRecommended(res.data.data.recommended);
-  };
-
-    // 우측 상단 액션 렌더
 
   const renderActionButtons = () => (
     <Box
@@ -284,11 +359,11 @@ export default function BoardDetail() {
           py: 0.1,
           borderRadius: "6px",
           backgroundColor: recommended ? "#ffddb8" : "#f5f5f5",
-            "&:hover": { backgroundColor: "#ffe0cc" },
+          "&:hover": { backgroundColor: "#ffe0cc" },
         }}
-        onClick={handleRecommend}
+        onClick={() => void handleRecommend()}
       >
-       {recommended ? "👍 추천됨" : "👍 추천"}
+        {recommended ? "👍 추천됨" : "👍 추천"}
       </Typography>
 
       <Typography
@@ -301,57 +376,54 @@ export default function BoardDetail() {
           backgroundColor: "#f5f5f5",
           "&:hover": { backgroundColor: "#e3f2fd" },
         }}
-        onClick={handleShare}
+        onClick={() => void handleShare()}
       >
         🔗 공유
       </Typography>
 
       <Typography
         sx={{
-          cursor: "pointer",
+          cursor: reportSubmitted ? "default" : "pointer",
           fontSize: 14,
           px: 0.6,
           py: 0.1,
           borderRadius: "6px",
-          backgroundColor: "#f5f5f5",
-          "&:hover": { backgroundColor: "#fdecea" },
+          color: reportSubmitted ? "#777" : "inherit",
+          backgroundColor: reportSubmitted ? "#efefef" : "#f5f5f5",
+          "&:hover": { backgroundColor: reportSubmitted ? "#efefef" : "#fdecea" },
         }}
-        onClick={handleReport}
+        onClick={reportSubmitted ? undefined : () => void handleReport()}
       >
-        🚨 신고
+        {reportSubmitted ? "🚨 신고완료" : "🚨 신고"}
       </Typography>
     </Box>
   );
 
-  // 컴포넌트 마운트 시 게시글과 댓글 조회
-  useEffect(() => {
-    fetchPost();
-    fetchComments();
-  }, [id, sortType]);
-
-  if (!post) {
+  if (loadingPost && !post) {
     return <Box sx={{ textAlign: "center", mt: 10 }}>로딩중...</Box>;
   }
 
-    // 렌더
+  if (!post) {
+    return <Box sx={{ textAlign: "center", mt: 10 }}>게시글이 없습니다.</Box>;
+  }
+
+  const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
+  const canManagePost = Boolean(user && (isAdmin || user.id === post.authorId));
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
       <Paper sx={{ p: 3, position: "relative" }}>
         {renderActionButtons()}
 
-        {/* 제목 */}
         <Typography sx={{ fontSize: 25, fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
           <span>
-            [{post.boardType === "NOTICE" ? "공지" : "후기"}] {post.title}
+            [{post.boardType === "NOTICE" ? "공지" : "일반"}] {post.title}
           </span>
-
           <Typography component="span" sx={{ fontSize: 15, color: "#888" }}>
             {post.commentCount > 0 && `[${post.commentCount}]`}
           </Typography>
         </Typography>
 
-        {/* 작성자 / 날짜 / 조회 */}
         <Box
           sx={{
             mt: 3,
@@ -361,29 +433,18 @@ export default function BoardDetail() {
           }}
         >
           <Typography sx={{ fontSize: 12 }}>
-            {post.authorNickname} |{" "}
-            {post.createdAt ? formatDateTime(post.createdAt) : "-"}
+            {post.authorNickname} | {post.createdAt ? formatDateTime(post.createdAt) : "-"}
           </Typography>
 
           <Typography sx={{ fontSize: 12 }}>
             조회 {post.viewCount} | 추천 {post.recommendCount}
+            {post.hidden ? " | 숨김" : ""}
+            {(post.reportCount ?? 0) > 0 ? ` | 신고 ${post.reportCount}` : ""}
           </Typography>
         </Box>
 
         <Divider sx={{ my: 1 }} />
 
-        {/* 이미지 */}
-        {false && post?.imageUrl && (
-          <Box sx={{ my: 3, textAlign: "center" }}>
-            <img
-              src={post?.imageUrl}
-              alt="첨부"
-              style={{ maxWidth: "100%", maxHeight: 400 }}
-            />
-          </Box>
-        )}
-
-        {/* 본문 */}
         <Box
           sx={{
             fontSize: 15,
@@ -391,12 +452,11 @@ export default function BoardDetail() {
             minHeight: 200,
             "& img": { maxWidth: "100%" },
           }}
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: post.contentHtml ?? post.content }}
         />
 
         <Divider sx={{ my: 3 }} />
 
-        {/* 댓글 영역 */}
         <Box sx={{ mt: 1 }}>
           <Box
             sx={{
@@ -406,38 +466,27 @@ export default function BoardDetail() {
               mb: 1,
             }}
           >
-            <Typography sx={{ fontSize: 13 }}>
-              전체 댓글 {post.commentCount ?? 0}개
-            </Typography>
+            <Typography sx={{ fontSize: 13 }}>전체 댓글 {post.commentCount ?? 0}개</Typography>
 
             <Box sx={{ display: "flex", gap: 2 }}>
               <Typography
-                sx={{
-                  fontSize: 13,
-                  cursor: "pointer",
-                  color: sortType === "created" ? MAIN_COLOR : "#888",
-                }}
+                sx={{ fontSize: 13, cursor: "pointer", color: sortType === "created" ? MAIN_COLOR : "#888" }}
                 onClick={() => setSortType("created")}
               >
-                ✓ 등록순
+                등록순
               </Typography>
 
               <Typography
-                sx={{
-                  fontSize: 13,
-                  cursor: "pointer",
-                  color: sortType === "latest" ? MAIN_COLOR : "#888",
-                }}
+                sx={{ fontSize: 13, cursor: "pointer", color: sortType === "latest" ? MAIN_COLOR : "#888" }}
                 onClick={() => setSortType("latest")}
               >
-                ✓ 최신순
+                최신순
               </Typography>
             </Box>
           </Box>
 
           <Divider sx={{ mb: 1 }} />
 
-          {/* 댓글 작성 */}
           <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
             <TextField
               fullWidth
@@ -451,117 +500,91 @@ export default function BoardDetail() {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  submitComment();
+                  void submitComment();
                 }
               }}
               disabled={loadingSubmit}
-              sx={{
-                "& textarea": {
-                  fontSize: 13,
-                },
-              }}
+              sx={{ "& textarea": { fontSize: 13 } }}
             />
             <Button
               variant="contained"
-              sx={{
-                bgcolor: MAIN_COLOR,
-                whiteSpace: "nowrap",
-                height: 32,
-                fontSize: 12,
-                px: 1.5,
-              }}
-              onClick={submitComment}
+              sx={{ bgcolor: MAIN_COLOR, whiteSpace: "nowrap", height: 32, fontSize: 12, px: 1.5 }}
+              onClick={() => void submitComment()}
               disabled={loadingSubmit}
             >
               {loadingSubmit ? <CircularProgress size={20} color="inherit" /> : "등록"}
             </Button>
           </Box>
 
-          {/* 댓글 목록 */}
           {loadingComments ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
               <CircularProgress />
             </Box>
           ) : comments.length === 0 ? (
-            <Typography sx={{ color: "#888", fontSize: 13 }}>
-              아직 댓글이 없습니다.
-            </Typography>
+            <Typography sx={{ color: "#888", fontSize: 13 }}>아직 댓글이 없습니다.</Typography>
           ) : (
             comments.map((c) => (
               <Box key={c.id} sx={{ py: 1.2 }}>
-                {/* 부모 댓글 */}
-                <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                    }}
-                  >
-                    {/* 작성자 */}
-                    <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
-                      {c.authorNickname ?? "익명"}
-                    </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
+                    {c.authorNickname ?? "익명"}
+                  </Typography>
 
-                    {editingId === c.id ? (
-                      <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          multiline
-                          minRows={2}
-                          maxRows={6}
-                          value={editingText}
-                          onChange={(e) => setEditingText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault(); 
-                              updateComment(c.id);
-                            }
-                          }}
-                          sx={{
-                            "& .MuiInputBase-root": { 
-                              width: 630,
-                              fontSize: 13 
-                            },
-                          }}
-                        />
-                        <Button
-                          variant="contained"
-                          sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
-                          onClick={() => updateComment(c.id)}
-                        >
-                          저장
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          sx={{ height: 32, fontSize: 12, borderColor: "#bbb", color: "#666" }}
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditingText("");
-                          }}
-                        >
-                          취소
-                        </Button>
-                      </Box>
-                    ) : (
-                      <Typography
-                        sx={{
-                          fontSize: 13,
-                          flex: 1,
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                          color: c.deleted ? "#aaa" : "#000",
-                          fontStyle: c.deleted ? "italic" : "normal",
+                  {editingId === c.id ? (
+                    <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        multiline
+                        minRows={2}
+                        maxRows={6}
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            void updateComment(c.id);
+                          }
+                        }}
+                        sx={{ "& .MuiInputBase-root": { width: 630, fontSize: 13 } }}
+                      />
+                      <Button
+                        variant="contained"
+                        sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+                        onClick={() => void updateComment(c.id)}
+                      >
+                        저장
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        sx={{ height: 32, fontSize: 12, borderColor: "#bbb", color: "#666" }}
+                        onClick={() => {
+                          setEditingId(null);
+                          setEditingText("");
                         }}
                       >
-                        {c.deleted ? "삭제된 댓글입니다." : c.content}
-                      </Typography>
-                    )}
+                        취소
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        flex: 1,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        color: c.deleted ? "#aaa" : "#000",
+                        fontStyle: c.deleted ? "italic" : "normal",
+                      }}
+                    >
+                      {c.deleted ? "삭제된 댓글입니다." : c.content}
+                    </Typography>
+                  )}
 
-                    {editingId !== c.id && !c.deleted && (
+                  {editingId !== c.id && !c.deleted && (
                     <>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
-                        {user && (user.id === c.authorId || user.id === c.userId || user.nickname === c.authorNickname || user.role === 'ROLE_ADMIN') ? (
+                        {canEditComment(c) && (
                           <>
                             <Button
                               variant="text"
@@ -578,258 +601,216 @@ export default function BoardDetail() {
                               variant="text"
                               size="small"
                               sx={{ minWidth: 0, fontSize: 12, color: "#d32f2f" }}
-                              onClick={() => deleteComment(c.id)}
+                              onClick={() => void deleteComment(c.id)}
                             >
                               삭제
                             </Button>
                           </>
-                        ) : null}
+                        )}
                       </Box>
 
-                      {/* 작성시간 */}
                       <Typography sx={{ fontSize: 12, color: "#999" }}>
                         {c.createdAt ? formatDateTime(c.createdAt) : "-"}
                       </Typography>
                     </>
-                    )}
-                  </Box>
-                  
-
-                  {/* 답글 달기 버튼 */}
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      color: MAIN_COLOR,
-                      cursor: "pointer",
-                      mt: 0.6,
-                      width: "fit-content",
-                      ml: 1,
-                    }}
-                    onClick={() => {
-                      setReplyTo(c.id);
-                      setReplyText("");
-                    }}
-                  >
-                    답글 달기
-                  </Typography>
-                  
-                  {/* 대댓글 입력창 */}
-                  {replyTo === c.id && (
-                    <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 4 }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        multiline
-                        minRows={2}
-                        maxRows={6}
-                        placeholder="답글을 입력하세요"
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault(); 
-                            submitReply(c.id, replyText);
-                          }
-                        }}
-                        sx={{
-                          "& .MuiInputBase-root": {
-                            fontSize: 13,
-                          },
-                        }}
-                      />
-                      <Button
-                        variant="contained"
-                        sx={{
-                          bgcolor: MAIN_COLOR,
-                          whiteSpace: "nowrap",
-                          height: 32,
-                          fontSize: 12,
-                        }}
-                        onClick={() => submitReply(c.id, replyText)}
-                      >
-                        등록
-                      </Button>
-                      <Button
-                        variant="text"
-                        sx={{ 
-                          color: "#666", 
-                          whiteSpace: "nowrap", 
-                          backgroundColor: "#f3f3f3",
-                          height: 32,
-                          fontSize: 12, }}
-                        onClick={() => setReplyTo(null)}
-                      >
-                        취소
-                      </Button>
-                    </Box>
                   )}
+                </Box>
 
-                    {/* 대댓글 목록 */}
-                  {Array.isArray(c.children) && c.children.length > 0 && (
-                    <Box sx={{ mt: 1, ml: 4 }}>
-                      {c.children.map((r) => (
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: MAIN_COLOR,
+                    cursor: "pointer",
+                    mt: 0.6,
+                    width: "fit-content",
+                    ml: 1,
+                  }}
+                  onClick={() => {
+                    setReplyTo(c.id);
+                    setReplyText("");
+                  }}
+                >
+                  답글 달기
+                </Typography>
+
+                {replyTo === c.id && (
+                  <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 4 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={2}
+                      maxRows={6}
+                      placeholder="답글을 입력하세요"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void submitReply(c.id, replyText);
+                        }
+                      }}
+                      sx={{ "& .MuiInputBase-root": { fontSize: 13 } }}
+                    />
+                    <Button
+                      variant="contained"
+                      sx={{ bgcolor: MAIN_COLOR, whiteSpace: "nowrap", height: 32, fontSize: 12 }}
+                      onClick={() => void submitReply(c.id, replyText)}
+                    >
+                      등록
+                    </Button>
+                    <Button
+                      variant="text"
+                      sx={{
+                        color: "#666",
+                        whiteSpace: "nowrap",
+                        backgroundColor: "#f3f3f3",
+                        height: 32,
+                        fontSize: 12,
+                      }}
+                      onClick={() => setReplyTo(null)}
+                    >
+                      취소
+                    </Button>
+                  </Box>
+                )}
+
+                {Array.isArray(c.children) && c.children.length > 0 && (
+                  <Box sx={{ mt: 1, ml: 4 }}>
+                    {c.children.map((r) => (
+                      <Box key={r.id} sx={{ mt: 1, display: "flex", gap: 1, alignItems: "flex-start" }}>
+                        <Typography sx={{ fontSize: 13, color: "#999", mt: 0.2 }}>↳</Typography>
+
                         <Box
-                          key={r.id}
                           sx={{
-                            mt: 1,
-                            display: "flex",
-                            gap: 1,
-                            alignItems: "flex-start",
+                            flex: 1,
+                            p: 1,
+                            py: 0.4,
+                            borderRadius: 1,
+                            backgroundColor: "#fafafa",
+                            border: "1px solid #eee",
                           }}
                         >
-                          {/* ↳ 표시 */}
-                          <Typography sx={{ fontSize: 13, color: "#999", mt: 0.2 }}>
-                            ↳
-                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+                            <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
+                              {r.authorNickname ?? "익명"}
+                            </Typography>
 
-                          {/* 답글 박스 */}
-                          <Box
-                            sx={{
-                              flex: 1,
-                              p: 1,
-                              py: 0.4,
-                              borderRadius: 1,
-                              backgroundColor: "#fafafa",
-                              border: "1px solid #eee",
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                width: "100%",
-                              }}
-                            >
-                              {/* 작성자 */}
-                              <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
-                                {r.authorNickname ?? "익명"}
-                              </Typography>
-
-                              {editingId === r.id ? (
-                                <Box sx={{ display: "flex", gap: 1 }}>
-                                  <TextField
-                                    size="small"
-                                    multiline
-                                    minRows={2}
-                                    maxRows={6}
-                                    value={editingText}
-                                    onChange={(e) => setEditingText(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter" && !e.shiftKey) {
-                                        e.preventDefault(); 
-                                        updateComment(c.id);
-                                      }
-                                    }}
-                                    sx={{
-                                      "& .MuiInputBase-root": {
-                                        width: 500,
-                                        fontSize: 13,
-                                      },
-                                    }}
-                                  />
-                                  <Button
-                                    variant="contained"
-                                    sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
-                                    onClick={() => updateComment(r.id)}
-                                  >
-                                    저장
-                                  </Button>
-                                  <Button
-                                    variant="outlined"
-                                    sx={{ height: 32, fontSize: 12 }}
-                                    onClick={() => {
-                                      setEditingId(null);
-                                      setEditingText("");
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                </Box>
-                              ) : (
-                                <Typography
-                                  sx={{
-                                    fontSize: 13,
-                                    flex: 1,
-                                    whiteSpace: "pre-wrap",
-                                    wordBreak: "break-word",
-                                    color: r.deleted ? "#aaa" : "#000",
-                                    fontStyle: r.deleted ? "italic" : "normal",
+                            {editingId === r.id ? (
+                              <Box sx={{ display: "flex", gap: 1 }}>
+                                <TextField
+                                  size="small"
+                                  multiline
+                                  minRows={2}
+                                  maxRows={6}
+                                  value={editingText}
+                                  onChange={(e) => setEditingText(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                      e.preventDefault();
+                                      void updateComment(r.id);
+                                    }
+                                  }}
+                                  sx={{ "& .MuiInputBase-root": { width: 500, fontSize: 13 } }}
+                                />
+                                <Button
+                                  variant="contained"
+                                  sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+                                  onClick={() => void updateComment(r.id)}
+                                >
+                                  저장
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  sx={{ height: 32, fontSize: 12 }}
+                                  onClick={() => {
+                                    setEditingId(null);
+                                    setEditingText("");
                                   }}
                                 >
-                                  {r.deleted ? "삭제된 댓글입니다." : r.content}
+                                  취소
+                                </Button>
+                              </Box>
+                            ) : (
+                              <Typography
+                                sx={{
+                                  fontSize: 13,
+                                  flex: 1,
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                  color: r.deleted ? "#aaa" : "#000",
+                                  fontStyle: r.deleted ? "italic" : "normal",
+                                }}
+                              >
+                                {r.deleted ? "삭제된 댓글입니다." : r.content}
+                              </Typography>
+                            )}
+
+                            {editingId !== r.id && !r.deleted && (
+                              <>
+                                <Box sx={{ display: "flex" }}>
+                                  {canEditComment(r) && (
+                                    <>
+                                      <Button
+                                        variant="text"
+                                        size="small"
+                                        sx={{ minWidth: 0, fontSize: 12, color: "#666" }}
+                                        onClick={() => {
+                                          setEditingId(r.id);
+                                          setEditingText(r.content);
+                                        }}
+                                      >
+                                        수정
+                                      </Button>
+
+                                      <Button
+                                        variant="text"
+                                        size="small"
+                                        sx={{ minWidth: 0, fontSize: 12, color: "#d32f2f" }}
+                                        onClick={() => void deleteComment(r.id)}
+                                      >
+                                        삭제
+                                      </Button>
+                                    </>
+                                  )}
+                                </Box>
+                                <Typography sx={{ fontSize: 12, color: "#999" }}>
+                                  {r.createdAt ? formatDateTime(r.createdAt) : "-"}
                                 </Typography>
-                              )}
-
-                              {editingId !== r.id && !r.deleted && (
-                                <>
-                                  <Box sx={{ display: "flex" }}>
-                                    {user && (user.id === r.authorId || user.id === r.userId || user.nickname === r.authorNickname || user.role === 'ROLE_ADMIN') ? (
-                                      <>
-                                        <Button
-                                          variant="text"
-                                          size="small"
-                                          sx={{ minWidth: 0, fontSize: 12, color: "#666" }}
-                                          onClick={() => {
-                                            setEditingId(r.id);
-                                            setEditingText(r.content);
-                                          }}
-                                        >
-                                          수정
-                                        </Button>
-
-                                        <Button
-                                          variant="text"
-                                          size="small"
-                                          sx={{ minWidth: 0, fontSize: 12, color: "#d32f2f" }}
-                                          onClick={() => deleteComment(r.id)}
-                                        >
-                                          삭제
-                                        </Button>
-                                      </>
-                                    ) : null}
-                                  </Box>
-                                  <Typography sx={{ fontSize: 12, color: "#999" }}>
-                                    {r.createdAt ? formatDateTime(r.createdAt) : "-"}
-                                  </Typography>
-                                </>
-                              )}
-                            </Box>
+                              </>
+                            )}
                           </Box>
                         </Box>
-                      ))}
-                    </Box>
-                  )}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
 
-                  <Divider sx={{ mt: 1.5 }} />
-                </Box>
-              ))
-            )}
-
+                <Divider sx={{ mt: 1.5 }} />
+              </Box>
+            ))
+          )}
         </Box>
 
-        {/* 게시글 관련 버튼 */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-          {user && (user.id === post.authorId || user.role === 'ROLE_ADMIN') && ( 
+          {canManagePost && (
             <>
               <Button
                 variant="contained"
-                sx={{ 
-                  height: 32, 
-                  fontSize: 12, 
-                }}
-                onClick={() => navigate(`/board/edit/${id}`)}
+                sx={{ height: 32, fontSize: 12 }}
+                onClick={() => navigate(`/admin/board/edit/${id}`)}
               >
                 수정
               </Button>
               <Button
                 variant="contained"
-                sx={{ 
-                  height: 32, 
-                  fontSize: 12, 
-                }}
-                onClick={handleDelete}
+                sx={{ height: 32, fontSize: 12 }}
+                onClick={() => void handleHideToggle()}
+                disabled={actionLoading}
               >
+                {post.hidden ? "복구" : "숨김"}
+              </Button>
+              <Button variant="contained" sx={{ height: 32, fontSize: 12 }} onClick={() => void handleDelete()}>
                 삭제
               </Button>
             </>
@@ -837,19 +818,14 @@ export default function BoardDetail() {
 
           <Button
             variant="contained"
-            sx={{ 
-              bgcolor: MAIN_COLOR, 
-              height: 32, 
-              fontSize: 12, 
-            }}
-            onClick={() => navigate("/board")}
+            sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+            onClick={() => navigate("/admin/board")}
           >
             목록으로
           </Button>
         </Box>
       </Paper>
 
-      {/* 추천 토스트 */}
       <Snackbar
         open={Boolean(toast)}
         autoHideDuration={1500}

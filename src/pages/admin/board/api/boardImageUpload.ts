@@ -1,6 +1,7 @@
 import axios from "../../../common/axios";
 
 import rawAxios from "axios";
+import { ADMIN_BOARD_ENDPOINTS } from "./adminBoardApi";
 
 interface PresignedUploadPayload {
   uploadUrl: string;
@@ -17,7 +18,7 @@ interface UploadMarkedError {
   uploadStep?: UploadStep;
 }
 
-const PRESIGNED_URL_ENDPOINT = "/api/boards/images/presigned-url";
+const PRESIGNED_URL_ENDPOINT = ADMIN_BOARD_ENDPOINTS.imagePresignedUrl;
 
 const unwrapResponse = (payload: unknown): PresignedUploadPayload => {
   const body = payload as PresignedUploadResponse;

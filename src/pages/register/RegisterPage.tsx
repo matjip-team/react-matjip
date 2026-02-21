@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
-import { uploadBusinessLicenseFile } from "./api/registerFileUpload";
+import { uploadBusinessLicenseFile, uploadRestaurantRepresentativeImage } from "./api/registerFileUpload";
 
 type FormState = {
   name: string;
@@ -26,6 +26,7 @@ type FormState = {
   description: string;
   categories: string[];
   businessLicenseFileKey: string;
+  imageUrl: string;
 };
 
 type PlaceItem = {
@@ -51,6 +52,7 @@ const initialForm: FormState = {
   description: "",
   categories: [],
   businessLicenseFileKey: "",
+  imageUrl: "",
 };
 
 const CATEGORY_OPTIONS = [
@@ -72,6 +74,13 @@ const ACCEPTED_LICENSE_TYPES = [
 ];
 
 const MAX_LICENSE_FILE_SIZE = 10 * 1024 * 1024;
+const ACCEPTED_REPRESENTATIVE_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+];
+const MAX_REPRESENTATIVE_IMAGE_SIZE = 10 * 1024 * 1024;
 
 const getHttpStatus = (error: unknown): number | undefined =>
   (error as HttpErrorLike)?.response?.status;
@@ -85,6 +94,8 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [licenseUploading, setLicenseUploading] = useState(false);
   const [licenseFileName, setLicenseFileName] = useState("");
+  const [representativeUploading, setRepresentativeUploading] = useState(false);
+  const [representativeImageName, setRepresentativeImageName] = useState("");
   const [toast, setToast] = useState("");
 
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -94,7 +105,8 @@ export default function RegisterPage() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const markerRef = useRef<kakao.maps.Marker | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const licenseFileInputRef = useRef<HTMLInputElement | null>(null);
+  const representativeImageInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!window.kakao || !window.kakao.maps) {
@@ -207,7 +219,15 @@ export default function RegisterPage() {
       setToast("로그인이 필요합니다.");
       return;
     }
-    fileInputRef.current?.click();
+    licenseFileInputRef.current?.click();
+  };
+
+  const handleRepresentativeImageButtonClick = () => {
+    if (!user) {
+      setToast("로그인이 필요합니다.");
+      return;
+    }
+    representativeImageInputRef.current?.click();
   };
 
   const handleLicenseFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -251,11 +271,53 @@ export default function RegisterPage() {
     }
   };
 
+  const handleRepresentativeImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!ACCEPTED_REPRESENTATIVE_IMAGE_TYPES.includes(file.type)) {
+      setToast("PNG, JPG, WEBP 이미지 파일만 업로드할 수 있습니다.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_REPRESENTATIVE_IMAGE_SIZE) {
+      setToast("대표사진은 10MB 이하만 가능합니다.");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      setRepresentativeUploading(true);
+      const imageUrl = await uploadRestaurantRepresentativeImage(file);
+
+      setForm((prev) => ({
+        ...prev,
+        imageUrl,
+      }));
+      setRepresentativeImageName(file.name);
+      setToast("대표사진 업로드가 완료되었습니다.");
+    } catch (error: unknown) {
+      const status = getHttpStatus(error);
+      if (status === 401 || status === 403) {
+        setToast("로그인이 필요합니다.");
+      } else {
+        setToast("대표사진 업로드에 실패했습니다.");
+      }
+    } finally {
+      setRepresentativeUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const validate = () => {
     if (!form.name.trim()) return "가게명을 입력해 주세요.";
     if (!form.address.trim()) return "주소를 선택해 주세요.";
     if (!form.latitude || !form.longitude) return "주소 검색 후 위치를 선택해 주세요.";
     if (form.categories.length === 0) return "카테고리를 1개 이상 선택해 주세요.";
+    if (!form.imageUrl.trim()) return "대표사진을 업로드해 주세요.";
     if (!form.businessLicenseFileKey.trim()) return "사업자등록증 파일을 업로드해 주세요.";
 
     const lat = Number(form.latitude);
@@ -277,7 +339,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (licenseUploading) {
+    if (licenseUploading || representativeUploading) {
       setToast("파일 업로드가 끝난 뒤 등록해 주세요.");
       return;
     }
@@ -298,6 +360,7 @@ export default function RegisterPage() {
         phone: form.phone.trim() || null,
         description: form.description.trim() || null,
         businessLicenseFileKey: form.businessLicenseFileKey,
+        imageUrl: form.imageUrl.trim() || null,
         categoryNames: form.categories,
       });
 
@@ -307,6 +370,7 @@ export default function RegisterPage() {
       setSearchResults([]);
       setSelectedPlaceId(null);
       setLicenseFileName("");
+      setRepresentativeImageName("");
       navigate("/register/requests");
     } catch (error: unknown) {
       const status = getHttpStatus(error);
@@ -450,6 +514,51 @@ export default function RegisterPage() {
 
               <Stack spacing={1}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  대표사진 (필수)
+                </Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleRepresentativeImageButtonClick}
+                    disabled={representativeUploading}
+                    sx={{ borderColor: ACCENT, color: ACCENT, minWidth: 160 }}
+                  >
+                    {representativeUploading ? "업로드 중..." : "대표사진 업로드"}
+                  </Button>
+                  <Typography sx={{ fontSize: 13, color: "#666" }}>
+                    {representativeImageName || "선택된 대표사진 없음"}
+                  </Typography>
+                </Stack>
+                <Typography sx={{ fontSize: 12, color: "#999" }}>
+                  허용: PNG, JPG, WEBP (최대 10MB)
+                </Typography>
+                {form.imageUrl && (
+                  <Box
+                    component="img"
+                    src={form.imageUrl}
+                    alt="대표사진 미리보기"
+                    sx={{
+                      width: 220,
+                      maxWidth: "100%",
+                      height: 140,
+                      objectFit: "cover",
+                      borderRadius: 1,
+                      border: "1px solid #eee",
+                    }}
+                  />
+                )}
+                <input
+                  ref={representativeImageInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  style={{ display: "none" }}
+                  onChange={handleRepresentativeImageChange}
+                />
+              </Stack>
+
+              <Stack spacing={1}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                   사업자등록증 첨부 (임시 보관)
                 </Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
@@ -470,7 +579,7 @@ export default function RegisterPage() {
                   허용: PDF, PNG, JPG, WEBP (최대 10MB, 14일 후 자동 삭제)
                 </Typography>
                 <input
-                  ref={fileInputRef}
+                  ref={licenseFileInputRef}
                   type="file"
                   accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
                   style={{ display: "none" }}
@@ -513,7 +622,7 @@ export default function RegisterPage() {
               </Stack>
 
               <TextField
-                label="설명"
+                label="식당 정보글을 작성해주세요"
                 value={form.description}
                 onChange={handleChange("description")}
                 fullWidth

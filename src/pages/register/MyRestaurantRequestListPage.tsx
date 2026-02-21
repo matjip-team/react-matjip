@@ -35,7 +35,7 @@ interface HttpErrorLike {
   };
 }
 
-export default function RestaurantMyRequestsPage() {
+export default function MyRestaurantRequestListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 

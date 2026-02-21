@@ -1,162 +1,125 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
-import { formatDateTime } from "../../common/utils/helperUtil";
-
-export interface ReplyNode {
-  id: number;
-  authorId?: number;
-  authorNickname?: string;
-  content: string;
-  deleted?: boolean;
-  createdAt?: string;
-}
+﻿import { Box, Button, TextField, Typography } from "@mui/material";
+import { formatDateTime } from "../../../common/utils/helperUtil";
+import type { AdminCommentNode } from "../api/adminBoardApi";
 
 interface ReplyItemProps {
-  reply: ReplyNode;
-  currentUserId?: number;
-  postAuthorId: number;
+  reply: AdminCommentNode;
   editingId: number | null;
   editingText: string;
-  MAIN_COLOR: string;
-  onEditClick: (id: number, content: string) => void;
-  onDeleteClick: (id: number) => void;
-  onEditingTextChange: (text: string) => void;
-  onSaveEdit: (id: number) => void;
-  onCancelEdit: () => void;
+  currentUserId?: number;
+  onEditStart: (id: number, content: string) => void;
+  onDelete: (id: number) => void;
+  onSanction: (authorId?: number) => void;
+  onEditTextChange: (value: string) => void;
+  onEditSave: (id: number) => void;
+  onEditCancel: () => void;
 }
 
-export const ReplyItem = ({
-  reply: r,
-  currentUserId,
+export function ReplyItem({
+  reply,
   editingId,
   editingText,
-  MAIN_COLOR,
-  onEditClick,
-  onDeleteClick,
-  onEditingTextChange,
-  onSaveEdit,
-  onCancelEdit,
-}: ReplyItemProps) => {
-  const isEditing = editingId === r.id;
-  const isAuthor = currentUserId === r.authorId;
+  currentUserId,
+  onEditStart,
+  onDelete,
+  onSanction,
+  onEditTextChange,
+  onEditSave,
+  onEditCancel,
+}: ReplyItemProps) {
+  const isEditing = editingId === reply.id;
+  const canEdit =
+    currentUserId === reply.authorId ||
+    currentUserId === reply.userId ||
+    currentUserId === undefined;
 
   return (
     <Box
-      key={r.id}
       sx={{
-        mt: 1,
-        display: "flex",
-        gap: 1,
-        alignItems: "flex-start",
+        ml: 5,
+        mt: 0.8,
+        p: 1,
+        borderRadius: 1,
+        border: "1px solid #f0f0f0",
+        bgcolor: "#fafafa",
       }}
     >
-      <Typography sx={{ fontSize: 13, color: "#999", mt: 0.2 }}>↳</Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Typography sx={{ fontSize: 13, color: "#888", minWidth: 66 }}>
+          ㄴ {reply.authorNickname ?? "익명"}
+        </Typography>
 
-      <Box
-        sx={{
-          flex: 1,
-          p: 1,
-          py: 0.4,
-          borderRadius: 1,
-          backgroundColor: "#fafafa",
-          border: "1px solid #eee",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            width: "100%",
-          }}
-        >
-          <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
-            {r.authorNickname ?? "익명"}
-          </Typography>
-
-          {isEditing ? (
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <TextField
-                size="small"
-                multiline
-                minRows={2}
-                maxRows={6}
-                value={editingText}
-                onChange={(e) => onEditingTextChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    onSaveEdit(r.id);
-                  }
-                }}
-                sx={{
-                  "& .MuiInputBase-root": {
-                    width: 500,
-                    fontSize: 13,
-                  },
-                }}
-              />
-              <Button
-                variant="contained"
-                sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
-                onClick={() => onSaveEdit(r.id)}
-              >
-                저장
-              </Button>
-              <Button
-                variant="outlined"
-                sx={{ height: 32, fontSize: 12 }}
-                onClick={onCancelEdit}
-              >
-                취소
-              </Button>
-            </Box>
-          ) : (
-            <Typography
-              sx={{
-                fontSize: 13,
-                flex: 1,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                color: r.deleted ? "#aaa" : "#000",
-                fontStyle: r.deleted ? "italic" : "normal",
+        {isEditing ? (
+          <Box sx={{ display: "flex", gap: 1, flex: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              value={editingText}
+              onChange={(event) => onEditTextChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onEditSave(reply.id);
+                }
               }}
+            />
+            <Button variant="contained" size="small" onClick={() => onEditSave(reply.id)}>
+              저장
+            </Button>
+            <Button variant="outlined" size="small" onClick={onEditCancel}>
+              취소
+            </Button>
+          </Box>
+        ) : (
+          <Typography
+            sx={{
+              fontSize: 13,
+              flex: 1,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              color: reply.deleted ? "#999" : "#222",
+              fontStyle: reply.deleted ? "italic" : "normal",
+            }}
+          >
+            {reply.deleted ? "삭제된 댓글입니다." : reply.content}
+          </Typography>
+        )}
+
+        {!isEditing && !reply.deleted ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.2 }}>
+            {canEdit ? (
+              <Button
+                variant="text"
+                size="small"
+                sx={{ minWidth: 0, px: 0.5 }}
+                onClick={() => onEditStart(reply.id, reply.content)}
+              >
+                수정
+              </Button>
+            ) : null}
+            <Button
+              variant="text"
+              size="small"
+              sx={{ minWidth: 0, px: 0.5, color: "#d32f2f" }}
+              onClick={() => onDelete(reply.id)}
             >
-              {r.deleted ? "삭제된 댓글입니다." : r.content}
-            </Typography>
-          )}
+              삭제
+            </Button>
+            <Button
+              variant="text"
+              size="small"
+              sx={{ minWidth: 0, px: 0.5, color: "#7b1fa2" }}
+              onClick={() => onSanction(reply.authorId)}
+            >
+              제재
+            </Button>
+          </Box>
+        ) : null}
 
-          {!isEditing && !r.deleted && (
-            <>
-              <Box sx={{ display: "flex" }}>
-                {isAuthor && (
-                  <>
-                    <Button
-                      variant="text"
-                      size="small"
-                      sx={{ minWidth: 0, fontSize: 12, color: "#666" }}
-                      onClick={() => onEditClick(r.id, r.content)}
-                    >
-                      수정
-                    </Button>
-
-                    <Button
-                      variant="text"
-                      size="small"
-                      sx={{ minWidth: 0, fontSize: 12, color: "#d32f2f" }}
-                      onClick={() => onDeleteClick(r.id)}
-                    >
-                      삭제
-                    </Button>
-                  </>
-                )}
-              </Box>
-              <Typography sx={{ fontSize: 12, color: "#999" }}>
-                {r.createdAt ? formatDateTime(r.createdAt) : "-"}
-              </Typography>
-            </>
-          )}
-        </Box>
+        <Typography sx={{ fontSize: 12, color: "#999", minWidth: 150, textAlign: "right" }}>
+          {reply.createdAt ? formatDateTime(reply.createdAt) : "-"}
+        </Typography>
       </Box>
     </Box>
   );
-};
+}

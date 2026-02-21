@@ -198,6 +198,7 @@ export default function BoardWrite() {
 
                 <ButtonGroup size="small">
                   <Button
+                    size="small"
                     variant={boardType === "REVIEW" ? "contained" : "outlined"}
                     sx={{
                       bgcolor: boardType === "REVIEW" ? MAIN_COLOR : "#fff",
@@ -207,19 +208,7 @@ export default function BoardWrite() {
                     }}
                     onClick={() => setBoardType("REVIEW")}
                   >
-                    후기
-                  </Button>
-                  <Button
-                    variant={boardType === "NOTICE" ? "contained" : "outlined"}
-                    sx={{
-                      bgcolor: boardType === "NOTICE" ? MAIN_COLOR : "#fff",
-                      color: boardType === "NOTICE" ? "#fff" : MAIN_COLOR,
-                      borderColor: MAIN_COLOR,
-                      "&:hover": { bgcolor: MAIN_COLOR, color: "#fff" },
-                    }}
-                    onClick={() => setBoardType("NOTICE")}
-                  >
-                    공지
+                    일반
                   </Button>
                 </ButtonGroup>
               </Box>

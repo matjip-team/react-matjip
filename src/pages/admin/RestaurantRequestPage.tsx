@@ -19,17 +19,18 @@ type RestaurantRequestItem = {
   name: string;
   address: string;
   hasBusinessLicenseFile: boolean;
-  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
   createdAt: string;
 };
 
 const STATUS_META: Record<
   RestaurantRequestItem["approvalStatus"],
-  { label: string; color: "warning" | "success" | "error" }
+  { label: string; color: "warning" | "success" | "error" | "default" }
 > = {
   PENDING: { label: "승인 대기", color: "warning" },
   APPROVED: { label: "승인 완료", color: "success" },
   REJECTED: { label: "반려", color: "error" },
+  CANCELLED: { label: "철회", color: "default" },
 };
 
 export default function RestaurantRequestPage() {
@@ -49,10 +50,32 @@ export default function RestaurantRequestPage() {
 
     try {
       setLoading(true);
-      const res = await axios.get("/api/admin/restaurants", {
-        params: { status: "PENDING" },
-      });
-      setItems(res.data?.data ?? []);
+      const statuses: RestaurantRequestItem["approvalStatus"][] = [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "CANCELLED",
+      ];
+
+      const responses = await Promise.all(
+        statuses.map((status) =>
+          axios.get("/api/admin/restaurants", { params: { status } }),
+        ),
+      );
+
+      const merged = responses.flatMap(
+        (res) => (res.data?.data as RestaurantRequestItem[] | undefined) ?? [],
+      );
+
+      const deduped = Array.from(
+        new Map(merged.map((item) => [item.id, item])).values(),
+      );
+
+      deduped.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+
+      setItems(deduped);
     } catch (error) {
       console.error(error);
       setToast("신청 목록 조회에 실패했습니다.");
@@ -65,20 +88,6 @@ export default function RestaurantRequestPage() {
     void fetchRequests();
   }, [fetchRequests]);
 
-  const handleViewLicense = async (id: number) => {
-    try {
-      const res = await axios.get(`/api/admin/restaurants/${id}/license-view-url`);
-      const viewUrl = res.data?.data;
-      if (!viewUrl) {
-        setToast("서류 보기 URL 발급에 실패했습니다.");
-        return;
-      }
-      window.open(viewUrl, "_blank", "noopener,noreferrer");
-    } catch (error) {
-      console.error(error);
-      setToast("서류 보기 URL 발급에 실패했습니다.");
-    }
-  };
 
   if (!user) {
     return (
@@ -104,7 +113,7 @@ export default function RestaurantRequestPage() {
 
       {loading && <Typography sx={{ color: "#666", mb: 2 }}>목록 불러오는 중...</Typography>}
 
-      {!loading && items.length === 0 && <Alert severity="info">승인 대기 신청이 없습니다.</Alert>}
+      {!loading && items.length === 0 && <Alert severity="info">신청 내역이 없습니다.</Alert>}
 
       <Stack spacing={2}>
         {items.map((item) => (
@@ -133,14 +142,6 @@ export default function RestaurantRequestPage() {
                     onClick={() => navigate(`/admin/restaurant-requests/${item.id}`)}
                   >
                     상세보기
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    disabled={!item.hasBusinessLicenseFile}
-                    onClick={() => void handleViewLicense(item.id)}
-                  >
-                    서류 보기
                   </Button>
                 </Stack>
               </Stack>

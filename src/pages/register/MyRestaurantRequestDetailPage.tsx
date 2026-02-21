@@ -54,13 +54,6 @@ const formatDateTime = (value?: string | null) => {
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("ko-KR");
 };
 
-const formatCoordinate = (value?: number | null) => {
-  if (value === null || value === undefined) {
-    return "-";
-  }
-  return String(value);
-};
-
 const getStatusGuide = (status: RestaurantApprovalStatus) => {
   if (status === "PENDING") {
     return {
@@ -100,7 +93,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function RestaurantMyRequestDetailPage() {
+export default function MyRestaurantRequestDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
@@ -392,10 +385,6 @@ export default function RestaurantMyRequestDetailPage() {
               <InfoRow
                 label="카테고리"
                 value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"}
-              />
-              <InfoRow
-                label="위치 좌표"
-                value={`${formatCoordinate(detail.latitude)} / ${formatCoordinate(detail.longitude)}`}
               />
               <Box sx={{ pl: { xs: 0, sm: 12.5 } }}>
                 <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>

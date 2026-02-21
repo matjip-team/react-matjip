@@ -10,6 +10,7 @@ import {
   Divider,
   Snackbar,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
@@ -32,6 +33,7 @@ type RestaurantAdminDetail = {
   approvalStatus: RestaurantApprovalStatus;
   createdAt?: string | null;
   reviewedAt?: string | null;
+  rejectedReason?: string | null;
   registeredById?: number | null;
   registeredByNickname?: string | null;
 };
@@ -49,13 +51,6 @@ const formatDateTime = (value?: string | null) => {
   }
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("ko-KR");
-};
-
-const formatCoordinate = (value?: number | null) => {
-  if (value === null || value === undefined) {
-    return "-";
-  }
-  return String(value);
 };
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -78,6 +73,7 @@ export default function RestaurantRequestDetailPage() {
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [openingLicense, setOpeningLicense] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const [toast, setToast] = useState("");
 
   const requestId = useMemo(() => Number(id), [id]);
@@ -100,7 +96,9 @@ export default function RestaurantRequestDetailPage() {
     try {
       setLoading(true);
       const res = await axios.get(`/api/admin/restaurants/${requestId}`);
-      setDetail(res.data?.data ?? null);
+      const nextDetail = (res.data?.data ?? null) as RestaurantAdminDetail | null;
+      setDetail(nextDetail);
+      setRejectReason(nextDetail?.rejectedReason ?? "");
     } catch (error) {
       console.error(error);
       setToast("신청 상세 조회에 실패했습니다.");
@@ -151,10 +149,18 @@ export default function RestaurantRequestDetailPage() {
     if (!detail) {
       return;
     }
+    const trimmedReason = rejectReason.trim();
+    if (status === "REJECTED" && !trimmedReason) {
+      setToast("반려 사유를 입력해 주세요.");
+      return;
+    }
 
     try {
       setProcessing(true);
-      await axios.patch(`/api/admin/restaurants/${detail.id}/approval`, { status });
+      await axios.patch(`/api/admin/restaurants/${detail.id}/approval`, {
+        status,
+        rejectedReason: status === "REJECTED" ? trimmedReason : null,
+      });
       setToast(status === "APPROVED" ? "승인 처리되었습니다." : "반려 처리되었습니다.");
       await fetchDetail();
     } catch (error) {
@@ -170,18 +176,36 @@ export default function RestaurantRequestDetailPage() {
       return;
     }
 
+    const popup = window.open("about:blank", "_blank");
+    if (!popup) {
+      setToast("브라우저 팝업 차단을 해제한 뒤 다시 시도해 주세요.");
+      return;
+    }
+
     try {
       setOpeningLicense(true);
       const res = await axios.get(`/api/admin/restaurants/${detail.id}/license-view-url`);
-      const viewUrl = res.data?.data;
+      const urlFromData = res.data?.data;
+      const urlFromMessage = res.data?.message;
+      const viewUrl = urlFromData
+        ?? (typeof urlFromMessage === "string" && /^https?:\/\//i.test(urlFromMessage)
+          ? urlFromMessage
+          : null);
       if (!viewUrl) {
-        setToast("서류 보기 URL 발급에 실패했습니다.");
+        popup.close();
+        setToast("첨부파일 주소를 불러오지 못했습니다.");
         return;
       }
-      window.open(viewUrl, "_blank", "noopener,noreferrer");
+      try {
+        popup.location.replace(viewUrl);
+        popup.focus();
+      } catch {
+        window.open(viewUrl, "_blank");
+      }
     } catch (error) {
+      popup.close();
       console.error(error);
-      setToast("서류 보기 URL 발급에 실패했습니다.");
+      setToast("첨부파일 열기에 실패했습니다.");
     } finally {
       setOpeningLicense(false);
     }
@@ -275,18 +299,25 @@ export default function RestaurantRequestDetailPage() {
 
               <Box>
                 <Typography sx={{ fontWeight: 700, mb: 1 }}>첨부 서류</Typography>
-                <InfoRow label="사업자등록증" value={detail.hasBusinessLicenseFile ? "첨부됨" : "없음"} />
-                <Box sx={{ pl: { xs: 0, sm: 13.8 }, mt: 0.8 }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<DescriptionOutlinedIcon />}
-                    onClick={() => void handleOpenLicense()}
-                    disabled={!detail.hasBusinessLicenseFile || openingLicense}
-                  >
-                    {openingLicense ? "여는 중..." : "사업자등록증 열기"}
-                  </Button>
-                </Box>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7} alignItems={{ xs: "flex-start", sm: "center" }}>
+                  <Typography sx={{ width: { xs: "100%", sm: 110 }, color: "#666", fontSize: 14 }}>
+                    사업자등록증
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap" }}>
+                    <Typography sx={{ color: "#222", fontSize: 14 }}>
+                      {detail.hasBusinessLicenseFile ? "첨부됨" : "없음"}
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<DescriptionOutlinedIcon />}
+                      onClick={() => void handleOpenLicense()}
+                      disabled={!detail.hasBusinessLicenseFile || openingLicense}
+                    >
+                      {openingLicense ? "여는 중..." : "첨부파일 열기"}
+                    </Button>
+                  </Stack>
+                </Stack>
               </Box>
             </Box>
 
@@ -297,7 +328,6 @@ export default function RestaurantRequestDetailPage() {
               <InfoRow label="주소" value={detail.address || "-"} />
               <InfoRow label="전화번호" value={detail.phone || "-"} />
               <InfoRow label="카테고리" value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"} />
-              <InfoRow label="위치 좌표" value={`${formatCoordinate(detail.latitude)} / ${formatCoordinate(detail.longitude)}`} />
               <Box sx={{ pl: { xs: 0, sm: 13.8 } }}>
                 <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
                   지도에서 크게 보기
@@ -319,10 +349,20 @@ export default function RestaurantRequestDetailPage() {
               }}
             />
 
-            <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-              <Button variant="outlined" onClick={() => navigate("/admin/restaurant-requests")}>닫기</Button>
-              {detail.approvalStatus === "PENDING" && (
-                <>
+            {detail.approvalStatus === "PENDING" && (
+              <Box sx={{ mt: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  multiline
+                  minRows={2}
+                  label="반려 사유"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="반려 사유를 입력해 주세요."
+                />
+
+                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1 }}>
                   <Button
                     variant="contained"
                     color="success"
@@ -339,9 +379,14 @@ export default function RestaurantRequestDetailPage() {
                   >
                     반려
                   </Button>
-                </>
-              )}
-            </Stack>
+                </Stack>
+              </Box>
+            )}
+            {detail.approvalStatus === "REJECTED" && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                반려 사유: {detail.rejectedReason?.trim() ? detail.rejectedReason : "-"}
+              </Alert>
+            )}
           </CardContent>
         </Card>
       )}

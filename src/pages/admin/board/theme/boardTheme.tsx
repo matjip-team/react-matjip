@@ -1,21 +1,28 @@
-import { createTheme } from "@mui/material/styles";
+﻿import { createTheme } from "@mui/material/styles";
 
 export const boardTheme = createTheme({
+  palette: {
+    primary: {
+      main: "#ff6b00",
+    },
+  },
   components: {
     MuiButton: {
       defaultProps: {
-        disableRipple: true, // 💥 물결 제거
+        disableRipple: true,
       },
       styleOverrides: {
         root: {
-          textTransform: "none", 
-          "&:focus": {
-            outline: "none",
-          },
-          "&.Mui-focusVisible": {
-            outline: "none",
-            boxShadow: "none", // ✅ 검정 포커스 제거
-          },
+          textTransform: "none",
+          borderRadius: 8,
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        rounded: {
+          borderRadius: 12,
         },
       },
     },

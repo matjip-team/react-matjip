@@ -18,7 +18,7 @@ import { unwrapData } from "../common/utils/helperUtil";
 import { ThemeProvider } from "@mui/material/styles";
 import myPageTheme from "../common/theme/mypage";
 import RegisterPage from "../register/RegisterPage";
-import RestaurantMyRequestsPage from "../register/RestaurantMyRequestsPage";
+import MyRestaurantRequestListPage from "../register/MyRestaurantRequestListPage";
 
 export default function MyPage() {
   const [value, setValue] = React.useState(0);
@@ -58,7 +58,7 @@ export default function MyPage() {
       case 2:
         return <RegisterPage />;
       case 3:
-        return <RestaurantMyRequestsPage />;
+        return <MyRestaurantRequestListPage />;
       case 4:
         if (!profile) return <div>loading...</div>;
         return <ProfileEdit data={profile} />;

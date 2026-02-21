@@ -1,385 +1,386 @@
-// 게시글 목록 페이지
-import { useEffect, useState } from "react";
-// 자유게시판 목록 페이지
-import { useNavigate } from "react-router-dom";
+﻿import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
   Button,
   Chip,
-  Menu,
+  IconButton,
   MenuItem,
+  Pagination,
+  Paper,
   Select,
   Snackbar,
-  TextField,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Pagination,
-  IconButton,
+  TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import SmartDisplayOutlinedIcon from "@mui/icons-material/SmartDisplayOutlined";
-import axios from "../common/axios";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import { ThemeProvider } from "@mui/material/styles";
+import {
+  fetchAdminBoards,
+  type AdminBoardListItem,
+  type AdminBoardStatusFilter,
+  type BoardSearchType,
+} from "./api/adminBoardApi";
 import { boardTheme } from "./theme/boardTheme";
 
-// 타입 정의
+const statusOptions: Array<{ value: AdminBoardStatusFilter; label: string }> = [
+  { value: "ALL", label: "전체" },
+  { value: "NOTICE", label: "공지" },
+  { value: "REVIEW", label: "일반" },
+  { value: "HIDDEN", label: "숨김" },
+  { value: "REPORTED", label: "신고" },
+];
 
-type CategoryType = "ALL" | "공지" | "후기";
+type SortType =
+  | "LATEST"
+  | "OLDEST"
+  | "VIEW_DESC"
+  | "RECOMMEND_DESC"
+  | "COMMENT_DESC";
 
-interface Board {
-  id: number;
-  title: string;
-  // 타입 정의
-  content?: string;
-  boardType: "NOTICE" | "REVIEW";
-  authorNickname: string;
-  createdAt?: string;
-  viewCount: number;
-  recommendCount: number;
-  commentCount: number;
-  hasImage?: boolean;
-  hasVideo?: boolean;
-}
+const uniqueById = (items: AdminBoardListItem[]): AdminBoardListItem[] => {
+  const map = new Map<number, AdminBoardListItem>();
+  items.forEach((item) => map.set(item.id, item));
+  return Array.from(map.values());
+};
 
-// 메인 컴포넌트
+const getTime = (date?: string): number => {
+  if (!date) return 0;
+  const parsed = new Date(date).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const compareBySort = (a: AdminBoardListItem, b: AdminBoardListItem, sort: SortType): number => {
+  if (sort === "OLDEST") return getTime(a.createdAt) - getTime(b.createdAt);
+  if (sort === "VIEW_DESC") return b.viewCount - a.viewCount;
+  if (sort === "RECOMMEND_DESC") return b.recommendCount - a.recommendCount;
+  if (sort === "COMMENT_DESC") return b.commentCount - a.commentCount;
+  return getTime(b.createdAt) - getTime(a.createdAt);
+};
+
+const applyStatusFilter = (
+  items: AdminBoardListItem[],
+  status: AdminBoardStatusFilter,
+): AdminBoardListItem[] => {
+  if (status === "NOTICE") return items.filter((item) => item.boardType === "NOTICE");
+  if (status === "REVIEW") return items.filter((item) => item.boardType === "REVIEW");
+  if (status === "HIDDEN") return items.filter((item) => item.hidden);
+  if (status === "REPORTED") return items.filter((item) => (item.reportCount ?? 0) > 0);
+  return items;
+};
+
+const statusChip = (item: AdminBoardListItem) => {
+  if (item.hidden) return <Chip size="small" color="default" label="숨김" />;
+  if ((item.reportCount ?? 0) > 0) {
+    return <Chip size="small" color="error" label={`신고 ${item.reportCount ?? 0}`} />;
+  }
+  return <Chip size="small" color="success" label="정상" />;
+};
+
+const mediaIcon = (item: AdminBoardListItem) => {
+  const hasImage = Boolean(item.hasImage);
+  const hasVideo = Boolean(item.hasVideo);
+
+  if (hasImage && hasVideo) {
+    return (
+      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.3, mr: 0.8 }}>
+        <ImageOutlinedIcon sx={{ fontSize: 16, color: "#2e7d32" }} />
+        <SmartDisplayOutlinedIcon sx={{ fontSize: 16, color: "#d32f2f" }} />
+      </Box>
+    );
+  }
+
+  if (hasImage) {
+    return <ImageOutlinedIcon sx={{ fontSize: 16, color: "#2e7d32", mr: 0.8 }} />;
+  }
+
+  if (hasVideo) {
+    return <SmartDisplayOutlinedIcon sx={{ fontSize: 16, color: "#d32f2f", mr: 0.8 }} />;
+  }
+
+  return <ChatBubbleOutlineIcon sx={{ fontSize: 16, color: "#9e9e9e", mr: 0.8 }} />;
+};
 
 export default function BoardPage() {
   const navigate = useNavigate();
-  const MAIN_COLOR = "#ff6b00";
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // 메인 컴포넌트
-  // 상태
-  const [posts, setPosts] = useState<Board[]>([]);
-  const [category, setCategory] = useState<CategoryType>("ALL");
+  const initialStatus = (searchParams.get("status") as AdminBoardStatusFilter) || "ALL";
 
-  const [keyword, setKeyword] = useState("");
-    // 상태
-  const [appliedKeyword, setAppliedKeyword] = useState("");
-
-  const [totalPages, setTotalPages] = useState(1);
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
-  const [searchType, setSearchType] = useState("TITLE_CONTENT");
-  const [appliedSearchType, setAppliedSearchType] = useState("TITLE_CONTENT"); // 실제 검색용
+  const [rawItems, setRawItems] = useState<AdminBoardListItem[]>([]);
 
-  // 글쓴이 컨텍스트 메뉴
-  const [authorAnchor, setAuthorAnchor] = useState<null | HTMLElement>(null);
-  const [selectedAuthor, setSelectedAuthor] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<AdminBoardStatusFilter>(initialStatus);
+  const [searchType, setSearchType] = useState<BoardSearchType>("TITLE_CONTENT");
+  const [keyword, setKeyword] = useState("");
+  const [appliedKeyword, setAppliedKeyword] = useState("");
+  const [sortType, setSortType] = useState<SortType>("LATEST");
 
-    // 게시글 목록 조회
-    // 글쓴이 메뉴
+  const [size, setSize] = useState(20);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const fetchBoards = async () => {
-      const res = await axios.get("/api/boards", {
-    // 게시글 목록 조회
-        params: {
-          page,
-          size,
-          type:
-            category === "ALL"
-              ? null
-              : category === "공지"
-              ? "NOTICE"
-              : "REVIEW",
-          keyword: appliedKeyword,
-          searchType: appliedSearchType,
-        },
-      });
+    const run = async () => {
+      setLoading(true);
+      try {
+        const serverType =
+          statusFilter === "NOTICE" ? "NOTICE" : statusFilter === "REVIEW" ? "REVIEW" : undefined;
 
-      const data = res.data.data;
+        const data = await fetchAdminBoards({
+          page: 0,
+          size: 300,
+          type: serverType,
+          keyword: appliedKeyword || undefined,
+          searchType,
+        });
 
-      const notices = (data.notices ?? []).filter(Boolean);
-      const contents = (data.contents ?? []).filter(Boolean);
-
-      if (category === "ALL") {
-        setPosts([...notices, ...contents]);
-      } else if (category === "공지") {
-        setPosts(notices);
-      } else {
-        setPosts(contents);
+        setRawItems(uniqueById([...(data.notices ?? []), ...(data.contents ?? [])]));
+      } catch {
+        setToast("관리자 게시글을 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
       }
-
-      const computedTotalPages = Math.ceil(
-        (data.totalElements ?? 0) / (data.size ?? size)
-      );
-
-      setTotalPages(Math.max(1, computedTotalPages));
     };
 
-    fetchBoards();
-  }, [page, category, appliedKeyword, size, appliedSearchType]);
+    void run();
+  }, [statusFilter, appliedKeyword, searchType]);
 
-    // 헬퍼 함수
+  const filteredItems = useMemo(() => {
+    const byStatus = applyStatusFilter(rawItems, statusFilter);
+    return [...byStatus].sort((a, b) => compareBySort(a, b, sortType));
+  }, [rawItems, statusFilter, sortType]);
 
-  // 글 타입 반환
-  const getBoardType = (post?: Board) => post?.boardType ?? "";
-    // 헬퍼 함수
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / size));
+  const currentPage = Math.min(page, totalPages);
 
-  // 글 타입 레이블 변환
-  const getBoardLabel = (post: Board) => {
-    if (post.boardType === "NOTICE") return "공지";
-    if (post.boardType === "REVIEW") return "후기";
-    return "-";
-  };
-
-  // 검색 실행
-  const getTitleIcons = (post: Board) => {
-    if (post.hasImage && post.hasVideo) {
-      return (
-        <Box component="span" sx={{ display: "inline-flex", gap: 0.4, mr: 0.8 }}>
-          <ImageOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", color: "#2e7d32" }} />
-          <SmartDisplayOutlinedIcon sx={{ fontSize: 16, verticalAlign: "middle", color: "#d32f2f" }} />
-        </Box>
-      );
-    }
-
-    if (post.hasImage) {
-      return (
-        <ImageOutlinedIcon
-          sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#2e7d32" }}
-        />
-      );
-    }
-
-    if (post.hasVideo) {
-      return (
-        <SmartDisplayOutlinedIcon
-          sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#d32f2f" }}
-        />
-      );
-    }
-
-    return (
-      <ChatBubbleOutlineIcon
-        sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.8, color: "#9e9e9e" }}
-      />
-    );
-  };
+  const pageItems = useMemo(() => {
+    const start = (currentPage - 1) * size;
+    return filteredItems.slice(start, start + size);
+  }, [currentPage, filteredItems, size]);
 
   const handleSearch = () => {
-    if (!keyword.trim()) {
-      setToast("검색어를 입력해주세요.");
+    setPage(1);
+    setAppliedKeyword(keyword.trim());
+  };
+
+  const handleStatusChange = (next: AdminBoardStatusFilter) => {
+    setStatusFilter(next);
+    setPage(1);
+
+    if (next === "ALL") {
+      searchParams.delete("status");
+      setSearchParams(searchParams, { replace: true });
       return;
     }
 
-    setPage(0);
-    setAppliedKeyword(keyword);
-    setAppliedSearchType(searchType);
+    setSearchParams({ status: next }, { replace: true });
   };
 
-    // 글쓴이 메뉴
-
-  // 글쓴이 메뉴 오픈
-    // 글쓴이 메뉴
-  const openAuthorMenu = (
-    e: React.MouseEvent<HTMLElement>,
-    author: string
-  ) => {
-    setAuthorAnchor(e.currentTarget as HTMLElement);
-    setSelectedAuthor(author);
-  };
-
-  // 글쓴이 메뉴 닫기
-  const closeAuthorMenu = () => {
-    setAuthorAnchor(null);
-  };
-
-    // 렌더
-
-    // 렌더
   return (
     <ThemeProvider theme={boardTheme}>
-      <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
+      <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4, px: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            gap: 1,
+            flexWrap: "wrap",
+          }}
+        >
+          <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#ff6b00" }}>
+            관리자 게시글 목록
+          </Typography>
 
-        {/* 제목 / 글쓰기 */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
-            커뮤니티
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" onClick={() => navigate("/admin/board")}>대시보드</Button>
+            <Button
+              variant="contained"
+              sx={{ bgcolor: "#ff6b00", "&:hover": { bgcolor: "#e65f00" } }}
+              onClick={() => navigate("/admin/board/write")}
+            >
+              관리자 작성
+            </Button>
+          </Box>
+        </Box>
+
+        <Paper variant="outlined" sx={{ borderColor: "#ececec", p: 1.5, mb: 1.5 }}>
+          <Box sx={{ display: "flex", gap: 0.7, flexWrap: "wrap", mb: 1.2 }}>
+            {statusOptions.map((option) => (
+              <Button
+                key={option.value}
+                size="small"
+                variant={statusFilter === option.value ? "contained" : "outlined"}
+                sx={{
+                  color: statusFilter === option.value ? "#fff" : "#ff6b00",
+                  bgcolor: statusFilter === option.value ? "#ff6b00" : "#fff",
+                  borderColor: "#ff6b00",
+                  "&:hover": {
+                    bgcolor: statusFilter === option.value ? "#e65f00" : "#fff8f2",
+                    borderColor: "#ff6b00",
+                  },
+                }}
+                onClick={() => handleStatusChange(option.value)}
+              >
+                {option.label}
+              </Button>
+            ))}
           </Box>
 
-          <Button
-            variant="contained"
-            sx={{ bgcolor: MAIN_COLOR }}
-            onClick={() => navigate("/board/write")}
-          >
-            새글쓰기
-          </Button>
-        </Box>
-
-        {/* 검색 */}
-        <Box sx={{ display: "flex", gap: 1, mb: 4 }}>
-          <Select
-            size="small"
-            value={searchType}
-            onChange={(e) => {
-              setSearchType(e.target.value)
-            }}
-            sx={{width: 120}}
-          >
-            <MenuItem value="TITLE_CONTENT">제목+내용</MenuItem>
-            <MenuItem value="TITLE">제목</MenuItem>
-            <MenuItem value="CONTENT">내용</MenuItem>
-            <MenuItem value="AUTHOR">글쓴이</MenuItem>
-            <MenuItem value="COMMENT">댓글</MenuItem>
-          </Select>
-
-          <TextField
-            size="small"
-            placeholder="검색어 입력"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSearch();
-            }}
-            sx={{width: 300}}
-          />
-
-          <IconButton
-            sx={{
-              bgcolor: MAIN_COLOR,
-              color: "#fff",
-              "&:hover": { bgcolor: MAIN_COLOR },
-            }}
-            onClick={handleSearch}
-          >
-            <SearchIcon />
-          </IconButton>
-        </Box>
-
-        {/* 카테고리 */}
-        <Box sx={{ display: "flex", gap: 0.5, mb: 1, alignItems: "center" }}>
-          {["ALL", "공지", "후기"].map((c) => (
-            <Button
-              key={c}
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+            <Select
               size="small"
-              variant={category === c ? "contained" : "outlined"}
-              sx={{
-                bgcolor: category === c ? MAIN_COLOR : "#fff",
-                color: category === c ? "#fff" : MAIN_COLOR,
-                borderColor: MAIN_COLOR,
-              }}
-              onClick={() => {
-                setCategory(c as CategoryType);
-                setPage(0);
-                setKeyword("");
-  setAppliedKeyword("");
-              }}
+              value={searchType}
+              onChange={(event) => setSearchType(event.target.value as BoardSearchType)}
+              sx={{ minWidth: 140 }}
             >
-              {c === "ALL" ? "전체글" : c}
-            </Button>
-          ))}
+              <MenuItem value="TITLE_CONTENT">제목+내용</MenuItem>
+              <MenuItem value="TITLE">제목</MenuItem>
+              <MenuItem value="CONTENT">내용</MenuItem>
+              <MenuItem value="AUTHOR">작성자</MenuItem>
+              <MenuItem value="COMMENT">댓글</MenuItem>
+            </Select>
 
-          <Box sx={{ marginLeft: "auto" }}>
+            <TextField
+              size="small"
+              placeholder="검색어"
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSearch();
+                }
+              }}
+              sx={{ width: { xs: "100%", sm: 280 } }}
+            />
+
+            <IconButton
+              sx={{ bgcolor: "#ff6b00", color: "#fff", "&:hover": { bgcolor: "#e65f00" } }}
+              onClick={handleSearch}
+            >
+              <SearchIcon />
+            </IconButton>
+
+            <Box sx={{ flex: 1 }} />
+
+            <Select
+              size="small"
+              value={sortType}
+              onChange={(event) => setSortType(event.target.value as SortType)}
+              sx={{ minWidth: 140 }}
+            >
+              <MenuItem value="LATEST">최신순</MenuItem>
+              <MenuItem value="OLDEST">등록순</MenuItem>
+              <MenuItem value="VIEW_DESC">조회순</MenuItem>
+              <MenuItem value="RECOMMEND_DESC">추천순</MenuItem>
+              <MenuItem value="COMMENT_DESC">댓글순</MenuItem>
+            </Select>
+
             <Select
               size="small"
               value={size}
-              onChange={(e) => {
-                setSize(Number(e.target.value));
-                setPage(0);
+              onChange={(event) => {
+                setSize(Number(event.target.value));
+                setPage(1);
               }}
-              sx={{width: 90}}
+              sx={{ minWidth: 90 }}
             >
               <MenuItem value={10}>10개</MenuItem>
-              <MenuItem value={30}>30개</MenuItem>
+              <MenuItem value={20}>20개</MenuItem>
               <MenuItem value={50}>50개</MenuItem>
-              <MenuItem value={100}>100개</MenuItem>
             </Select>
           </Box>
-        </Box>
+        </Paper>
 
-        {/* 테이블 */}
-        <TableContainer component={Paper}>
-          <Table sx={{ tableLayout: "fixed" }}>
+        <TableContainer component={Paper} variant="outlined" sx={{ borderColor: "#ececec" }}>
+          <Table size="small" sx={{ tableLayout: "fixed" }}>
             <TableHead>
-              <TableRow sx={{ borderBottom: "2px solid #ff6b00" }}>
-                <TableCell align="center" sx={{ width: 30 }}>번호</TableCell>
-                <TableCell align="center" sx={{ width: 50 }}>말머리</TableCell>
-                <TableCell align="center">제목</TableCell>
-                <TableCell align="center" sx={{ width: 130 }}>글쓴이</TableCell>
-                <TableCell align="center" sx={{ width: 80 }}>작성일</TableCell>
-                <TableCell align="center" sx={{ width: 40 }}>조회</TableCell>
-                <TableCell align="center" sx={{ width: 40 }}>추천</TableCell>
+              <TableRow>
+                <TableCell align="center" sx={{ width: 70 }}>번호</TableCell>
+                <TableCell align="center" sx={{ width: 84 }}>상태</TableCell>
+                <TableCell align="center" sx={{ width: 80 }}>말머리</TableCell>
+                <TableCell align="left">제목</TableCell>
+                <TableCell align="center" sx={{ width: 120 }}>작성자</TableCell>
+                <TableCell align="center" sx={{ width: 130 }}>작성일</TableCell>
+                <TableCell align="center" sx={{ width: 70 }}>조회</TableCell>
+                <TableCell align="center" sx={{ width: 70 }}>추천</TableCell>
+                <TableCell align="center" sx={{ width: 84 }}>신고</TableCell>
               </TableRow>
             </TableHead>
-
             <TableBody>
-              {posts.length === 0 ? (
+              {!loading && pageItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 5, color: "#888" }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 5, color: "#777" }}>
                     게시글이 없습니다.
                   </TableCell>
                 </TableRow>
               ) : (
-                posts.map((post) => {
-                  const type = getBoardType(post);
-
+                pageItems.map((item) => {
+                  const isReported = (item.reportCount ?? 0) > 0;
                   return (
-                    <TableRow key={post.id} hover>
-                      <TableCell align="center">{post.id}</TableCell>
-
+                    <TableRow
+                      key={item.id}
+                      hover
+                      sx={{
+                        bgcolor: item.hidden ? "#fafafa" : "transparent",
+                      }}
+                    >
+                      <TableCell align="center">{item.id}</TableCell>
+                      <TableCell align="center">{statusChip(item)}</TableCell>
                       <TableCell align="center">
                         <Chip
-                          label={getBoardLabel(post)}
                           size="small"
-                          sx={{
-                            bgcolor: type === "NOTICE" ? MAIN_COLOR : "#adb5bd",
-                            color: "#fff",
-                          }}
+                          color={item.boardType === "NOTICE" ? "warning" : "default"}
+                          label={item.boardType === "NOTICE" ? "공지" : "일반"}
                         />
                       </TableCell>
-
-                      <TableCell
-                        align="left"
-                        sx={{
-                          pl: 10,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          fontWeight: type === "NOTICE" ? 700 : 400,
-                        }}
-                      >
+                      <TableCell align="left" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         <Box
-                          component="span"
-                          onClick={() => navigate(`/board/${post.id}`)}
-                          sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            cursor: "pointer",
+                            maxWidth: "100%",
+                            "&:hover": { textDecoration: "underline" },
+                          }}
+                          onClick={() => navigate(`/admin/board/${item.id}`)}
                         >
-                          {getTitleIcons(post)}
-                          {post.title}
-                          {post.commentCount > 0 && (
-                            <span style={{ color: "#999", marginLeft: 4 }}>
-                              [{post.commentCount}]
-                            </span>
-                          )}
+                          {mediaIcon(item)}
+                          {item.hidden ? <VisibilityOffOutlinedIcon sx={{ fontSize: 15, mr: 0.5, color: "#757575" }} /> : null}
+                          {isReported ? <FlagOutlinedIcon sx={{ fontSize: 15, mr: 0.5, color: "#d32f2f" }} /> : null}
+                          <span>{item.title}</span>
+                          {item.commentCount > 0 ? (
+                            <Typography component="span" sx={{ color: "#888", ml: 0.4 }}>
+                              [{item.commentCount}]
+                            </Typography>
+                          ) : null}
                         </Box>
                       </TableCell>
-
+                      <TableCell align="center">{item.authorNickname}</TableCell>
                       <TableCell align="center">
-                        <Box
-                          component="span"
-                          sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
-                          onClick={(e) => openAuthorMenu(e, post.authorNickname)}
-                        >
-                          {post.authorNickname}
-                        </Box>
+                        {item.createdAt ? new Date(item.createdAt).toLocaleString("ko-KR") : "-"}
                       </TableCell>
-
+                      <TableCell align="center">{item.viewCount}</TableCell>
+                      <TableCell align="center">{item.recommendCount}</TableCell>
                       <TableCell align="center">
-                        {post.createdAt
-                          ? new Date(post.createdAt).toLocaleDateString("ko-KR")
-                          : "-"}
+                        <Tooltip title="신고 수">
+                          <Box component="span">{item.reportCount ?? 0}</Box>
+                        </Tooltip>
                       </TableCell>
-
-                      <TableCell align="center">{post.viewCount}</TableCell>
-                      <TableCell align="center">{post.recommendCount}</TableCell>
                     </TableRow>
                   );
                 })
@@ -388,30 +389,21 @@ export default function BoardPage() {
           </Table>
         </TableContainer>
 
-        {/* 글쓴이 메뉴 */}
-        <Menu anchorEl={authorAnchor} open={Boolean(authorAnchor)} onClose={closeAuthorMenu}>
-          <MenuItem onClick={() => alert(`${selectedAuthor} 글 보기`)}>글</MenuItem>
-          <MenuItem onClick={() => alert(`${selectedAuthor} 댓글 보기`)}>댓글</MenuItem>
-          <MenuItem onClick={() => alert(`${selectedAuthor} 작성글 검색`)}>
-            작성글 검색
-          </MenuItem>
-        </Menu>
-
-        {/* 페이지네이션 */}
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
           <Pagination
-            count={posts.length === 0 ? 1 : totalPages}
-            page={page + 1}
-            disabled={posts.length === 0}
-            onChange={(_, v) => setPage(v - 1)}
+            count={totalPages}
+            page={currentPage}
+            onChange={(_, value) => setPage(value)}
+            color="primary"
           />
         </Box>
       </Box>
+
       <Snackbar
         open={Boolean(toast)}
-        autoHideDuration={1500}
-        message={toast}
+        autoHideDuration={1800}
         onClose={() => setToast("")}
+        message={toast}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
     </ThemeProvider>
