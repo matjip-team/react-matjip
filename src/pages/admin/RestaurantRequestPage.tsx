@@ -18,6 +18,7 @@ type RestaurantRequestItem = {
   id: number;
   name: string;
   address: string;
+  imageUrl?: string | null;
   hasBusinessLicenseFile: boolean;
   approvalStatus: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
   createdAt: string;
@@ -120,7 +121,33 @@ export default function RestaurantRequestPage() {
           <Card key={item.id} sx={{ border: "1px solid #eee" }}>
             <CardContent>
               <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
-                <Box>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flex: 1 }}>
+                  <Box
+                    sx={{
+                      width: 120,
+                      minWidth: 120,
+                      height: 90,
+                      borderRadius: 1,
+                      overflow: "hidden",
+                      border: "1px solid #eee",
+                      bgcolor: "#f7f7f7",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {item.imageUrl ? (
+                      <Box
+                        component="img"
+                        src={item.imageUrl}
+                        alt={`${item.name} 대표사진`}
+                        sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <Typography sx={{ fontSize: 12, color: "#999" }}>대표사진 없음</Typography>
+                    )}
+                  </Box>
+                  <Box>
                   <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
                     <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{item.name}</Typography>
                     <Chip
@@ -134,7 +161,8 @@ export default function RestaurantRequestPage() {
                   <Typography sx={{ color: "#999", mt: 0.5, fontSize: 13 }}>
                     신청일: {new Date(item.createdAt).toLocaleString()}
                   </Typography>
-                </Box>
+                  </Box>
+                </Stack>
 
                 <Stack direction={{ xs: "row", md: "column" }} spacing={1}>
                   <Button

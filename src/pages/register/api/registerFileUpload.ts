@@ -83,7 +83,7 @@ export const uploadRestaurantRepresentativeImage = async (file: File): Promise<s
     });
   } catch (error: unknown) {
     const status = getHttpStatus(error);
-    if (status !== 404 && status !== 405) {
+    if (status !== 404 && status !== 405 && status !== 500) {
       throw error;
     }
 

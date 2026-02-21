@@ -59,6 +59,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  const initialKeyword = searchParams.get("keyword") ?? "";
 
   const pageParam = Math.max(0, (Number(searchParams.get("page")) || 1) - 1);
   const keywordParam = searchParams.get("keyword") ?? "";
