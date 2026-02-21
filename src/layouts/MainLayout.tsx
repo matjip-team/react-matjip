@@ -16,7 +16,6 @@ const toAvatarUrl = (url?: string) => {
 export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isHome = location.pathname === "/";
 
   const { user, logout } = useAuth();
   const [toast, setToast] = useState("");
@@ -44,10 +43,19 @@ export default function MainLayout() {
 
   return (
     <div className="layout">
-      {/* 헤더 */}
+      {/* ===== 헤더 ===== */}
       <header className="header">
         <div className="header-inner">
-          <div className="logo">PROJECT MATJIB</div>
+          <div className="logo" onClick={() => navigate("/")}>
+           <img
+            src="/images/logo.png"
+            alt="MATJIB"
+            style={{
+         height: 80,
+        cursor: "pointer",
+       }}
+      />
+  </div>
 
           <nav className="nav">
             <span
@@ -85,6 +93,26 @@ export default function MainLayout() {
               AI 서비스
             </span>
 
+            {user && (
+              <>
+                <span
+                  className={location.pathname === "/register" ? "active" : ""}
+                  onClick={() => navigate("/register")}
+                >
+                  맛집 등록
+                </span>
+
+                <span
+                  className={
+                    location.pathname === "/register/requests" ? "active" : ""
+                  }
+                  onClick={() => navigate("/register/requests")}
+                >
+                  내 신청내역
+                </span>
+              </>
+            )}
+
             {isAdmin && (
               <div className="nav-dropdown" ref={adminMenuRef}>
                 <span
@@ -104,14 +132,10 @@ export default function MainLayout() {
                     }}
                   />
                 </span>
+
                 {adminMenuOpen && (
                   <div className="nav-submenu">
                     <span
-                      className={
-                        location.pathname === "/admin/restaurant-requests"
-                          ? "active"
-                          : ""
-                      }
                       onClick={() => {
                         navigate("/admin/restaurant-requests");
                         setAdminMenuOpen(false);
@@ -119,10 +143,8 @@ export default function MainLayout() {
                     >
                       신청 접수
                     </span>
+
                     <span
-                      className={
-                        location.pathname === "/admin/board" ? "active" : ""
-                      }
                       onClick={() => {
                         navigate("/admin/board");
                         setAdminMenuOpen(false);
@@ -130,10 +152,8 @@ export default function MainLayout() {
                     >
                       커뮤니티 관리
                     </span>
+
                     <span
-                      className={
-                        location.pathname === "/admin/blog" ? "active" : ""
-                      }
                       onClick={() => {
                         navigate("/admin/blog");
                         setAdminMenuOpen(false);
@@ -159,70 +179,53 @@ export default function MainLayout() {
           </nav>
 
           {user ? (
-            <>
-              <div
-                className="auth"
-                style={{ display: "flex", alignItems: "center" }}
-              >
-                <span>안녕하세요, {user?.name ?? ""}님</span>
-                <span onClick={logout} style={{ marginLeft: 10 }}>
-                  로그아웃
-                </span>
-                <Tooltip title="My 페이지 클릭">
-                  <div
-                    onClick={myHandleClick}
-                    style={{
-                      display: "inline-block",
-                      cursor: "pointer",
-                      marginLeft: 10,
-                    }}
-                  >
-                    <Badge
-                      badgeContent={1} // 표시할 숫자
-                      color="primary"
-                      overlap="circular"
+            <div className="auth" style={{ display: "flex", alignItems: "center" }}>
+              <span>안녕하세요, {user?.name ?? ""}님</span>
+
+              <span onClick={logout} style={{ marginLeft: 10 }}>
+                로그아웃
+              </span>
+
+              <Tooltip title="My 페이지 클릭">
+                <div
+                  onClick={myHandleClick}
+                  style={{
+                    display: "inline-block",
+                    cursor: "pointer",
+                    marginLeft: 10,
+                  }}
+                >
+                  <Badge badgeContent={1} color="primary" overlap="circular">
+                    <Avatar
+                      src={toAvatarUrl(user?.profileImageUrl)}
+                      alt={user?.name}
                     >
-                      <Avatar
-                        src={toAvatarUrl(user?.profileImageUrl)}
-                        alt={user?.name}
-                      >
-                        {!user?.profileImageUrl && <PersonIcon />}
-                      </Avatar>
-                    </Badge>
-                  </div>
-                </Tooltip>
-              </div>
-            </>
+                      {!user?.profileImageUrl && <PersonIcon />}
+                    </Avatar>
+                  </Badge>
+                </div>
+              </Tooltip>
+            </div>
           ) : (
-            <>
-              <div className="auth" onClick={() => navigate("/auth/login")}>
-                로그인
-              </div>
-            </>
+            <div className="auth" onClick={() => navigate("/auth/login")}>
+              로그인
+            </div>
           )}
         </div>
       </header>
 
-      {/* 홈일 때만 Hero */}
-      {isHome && (
-        <section className="hero">
-          <div className="hero-bg" />
-          <div className="hero-content">
-            <h1>오늘 뭐 먹지?</h1>
-            <p>지역과 취향에 맞는 맛집을 찾아보세요</p>
-            <div className="hero-search">
-              <input placeholder="맛집명, 지역명을 검색해보세요" />
-            </div>
-          </div>
-        </section>
-      )}
+      {/* 🔥 Hero 완전 삭제됨 */}
 
-      {/* 페이지 영역 */}
+      {/* ===== 페이지 영역 ===== */}
       <main className="content">
         <Outlet />
       </main>
 
-      <footer className="footer">Copyright © MATJIB</footer>
+      {/* ===== 푸터 ===== */}
+      <footer className="footer">
+        Copyright © MATJIB
+      </footer>
+
       <Snackbar
         open={Boolean(toast)}
         autoHideDuration={1500}
