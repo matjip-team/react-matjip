@@ -109,7 +109,7 @@ export default function AdminBlogListPage() {
   const [appliedKeyword, setAppliedKeyword] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  const [size, setSize] = useState(8);
   const [toast, setToast] = useState("");
   const [searchType, setSearchType] = useState("TITLE_CONTENT");
   const [appliedSearchType, setAppliedSearchType] = useState("TITLE_CONTENT");
@@ -283,6 +283,7 @@ export default function AdminBlogListPage() {
               }}
               sx={{ width: 90 }}
             >
+              <MenuItem value={8}>8개</MenuItem>
               <MenuItem value={10}>10개</MenuItem>
               <MenuItem value={30}>30개</MenuItem>
               <MenuItem value={50}>50개</MenuItem>

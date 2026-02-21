@@ -72,7 +72,7 @@ export default function BlogPage() {
   const [appliedKeyword, setAppliedKeyword] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  const [size, setSize] = useState(8);
   const [toast, setToast] = useState("");
   const [searchType, setSearchType] = useState("TITLE_CONTENT");
   const [appliedSearchType, setAppliedSearchType] = useState("TITLE_CONTENT");
@@ -160,7 +160,7 @@ export default function BlogPage() {
       <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
           <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
-            블로그
+            맛집 이야기(미슐랭 가이드)
           </Box>
           {/* <Button
             variant="contained"
@@ -216,6 +216,7 @@ export default function BlogPage() {
               }}
               sx={{ width: 90 }}
             >
+              <MenuItem value={8}>8개</MenuItem>
               <MenuItem value={10}>10개</MenuItem>
               <MenuItem value={30}>30개</MenuItem>
               <MenuItem value={50}>50개</MenuItem>

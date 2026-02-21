@@ -1,7 +1,8 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Avatar, Badge, Snackbar, Tooltip } from "@mui/material";
+import { Avatar, Snackbar, Tooltip } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import BlogFeaturedCarousel from "../components/BlogFeaturedCarousel/BlogFeaturedCarousel";
 import "./mainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
 import { useState, useRef, useEffect } from "react";
@@ -82,7 +83,7 @@ export default function MainLayout() {
               className={location.pathname.startsWith("/blog") ? "active" : ""}
               onClick={() => navigate("/blog")}
             >
-              블로그
+              맛집 이야기
             </span>
             <span
               className={location.pathname === "/ai" ? "active" : ""}
@@ -189,7 +190,8 @@ export default function MainLayout() {
         </div>
       </header>
 
-      {/* 🔥 Hero 완전 삭제됨 */}
+      {/* 블로그 featured 롤링 섹션 */}
+      <BlogFeaturedCarousel />
 
       {/* ===== 페이지 영역 ===== */}
       <main className="content">
