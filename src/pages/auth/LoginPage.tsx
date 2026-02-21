@@ -7,7 +7,7 @@ import {
   Alert,
   Link as MuiLink,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "./api/authApi";
 import type { LoginRequest } from "./api/types";
@@ -26,7 +26,14 @@ function toUser(data: { id: number; email: string; name: string; nickname: strin
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { user, setUser } = useAuth();
+
+  // 로그인된 상태면 메인으로 이동
+  useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   const [form, setForm] = useState<LoginForm>({
     email: "",
@@ -84,6 +91,8 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
+
+  if (user) return null; // 리다이렉트 중
 
   return (
     <Container maxWidth="sm">

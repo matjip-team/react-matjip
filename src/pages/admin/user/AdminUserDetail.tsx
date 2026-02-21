@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
+  Avatar,
   Box,
   Button,
   Paper,
@@ -8,11 +9,12 @@ import {
   CircularProgress,
   Chip,
   Snackbar,
-  Divider,
 } from "@mui/material";
 import ImageViewerDialog from "../../common/component/ImageViewerDialog";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
+import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import axios from "../../common/axios";
 import { formatDateTime } from "../../common/utils/helperUtil";
 import { ADMIN_USER_API } from "./api/adminUserApi";
@@ -85,102 +87,233 @@ export default function AdminUserDetail() {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
         <Typography color="text.secondary">회원 정보를 찾을 수 없습니다.</Typography>
-        <Button sx={{ mt: 2 }} onClick={() => navigate("/admin/user")}>목록으로</Button>
+        <Button sx={{ mt: 2, borderRadius: 2 }} onClick={() => navigate("/admin/user")}>
+          목록으로
+        </Button>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 700, mx: "auto", mt: 5, mb: 4 }}>
-      <Typography sx={{ fontSize: 24, fontWeight: 700, color: MAIN_COLOR, mb: 3 }}>회원 상세</Typography>
-
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3, mb: 3 }}>
-          {toAvatarUrl(user.profileImageUrl) ? (
+    <Box sx={{ maxWidth: 560, mx: "auto", mt: 5, mb: 4 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 3,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        {/* 헤더 */}
+        <Box
+          sx={{
+            background: `linear-gradient(135deg, ${MAIN_COLOR}08 0%, ${MAIN_COLOR}18 100%)`,
+            px: 4,
+            pt: 4,
+            pb: 3,
+          }}
+        >
+          <Typography
+            variant="h5"
+            fontWeight={700}
+            sx={{ color: "text.primary", letterSpacing: "-0.02em", mb: 3 }}
+          >
+            회원 상세
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Box
-              component="img"
-              src={toAvatarUrl(user.profileImageUrl)}
-              alt={user.name}
-              onClick={() => setImageViewerOpen(true)}
               sx={{
-                width: 100,
-                height: 100,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "1px solid #e0e0e0",
-                cursor: "pointer",
-                "&:hover": { opacity: 0.9 },
+                position: "relative",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: -4,
+                  borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${MAIN_COLOR}40, ${MAIN_COLOR}10)`,
+                },
               }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-            />
-          ) : (
-            <Box sx={{ width: 100, height: 100, borderRadius: "50%", bgcolor: "#e0e0e0",
-              display: "flex", alignItems: "center", justifyContent: "center", color: "#999" }}>
-              {user.name?.charAt(0) ?? "?"}
+            >
+              <Avatar
+                src={toAvatarUrl(user.profileImageUrl)}
+                onClick={() => setImageViewerOpen(true)}
+                sx={{
+                  width: 88,
+                  height: 88,
+                  fontSize: 36,
+                  cursor: "pointer",
+                  border: "3px solid",
+                  borderColor: "background.paper",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                  position: "relative",
+                  transition: "transform 0.2s",
+                  "&:hover": { transform: "scale(1.02)" },
+                }}
+              >
+                {user.name?.charAt(0) ?? "?"}
+              </Avatar>
             </Box>
-          )}
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-            <Typography variant="h6">{user.name}</Typography>
-            <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-            <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-              <Chip label={getRoleLabel(user.role)} size="small"
-                color={user.role?.includes("ADMIN") ? "primary" : "default"} variant="outlined" />
-              <Chip label={getStatusLabel(user.status)} size="small"
-                color={getStatusColor(user.status)} variant="outlined" />
-              <Button size="small" variant="outlined" onClick={() => setImageViewerOpen(true)}>
-                사진보기
-              </Button>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="h5" fontWeight={700}>
+                {user.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {user.email}
+              </Typography>
+              <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                <Chip
+                  label={getRoleLabel(user.role)}
+                  size="small"
+                  color={user.role?.includes("ADMIN") ? "primary" : "default"}
+                  variant="outlined"
+                  sx={{ borderRadius: 2 }}
+                />
+                <Chip
+                  label={getStatusLabel(user.status)}
+                  size="small"
+                  color={getStatusColor(user.status)}
+                  variant="outlined"
+                  sx={{ borderRadius: 2 }}
+                />
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => setImageViewerOpen(true)}
+                  sx={{
+                    color: MAIN_COLOR,
+                    fontWeight: 600,
+                    "&:hover": { bgcolor: `${MAIN_COLOR}12` },
+                  }}
+                >
+                  사진 보기
+                </Button>
+              </Box>
             </Box>
           </Box>
         </Box>
+
         <ImageViewerDialog
           open={imageViewerOpen}
           onClose={() => setImageViewerOpen(false)}
           imageUrl={toAvatarUrl(user.profileImageUrl)}
           alt={`${user.name} 프로필 사진`}
         />
-        <Divider sx={{ my: 2 }} />
-        <Box sx={{ display: "grid", gap: 2 }}>
-          <InfoRow label="ID" value={String(user.id)} />
-          <InfoRow label="이메일" value={user.email} />
-          <InfoRow label="이름" value={user.name} />
-          <InfoRow label="닉네임" value={user.nickname} />
-          <InfoRow label="역할" value={getRoleLabel(user.role)} />
-          <InfoRow label="상태" value={getStatusLabel(user.status)} />
-          <InfoRow label="가입일" value={user.createdAt ? formatDateTime(user.createdAt) : "-"} />
-          {user.updatedAt && <InfoRow label="수정일" value={formatDateTime(user.updatedAt)} />}
+
+        {/* 상세 정보 */}
+        <Box sx={{ px: 4, py: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 20 }} />} label="ID" value={String(user.id)} />
+            <InfoRow icon={<EmailOutlinedIcon sx={{ fontSize: 20 }} />} label="이메일" value={user.email} />
+            <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 20 }} />} label="이름" value={user.name} />
+            <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 20 }} />} label="닉네임" value={user.nickname} />
+            <InfoRow label="역할" value={getRoleLabel(user.role)} />
+            <InfoRow label="상태" value={getStatusLabel(user.status)} />
+            <InfoRow label="가입일" value={user.createdAt ? formatDateTime(user.createdAt) : "-"} />
+            {user.updatedAt && <InfoRow label="수정일" value={formatDateTime(user.updatedAt)} />}
+          </Box>
           {user.bio && (
-            <Box>
-              <Typography variant="caption" color="text.secondary">자기소개</Typography>
-              <Typography sx={{ mt: 0.5, whiteSpace: "pre-wrap" }}>{user.bio}</Typography>
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                borderRadius: 2,
+                bgcolor: "grey.50",
+                border: "1px solid",
+                borderColor: "grey.200",
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                자기소개
+              </Typography>
+              <Typography sx={{ mt: 1, whiteSpace: "pre-wrap", lineHeight: 1.7, fontSize: "0.9rem" }}>
+                {user.bio}
+              </Typography>
             </Box>
           )}
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}>
-          <Button startIcon={<ArrowBackIcon />} variant="outlined" onClick={() => navigate("/admin/user")}>
-            목록
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            sx={{ bgcolor: MAIN_COLOR }}
-            onClick={() => navigate(`/admin/user/${id}/edit`)}
+
+          {/* 액션 버튼 */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              mt: 4,
+              pt: 3,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
           >
-            수정
-          </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon fontSize="small" />}
+              onClick={() => navigate("/admin/user")}
+              sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+            >
+              목록
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<EditIcon fontSize="small" />}
+              onClick={() => navigate(`/admin/user/${id}/edit`)}
+              sx={{
+                borderRadius: 2,
+                bgcolor: MAIN_COLOR,
+                textTransform: "none",
+                fontWeight: 600,
+                px: 2.5,
+                "&:hover": { bgcolor: "#3d8ae6" },
+              }}
+            >
+              수정
+            </Button>
+          </Box>
         </Box>
       </Paper>
-      <Snackbar open={Boolean(toast)} autoHideDuration={2000} message={toast}
-        onClose={() => setToast("")} anchorOrigin={{ vertical: "bottom", horizontal: "center" }} />
+      <Snackbar
+        open={Boolean(toast)}
+        autoHideDuration={2000}
+        message={toast}
+        onClose={() => setToast("")}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </Box>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <Box sx={{ display: "flex", gap: 2, alignItems: "baseline" }}>
-      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>{label}</Typography>
-      <Typography>{value || "-"}</Typography>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        py: 1.5,
+        borderBottom: "1px solid",
+        borderColor: "grey.100",
+        "&:last-of-type": { borderBottom: "none" },
+      }}
+    >
+      {icon && (
+        <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center" }}>
+          {icon}
+        </Box>
+      )}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="caption" color="text.secondary" fontWeight={500}>
+          {label}
+        </Typography>
+        <Typography sx={{ mt: 0.25, fontSize: "0.95rem", fontWeight: 500 }}>
+          {value || "-"}
+        </Typography>
+      </Box>
     </Box>
   );
 }
