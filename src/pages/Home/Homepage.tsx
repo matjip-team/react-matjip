@@ -15,7 +15,7 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import SearchIcon from "@mui/icons-material/Search";
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
 
@@ -57,14 +57,22 @@ type SearchParams = {
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const initialKeyword = searchParams.get("keyword") ?? "";
 
   const [selectedCategory, setSelectedCategory] = useState("전체");
   const [stores, setStores] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(false);
-  const [keyword, setKeyword] = useState("");
+  const [keyword, setKeyword] = useState(initialKeyword);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() => {
+    const nextKeyword = searchParams.get("keyword") ?? "";
+    setKeyword(nextKeyword);
+    setPage(0);
+  }, [searchParams]);
 
   /* ===================== 맛집 조회 ===================== */
   const fetchRestaurants = useCallback(async () => {

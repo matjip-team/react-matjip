@@ -387,6 +387,16 @@ export default function RestaurantRequestDetailPage() {
                 반려 사유: {detail.rejectedReason?.trim() ? detail.rejectedReason : "-"}
               </Alert>
             )}
+            {detail.approvalStatus === "APPROVED" && (
+              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate(`/?keyword=${encodeURIComponent(detail.name)}`)}
+                >
+                  홈에서 카드 확인
+                </Button>
+              </Stack>
+            )}
           </CardContent>
         </Card>
       )}
