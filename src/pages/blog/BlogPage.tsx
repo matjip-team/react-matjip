@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Button,
+  // Button,
   Card,
   CardContent,
   Chip,
@@ -21,11 +21,11 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import axios from "../common/axios";
-import { useAuth } from "../common/context/useAuth";
+// import { useAuth } from "../common/context/useAuth";
 import { ThemeProvider } from "@mui/material/styles";
 import { blogTheme } from "./theme/blogTheme";
 
-type CategoryType = "ALL" | "NOTICE" | "REVIEW";
+// type CategoryType = "ALL" | "NOTICE" | "REVIEW";
 
 interface BlogPost {
   id: number;
@@ -98,11 +98,12 @@ const getPostHtml = (post: BlogPost) => post.contentHtml ?? post.content ?? "";
 
 export default function BlogPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const MAIN_COLOR = "#ff6b00";
+  // const { user } = useAuth();
+  const MAIN_COLOR = "#4F9FFA";
 
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [category, setCategory] = useState<CategoryType>("ALL");
+  const category = "ALL";
+  // const [category, setCategory] = useState<CategoryType>("ALL");
   const [keyword, setKeyword] = useState("");
   const [appliedKeyword, setAppliedKeyword] = useState("");
   const [totalPages, setTotalPages] = useState(1);
@@ -212,13 +213,13 @@ export default function BlogPage() {
 
   const closeAuthorMenu = () => setAuthorAnchor(null);
 
-  const handleWriteClick = () => {
-    if (!user) {
-      setToast("로그인이 필요합니다.");
-      return;
-    }
-    navigate("/blog/write");
-  };
+  // const handleWriteClick = () => {
+  //   if (!user) {
+  //     setToast("로그인이 필요합니다.");
+  //     return;
+  //   }
+  //   navigate("/blog/write");
+  // };
 
   return (
     <ThemeProvider theme={blogTheme}>
@@ -227,13 +228,13 @@ export default function BlogPage() {
           <Box sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR }}>
             블로그
           </Box>
-          <Button
+          {/* <Button
             variant="contained"
             sx={{ bgcolor: MAIN_COLOR }}
             onClick={handleWriteClick}
           >
             새글쓰기
-          </Button>
+          </Button> */}
         </Box>
 
         <Box sx={{ display: "flex", gap: 1, mb: 4 }}>
@@ -271,10 +272,26 @@ export default function BlogPage() {
           >
             <SearchIcon />
           </IconButton>
+          <Box sx={{ marginLeft: "auto" }}>
+            <Select
+              size="small"
+              value={size}
+              onChange={(e) => {
+                setSize(Number(e.target.value));
+                setPage(0);
+              }}
+              sx={{ width: 90 }}
+            >
+              <MenuItem value={10}>10개</MenuItem>
+              <MenuItem value={30}>30개</MenuItem>
+              <MenuItem value={50}>50개</MenuItem>
+              <MenuItem value={100}>100개</MenuItem>
+            </Select>
+          </Box>
         </Box>
 
         <Box sx={{ display: "flex", gap: 0.5, mb: 1, alignItems: "center" }}>
-          {[
+          {/* {[
             { key: "ALL" as const, label: "전체글" },
             { key: "NOTICE" as const, label: "공지" },
             { key: "REVIEW" as const, label: "후기" },
@@ -297,24 +314,7 @@ export default function BlogPage() {
             >
               {c.label}
             </Button>
-          ))}
-
-          <Box sx={{ marginLeft: "auto" }}>
-            <Select
-              size="small"
-              value={size}
-              onChange={(e) => {
-                setSize(Number(e.target.value));
-                setPage(0);
-              }}
-              sx={{ width: 90 }}
-            >
-              <MenuItem value={10}>10개</MenuItem>
-              <MenuItem value={30}>30개</MenuItem>
-              <MenuItem value={50}>50개</MenuItem>
-              <MenuItem value={100}>100개</MenuItem>
-            </Select>
-          </Box>
+          ))} */}
         </Box>
 
         {posts.length === 0 ? (

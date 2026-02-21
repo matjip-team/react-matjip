@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../common/axios";
-import { Box, Button, Typography, Paper, Divider, Snackbar, TextField, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  Paper,
+  Divider,
+  Snackbar,
+  TextField,
+  CircularProgress,
+} from "@mui/material";
 import { useAuth } from "../../common/context/useAuth";
 import { formatDateTime } from "../../common/utils/helperUtil";
 import ReactQuill, { Quill } from "react-quill-new";
@@ -59,13 +68,12 @@ export default function AdminBlogDetail() {
   const [toast, setToast] = useState("");
   const [recommended, setRecommended] = useState(false);
 
-  const MAIN_COLOR = "#ff6b00";
+  const MAIN_COLOR = "#4F9FFA";
 
   // 로그인사용자 정보  가져오기
   const { user } = useAuth();
-  
 
-    // 댓글/대댓글 상태
+  // 댓글/대댓글 상태
   const [comments, setComments] = useState<BlogCommentNode[]>([]);
   const [sortType, setSortType] = useState<"created" | "latest">("latest");
   const [newComment, setNewComment] = useState("");
@@ -76,7 +84,6 @@ export default function AdminBlogDetail() {
 
   const quillRef = useRef<ReactQuill | null>(null);
 
-  
   // 로딩 상태
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -106,7 +113,7 @@ export default function AdminBlogDetail() {
     }
     return true;
   };
-    // 액션 핸들러
+  // 액션 핸들러
 
   const handleRecommend = async () => {
     if (!requireLogin()) return;
@@ -122,7 +129,9 @@ export default function AdminBlogDetail() {
       setPost(data);
       setRecommended(data.recommended);
 
-      setToast(data.recommended ? "추천되었습니다 👍" : "추천이 취소되었습니다.");
+      setToast(
+        data.recommended ? "추천되었습니다 👍" : "추천이 취소되었습니다.",
+      );
     } catch (e: unknown) {
       const status = (e as HttpErrorLike)?.response?.status;
       if (status === 401 || status === 403) {
@@ -138,11 +147,11 @@ export default function AdminBlogDetail() {
     alert("링크가 복사되었습니다!");
   };
 
-  const handleReport = () => {
-    alert("신고 클릭!");
-  };
+  // const handleReport = () => {
+  //   alert("신고 클릭!");
+  // };
 
-// 게시글 삭제 함수
+  // 게시글 삭제 함수
   const handleDelete = async () => {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
@@ -155,7 +164,7 @@ export default function AdminBlogDetail() {
     }
   };
 
-    // 댓글 API 함수들
+  // 댓글 API 함수들
 
   // 댓글 목록 조회
   const fetchComments = async () => {
@@ -175,12 +184,11 @@ export default function AdminBlogDetail() {
       // 댓글은 비로그인도 볼 수 있게 할 수도 있어서 alert 안 띄움
       setComments([]);
 
-        // 게시글 삭제 처리
+      // 게시글 삭제 처리
     } finally {
       setLoadingComments(false);
     }
   };
-
 
   // 새 댓글 등록
   const submitComment = async () => {
@@ -212,7 +220,6 @@ export default function AdminBlogDetail() {
       setLoadingSubmit(false);
     }
   };
-
 
   // 대댓글 등록
   const submitReply = async (parentId: number, content: string) => {
@@ -247,7 +254,6 @@ export default function AdminBlogDetail() {
     }
   };
 
-
   // 댓글 수정
   const updateComment = async (commentId: number) => {
     if (!requireLogin()) return;
@@ -280,7 +286,6 @@ export default function AdminBlogDetail() {
     }
   };
 
-
   // 댓글 삭제
   const deleteComment = async (commentId: number) => {
     if (!requireLogin()) return;
@@ -312,7 +317,7 @@ export default function AdminBlogDetail() {
     setRecommended(res.data.data.recommended);
   };
 
-    // 우측 상단 액션 렌더
+  // 우측 상단 액션 렌더
 
   const renderActionButtons = () => (
     <Box
@@ -332,11 +337,11 @@ export default function AdminBlogDetail() {
           py: 0.1,
           borderRadius: "6px",
           backgroundColor: recommended ? "#ffddb8" : "#f5f5f5",
-            "&:hover": { backgroundColor: "#ffe0cc" },
+          "&:hover": { backgroundColor: "#ffe0cc" },
         }}
         onClick={handleRecommend}
       >
-       {recommended ? "👍 추천됨" : "👍 추천"}
+        {recommended ? "👍 추천됨" : "👍 추천"}
       </Typography>
 
       <Typography
@@ -354,7 +359,7 @@ export default function AdminBlogDetail() {
         🔗 공유
       </Typography>
 
-      <Typography
+      {/* <Typography
         sx={{
           cursor: "pointer",
           fontSize: 14,
@@ -367,7 +372,7 @@ export default function AdminBlogDetail() {
         onClick={handleReport}
       >
         🚨 신고
-      </Typography>
+      </Typography> */}
     </Box>
   );
 
@@ -402,7 +407,7 @@ export default function AdminBlogDetail() {
     return <Box sx={{ textAlign: "center", mt: 10 }}>로딩중...</Box>;
   }
 
-    // 렌더
+  // 렌더
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
@@ -410,7 +415,15 @@ export default function AdminBlogDetail() {
         {renderActionButtons()}
 
         {/* 제목 */}
-        <Typography sx={{ fontSize: 25, fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+        <Typography
+          sx={{
+            fontSize: 25,
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
           <span>
             [{post.blogType === "NOTICE" ? "공지" : "후기"}] {post.title}
           </span>
@@ -442,7 +455,7 @@ export default function AdminBlogDetail() {
         <Divider sx={{ my: 1 }} />
 
         {/* 이미지 */}
-        {false && post?.imageUrl && (
+        {/* {false && post?.imageUrl && (
           <Box sx={{ my: 3, textAlign: "center" }}>
             <img
               src={post?.imageUrl}
@@ -450,7 +463,7 @@ export default function AdminBlogDetail() {
               style={{ maxWidth: "100%", maxHeight: 400 }}
             />
           </Box>
-        )}
+        )} */}
 
         {/* 본문 */}
         <Box
@@ -486,7 +499,12 @@ export default function AdminBlogDetail() {
             },
           }}
         >
-          <ReactQuill ref={quillRef} theme="bubble" readOnly modules={quillReadOnlyModules} />
+          <ReactQuill
+            ref={quillRef}
+            theme="bubble"
+            readOnly
+            modules={quillReadOnlyModules}
+          />
         </Box>
 
         <Divider sx={{ my: 3 }} />
@@ -568,7 +586,11 @@ export default function AdminBlogDetail() {
               onClick={submitComment}
               disabled={loadingSubmit}
             >
-              {loadingSubmit ? <CircularProgress size={20} color="inherit" /> : "등록"}
+              {loadingSubmit ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "등록"
+              )}
             </Button>
           </Box>
 
@@ -586,77 +608,90 @@ export default function AdminBlogDetail() {
               <Box key={c.id} sx={{ py: 1.2 }}>
                 {/* 부모 댓글 */}
                 <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                    }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  {/* 작성자 */}
+                  <Typography
+                    sx={{ fontSize: 13, color: "#666", minWidth: 70 }}
                   >
-                    {/* 작성자 */}
-                    <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
-                      {c.authorNickname ?? "익명"}
-                    </Typography>
+                    {c.authorNickname ?? "익명"}
+                  </Typography>
 
-                    {editingId === c.id ? (
-                      <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          multiline
-                          minRows={2}
-                          maxRows={6}
-                          value={editingText}
-                          onChange={(e) => setEditingText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault(); 
-                              updateComment(c.id);
-                            }
-                          }}
-                          sx={{
-                            "& .MuiInputBase-root": { 
-                              width: 630,
-                              fontSize: 13 
-                            },
-                          }}
-                        />
-                        <Button
-                          variant="contained"
-                          sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
-                          onClick={() => updateComment(c.id)}
-                        >
-                          저장
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          sx={{ height: 32, fontSize: 12, borderColor: "#bbb", color: "#666" }}
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditingText("");
-                          }}
-                        >
-                          취소
-                        </Button>
-                      </Box>
-                    ) : (
-                      <Typography
+                  {editingId === c.id ? (
+                    <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        multiline
+                        minRows={2}
+                        maxRows={6}
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            updateComment(c.id);
+                          }
+                        }}
                         sx={{
-                          fontSize: 13,
-                          flex: 1,
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                          color: c.deleted ? "#aaa" : "#000",
-                          fontStyle: c.deleted ? "italic" : "normal",
+                          "& .MuiInputBase-root": {
+                            width: 630,
+                            fontSize: 13,
+                          },
+                        }}
+                      />
+                      <Button
+                        variant="contained"
+                        sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
+                        onClick={() => updateComment(c.id)}
+                      >
+                        저장
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        sx={{
+                          height: 32,
+                          fontSize: 12,
+                          borderColor: "#bbb",
+                          color: "#666",
+                        }}
+                        onClick={() => {
+                          setEditingId(null);
+                          setEditingText("");
                         }}
                       >
-                        {c.deleted ? "삭제된 댓글입니다." : c.content}
-                      </Typography>
-                    )}
+                        취소
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        flex: 1,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        color: c.deleted ? "#aaa" : "#000",
+                        fontStyle: c.deleted ? "italic" : "normal",
+                      }}
+                    >
+                      {c.deleted ? "삭제된 댓글입니다." : c.content}
+                    </Typography>
+                  )}
 
-                    {editingId !== c.id && !c.deleted && (
+                  {editingId !== c.id && !c.deleted && (
                     <>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
-                        {user && (user.id === c.authorId || user.id === c.userId || user.nickname === c.authorNickname || user.role === 'ROLE_ADMIN') ? (
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0 }}
+                      >
+                        {user &&
+                        (user.id === c.authorId ||
+                          user.id === c.userId ||
+                          user.nickname === c.authorNickname ||
+                          user.role === "ROLE_ADMIN") ? (
                           <>
                             <Button
                               variant="text"
@@ -672,7 +707,11 @@ export default function AdminBlogDetail() {
                             <Button
                               variant="text"
                               size="small"
-                              sx={{ minWidth: 0, fontSize: 12, color: "#d32f2f" }}
+                              sx={{
+                                minWidth: 0,
+                                fontSize: 12,
+                                color: "#d32f2f",
+                              }}
                               onClick={() => deleteComment(c.id)}
                             >
                               삭제
@@ -686,257 +725,283 @@ export default function AdminBlogDetail() {
                         {c.createdAt ? formatDateTime(c.createdAt) : "-"}
                       </Typography>
                     </>
-                    )}
-                  </Box>
-                  
-
-                  {/* 답글 달기 버튼 */}
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      color: MAIN_COLOR,
-                      cursor: "pointer",
-                      mt: 0.6,
-                      width: "fit-content",
-                      ml: 1,
-                    }}
-                    onClick={() => {
-                      if (!requireLogin()) return;
-                      setReplyTo(c.id);
-                      setReplyText("");
-                    }}
-                  >
-                    답글 달기
-                  </Typography>
-                  
-                  {/* 대댓글 입력창 */}
-                  {replyTo === c.id && (
-                    <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 4 }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        multiline
-                        minRows={2}
-                        maxRows={6}
-                        placeholder="답글을 입력하세요"
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault(); 
-                            submitReply(c.id, replyText);
-                          }
-                        }}
-                        sx={{
-                          "& .MuiInputBase-root": {
-                            fontSize: 13,
-                          },
-                        }}
-                      />
-                      <Button
-                        variant="contained"
-                        sx={{
-                          bgcolor: MAIN_COLOR,
-                          whiteSpace: "nowrap",
-                          height: 32,
-                          fontSize: 12,
-                        }}
-                        onClick={() => submitReply(c.id, replyText)}
-                      >
-                        등록
-                      </Button>
-                      <Button
-                        variant="text"
-                        sx={{ 
-                          color: "#666", 
-                          whiteSpace: "nowrap", 
-                          backgroundColor: "#f3f3f3",
-                          height: 32,
-                          fontSize: 12, }}
-                        onClick={() => setReplyTo(null)}
-                      >
-                        취소
-                      </Button>
-                    </Box>
                   )}
+                </Box>
 
-                    {/* 대댓글 목록 */}
-                  {Array.isArray(c.children) && c.children.length > 0 && (
-                    <Box sx={{ mt: 1, ml: 4 }}>
-                      {c.children.map((r) => (
+                {/* 답글 달기 버튼 */}
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: MAIN_COLOR,
+                    cursor: "pointer",
+                    mt: 0.6,
+                    width: "fit-content",
+                    ml: 1,
+                  }}
+                  onClick={() => {
+                    if (!requireLogin()) return;
+                    setReplyTo(c.id);
+                    setReplyText("");
+                  }}
+                >
+                  답글 달기
+                </Typography>
+
+                {/* 대댓글 입력창 */}
+                {replyTo === c.id && (
+                  <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 4 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={2}
+                      maxRows={6}
+                      placeholder="답글을 입력하세요"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          submitReply(c.id, replyText);
+                        }
+                      }}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          fontSize: 13,
+                        },
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      sx={{
+                        bgcolor: MAIN_COLOR,
+                        whiteSpace: "nowrap",
+                        height: 32,
+                        fontSize: 12,
+                      }}
+                      onClick={() => submitReply(c.id, replyText)}
+                    >
+                      등록
+                    </Button>
+                    <Button
+                      variant="text"
+                      sx={{
+                        color: "#666",
+                        whiteSpace: "nowrap",
+                        backgroundColor: "#f3f3f3",
+                        height: 32,
+                        fontSize: 12,
+                      }}
+                      onClick={() => setReplyTo(null)}
+                    >
+                      취소
+                    </Button>
+                  </Box>
+                )}
+
+                {/* 대댓글 목록 */}
+                {Array.isArray(c.children) && c.children.length > 0 && (
+                  <Box sx={{ mt: 1, ml: 4 }}>
+                    {c.children.map((r) => (
+                      <Box
+                        key={r.id}
+                        sx={{
+                          mt: 1,
+                          display: "flex",
+                          gap: 1,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        {/* ↳ 표시 */}
+                        <Typography
+                          sx={{ fontSize: 13, color: "#999", mt: 0.2 }}
+                        >
+                          ↳
+                        </Typography>
+
+                        {/* 답글 박스 */}
                         <Box
-                          key={r.id}
                           sx={{
-                            mt: 1,
-                            display: "flex",
-                            gap: 1,
-                            alignItems: "flex-start",
+                            flex: 1,
+                            p: 1,
+                            py: 0.4,
+                            borderRadius: 1,
+                            backgroundColor: "#fafafa",
+                            border: "1px solid #eee",
                           }}
                         >
-                          {/* ↳ 표시 */}
-                          <Typography sx={{ fontSize: 13, color: "#999", mt: 0.2 }}>
-                            ↳
-                          </Typography>
-
-                          {/* 답글 박스 */}
                           <Box
                             sx={{
-                              flex: 1,
-                              p: 1,
-                              py: 0.4,
-                              borderRadius: 1,
-                              backgroundColor: "#fafafa",
-                              border: "1px solid #eee",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              width: "100%",
                             }}
                           >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                width: "100%",
-                              }}
+                            {/* 작성자 */}
+                            <Typography
+                              sx={{ fontSize: 13, color: "#666", minWidth: 70 }}
                             >
-                              {/* 작성자 */}
-                              <Typography sx={{ fontSize: 13, color: "#666", minWidth: 70 }}>
-                                {r.authorNickname ?? "익명"}
-                              </Typography>
+                              {r.authorNickname ?? "익명"}
+                            </Typography>
 
-                              {editingId === r.id ? (
-                                <Box sx={{ display: "flex", gap: 1 }}>
-                                  <TextField
-                                    size="small"
-                                    multiline
-                                    minRows={2}
-                                    maxRows={6}
-                                    value={editingText}
-                                    onChange={(e) => setEditingText(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter" && !e.shiftKey) {
-                                        e.preventDefault(); 
-                                        updateComment(c.id);
-                                      }
-                                    }}
-                                    sx={{
-                                      "& .MuiInputBase-root": {
-                                        width: 500,
-                                        fontSize: 13,
-                                      },
-                                    }}
-                                  />
-                                  <Button
-                                    variant="contained"
-                                    sx={{ bgcolor: MAIN_COLOR, height: 32, fontSize: 12 }}
-                                    onClick={() => updateComment(r.id)}
-                                  >
-                                    저장
-                                  </Button>
-                                  <Button
-                                    variant="outlined"
-                                    sx={{ height: 32, fontSize: 12 }}
-                                    onClick={() => {
-                                      setEditingId(null);
-                                      setEditingText("");
-                                    }}
-                                  >
-                                    취소
-                                  </Button>
-                                </Box>
-                              ) : (
-                                <Typography
+                            {editingId === r.id ? (
+                              <Box sx={{ display: "flex", gap: 1 }}>
+                                <TextField
+                                  size="small"
+                                  multiline
+                                  minRows={2}
+                                  maxRows={6}
+                                  value={editingText}
+                                  onChange={(e) =>
+                                    setEditingText(e.target.value)
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                      e.preventDefault();
+                                      updateComment(c.id);
+                                    }
+                                  }}
                                   sx={{
-                                    fontSize: 13,
-                                    flex: 1,
-                                    whiteSpace: "pre-wrap",
-                                    wordBreak: "break-word",
-                                    color: r.deleted ? "#aaa" : "#000",
-                                    fontStyle: r.deleted ? "italic" : "normal",
+                                    "& .MuiInputBase-root": {
+                                      width: 500,
+                                      fontSize: 13,
+                                    },
+                                  }}
+                                />
+                                <Button
+                                  variant="contained"
+                                  sx={{
+                                    bgcolor: MAIN_COLOR,
+                                    height: 32,
+                                    fontSize: 12,
+                                  }}
+                                  onClick={() => updateComment(r.id)}
+                                >
+                                  저장
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  sx={{ height: 32, fontSize: 12 }}
+                                  onClick={() => {
+                                    setEditingId(null);
+                                    setEditingText("");
                                   }}
                                 >
-                                  {r.deleted ? "삭제된 댓글입니다." : r.content}
+                                  취소
+                                </Button>
+                              </Box>
+                            ) : (
+                              <Typography
+                                sx={{
+                                  fontSize: 13,
+                                  flex: 1,
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                  color: r.deleted ? "#aaa" : "#000",
+                                  fontStyle: r.deleted ? "italic" : "normal",
+                                }}
+                              >
+                                {r.deleted ? "삭제된 댓글입니다." : r.content}
+                              </Typography>
+                            )}
+
+                            {editingId !== r.id && !r.deleted && (
+                              <>
+                                <Box sx={{ display: "flex" }}>
+                                  {user &&
+                                  (user.id === r.authorId ||
+                                    user.id === r.userId ||
+                                    user.nickname === r.authorNickname ||
+                                    user.role === "ROLE_ADMIN") ? (
+                                    <>
+                                      <Button
+                                        variant="text"
+                                        size="small"
+                                        sx={{
+                                          minWidth: 0,
+                                          fontSize: 12,
+                                          color: "#666",
+                                        }}
+                                        onClick={() => {
+                                          setEditingId(r.id);
+                                          setEditingText(r.content);
+                                        }}
+                                      >
+                                        수정
+                                      </Button>
+
+                                      <Button
+                                        variant="text"
+                                        size="small"
+                                        sx={{
+                                          minWidth: 0,
+                                          fontSize: 12,
+                                          color: "#d32f2f",
+                                        }}
+                                        onClick={() => deleteComment(r.id)}
+                                      >
+                                        삭제
+                                      </Button>
+                                    </>
+                                  ) : null}
+                                </Box>
+                                <Typography
+                                  sx={{ fontSize: 12, color: "#999" }}
+                                >
+                                  {r.createdAt
+                                    ? formatDateTime(r.createdAt)
+                                    : "-"}
                                 </Typography>
-                              )}
-
-                              {editingId !== r.id && !r.deleted && (
-                                <>
-                                  <Box sx={{ display: "flex" }}>
-                                    {user && (user.id === r.authorId || user.id === r.userId || user.nickname === r.authorNickname || user.role === 'ROLE_ADMIN') ? (
-                                      <>
-                                        <Button
-                                          variant="text"
-                                          size="small"
-                                          sx={{ minWidth: 0, fontSize: 12, color: "#666" }}
-                                          onClick={() => {
-                                            setEditingId(r.id);
-                                            setEditingText(r.content);
-                                          }}
-                                        >
-                                          수정
-                                        </Button>
-
-                                        <Button
-                                          variant="text"
-                                          size="small"
-                                          sx={{ minWidth: 0, fontSize: 12, color: "#d32f2f" }}
-                                          onClick={() => deleteComment(r.id)}
-                                        >
-                                          삭제
-                                        </Button>
-                                      </>
-                                    ) : null}
-                                  </Box>
-                                  <Typography sx={{ fontSize: 12, color: "#999" }}>
-                                    {r.createdAt ? formatDateTime(r.createdAt) : "-"}
-                                  </Typography>
-                                </>
-                              )}
-                            </Box>
+                              </>
+                            )}
                           </Box>
                         </Box>
-                      ))}
-                    </Box>
-                  )}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
 
-                  <Divider sx={{ mt: 1.5 }} />
-                </Box>
-              ))
-            )}
-
+                <Divider sx={{ mt: 1.5 }} />
+              </Box>
+            ))
+          )}
         </Box>
 
         {/* 게시글 관련 버튼 */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-          {user && (user.id === post.authorId || user.role === 'ROLE_ADMIN') && ( 
-            <>
-              <Button
-                variant="contained"
-                sx={{ 
-                  height: 32, 
-                  fontSize: 12, 
-                }}
-                onClick={() => navigate(`/admin/blog/edit/${id}`)}
-              >
-                수정
-              </Button>
-              <Button
-                variant="contained"
-                sx={{ 
-                  height: 32, 
-                  fontSize: 12, 
-                }}
-                onClick={handleDelete}
-              >
-                삭제
-              </Button>
-            </>
-          )}
+          {user &&
+            (user.id === post.authorId || user.role === "ROLE_ADMIN") && (
+              <>
+                <Button
+                  variant="contained"
+                  sx={{
+                    height: 32,
+                    fontSize: 12,
+                  }}
+                  onClick={() => navigate(`/admin/blog/edit/${id}`)}
+                >
+                  수정
+                </Button>
+                <Button
+                  variant="contained"
+                  sx={{
+                    height: 32,
+                    fontSize: 12,
+                  }}
+                  onClick={handleDelete}
+                >
+                  삭제
+                </Button>
+              </>
+            )}
 
           <Button
             variant="contained"
-            sx={{ 
-              bgcolor: MAIN_COLOR, 
-              height: 32, 
-              fontSize: 12, 
+            sx={{
+              bgcolor: MAIN_COLOR,
+              height: 32,
+              fontSize: 12,
             }}
             onClick={() => navigate("/admin/blog")}
           >

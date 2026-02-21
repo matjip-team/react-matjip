@@ -12,6 +12,7 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import ReviewList from "./components/ReviewsList";
 import LikeList from "./components/LikeList";
 import ProfileEdit from "./components/ProfileEdit";
+import ProfileInfo from "./components/ProfileInfo";
 import { getProfile } from "./api/mypageApi";
 import type { ProfileResponse } from "./types/profile";
 import { unwrapData } from "../common/utils/helperUtil";
@@ -23,6 +24,7 @@ import RestaurantMyRequestsPage from "../register/RestaurantMyRequestsPage";
 export default function MyPage() {
   const [value, setValue] = React.useState(0);
   const [profile, setProfile] = React.useState<ProfileResponse | null>(null);
+  const [profileViewMode, setProfileViewMode] = React.useState<"info" | "edit">("info");
 
   //const [profile, setProfile] = React.useState<ProfileResponse | null>(null);
 
@@ -34,11 +36,11 @@ export default function MyPage() {
           //
         } else if (value === 1) {
           //
-        } else if (value === 2) {
+        } else if (value === 4) {
           const res = await getProfile();
-          console.log("Profile 부모 렌더");
           const profileData = unwrapData(res.data);
           setProfile(profileData);
+          setProfileViewMode("info");
         }
       } catch (err) {
         console.error(err);
@@ -61,7 +63,26 @@ export default function MyPage() {
         return <RestaurantMyRequestsPage />;
       case 4:
         if (!profile) return <div>loading...</div>;
-        return <ProfileEdit data={profile} />;
+        if (profileViewMode === "edit") {
+          return (
+            <ProfileEdit
+              data={profile}
+              onBack={() => setProfileViewMode("info")}
+              onSaved={async () => {
+                const res = await getProfile();
+                const profileData = unwrapData(res.data);
+                setProfile(profileData);
+                setProfileViewMode("info");
+              }}
+            />
+          );
+        }
+        return (
+          <ProfileInfo
+            data={profile}
+            onEdit={() => setProfileViewMode("edit")}
+          />
+        );
       default:
         return null;
     }
