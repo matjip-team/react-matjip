@@ -168,7 +168,7 @@ export default function ReviewList() {
               }}
               onClick={() => {
                 if (review.restaurantId)
-                  navigate(`/restaurant/${review.restaurantId}`);
+                  navigate(`/restaurant/${review.restaurantId}`, { state: { fromMyPageTab: 1 } });
               }}
             >
               <CardContent

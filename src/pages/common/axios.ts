@@ -33,6 +33,8 @@ instance.interceptors.response.use(
         // 토큰 갱신 후 원래 요청 재시도
         return instance(originalRequest);
       } catch (err) {
+        // refresh 실패 = accessToken 없음/만료 → 로그아웃 이벤트 발생
+        window.dispatchEvent(new CustomEvent("auth:session-expired"));
         return Promise.reject(err);
       }
     }

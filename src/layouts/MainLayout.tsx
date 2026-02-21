@@ -25,6 +25,15 @@ export default function MainLayout() {
   const isAdmin = user?.role === "ROLE_ADMIN" || user?.role === "ADMIN";
 
   useEffect(() => {
+    const handleShowToast = (e: Event) => {
+      const message = (e as CustomEvent<{ message: string }>).detail?.message;
+      if (message) setToast(message);
+    };
+    window.addEventListener("show-toast", handleShowToast);
+    return () => window.removeEventListener("show-toast", handleShowToast);
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
         adminMenuRef.current &&

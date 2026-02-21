@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "../common/axios";
 
 import {
@@ -19,6 +19,7 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 interface Review {
   id: number;
@@ -45,6 +46,9 @@ interface RestaurantDetail {
 
 export default function Restaurant() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const fromMyPageTab = (location.state as { fromMyPageTab?: number } | null)?.fromMyPageTab;
 
   const [store, setStore] = useState<RestaurantDetail | null>(null);
   const [myRating, setMyRating] = useState<number | null>(0);
@@ -286,6 +290,24 @@ export default function Restaurant() {
           ))}
         </CardContent>
       </Card>
+
+      {/* 뒤로 가기 */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => {
+            if (fromMyPageTab !== undefined) {
+              navigate(`/auth/mypage?tab=${fromMyPageTab}`, { replace: true });
+            } else {
+              navigate(-1);
+            }
+          }}
+          sx={{ borderRadius: 2 }}
+        >
+          뒤로 가기
+        </Button>
+      </Box>
     </Container>
   );
 }
