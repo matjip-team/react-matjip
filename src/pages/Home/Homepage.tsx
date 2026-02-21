@@ -63,7 +63,6 @@ export default function HomePage() {
   const [stores, setStores] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState("");
-
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -87,7 +86,6 @@ export default function HomePage() {
       }
 
       const res = await axios.get("/api/restaurants", { params });
-
       const data: PageResponse<Restaurant> = res.data.data;
 
       setStores(data.content);
@@ -109,7 +107,7 @@ export default function HomePage() {
       alert("로그인이 필요합니다.");
       navigate("/auth/login");
       return;
-    } 
+    }
 
     const target = stores.find((s) => s.id === storeId);
     if (!target) return;
@@ -137,194 +135,233 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error("좋아요 실패", error);
-      fetchRestaurants(); // 실패 시 서버 기준 재동기화
+      fetchRestaurants();
     }
   };
 
   return (
-    <Box sx={{ backgroundColor: "#f5f6f8", minHeight: "100vh", py: 6 }}>
-      <Container maxWidth="lg">
-
-        {/* 검색 */}
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 5 }}>
-          <TextField
-            placeholder="맛집명, 지역명을 검색해보세요"
-            value={keyword}
-            onChange={(e) => {
-              setKeyword(e.target.value);
-              setPage(0);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") fetchRestaurants();
-            }}
-            sx={{
-              width: 420,
-              backgroundColor: "#fff",
-              borderRadius: 3,
-            }}
-          />
-
-          <Button
-            variant="contained"
-            startIcon={<SearchIcon />}
-            onClick={fetchRestaurants}
-            sx={{
-              ml: 2,
-              px: 3,
-              backgroundColor: "#ff6b00",
-              "&:hover": { backgroundColor: "#e65f00" },
-            }}
-          >
-            검색
-          </Button>
-        </Box>
-
-        {/* 카테고리 */}
-        <Box sx={{ textAlign: "center", mb: 5 }}>
-          {categories.map((cat) => (
-            <Chip
-              key={cat.value}
-              label={cat.label}
-              clickable
-              onClick={() => {
-                setSelectedCategory(cat.value);
-                setPage(0);
-              }}
-              sx={{
-                m: 1,
-                px: 2,
-                fontWeight: 600,
-                borderRadius: 3,
-                backgroundColor:
-                  selectedCategory === cat.value ? "#ff6b00" : "#fff",
-                color: selectedCategory === cat.value ? "#fff" : "#444",
-                boxShadow: selectedCategory === cat.value ? 3 : 1,
-              }}
-            />
-          ))}
-        </Box>
-
-        {/* 카드 영역 */}
+    <>
+      {/* 🔥 HERO 영역 + 검색창 */}
+      <Box
+        sx={{
+          height: 420,
+          backgroundImage: "url('/images/hero-bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          color: "#fff",
+          textAlign: "center",
+        }}
+      >
+        {/* 어두운 오버레이 */}
         <Box
           sx={{
-            display: "grid",
-            gap: 4,
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-            },
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
           }}
-        >
-          {loading
-            ? Array.from({ length: 6 }).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  variant="rectangular"
-                  height={250}
-                  sx={{ borderRadius: 4 }}
-                />
-              ))
-            : stores.map((store) => (
-                <Card
-                  key={store.id}
-                  sx={{
-                    borderRadius: 4,
-                    overflow: "hidden",
-                    transition: "0.3s",
-                    boxShadow: 2,
-                    "&:hover": {
-                      transform: "translateY(-8px)",
-                      boxShadow: 6,
-                    },
-                  }}
-                >
-                  <CardActionArea
-                    onClick={() => navigate(`/restaurant/${store.id}`)}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={store.imageUrl ?? "/images/world.jpg"}
-                    />
+        />
 
-                    <CardContent>
-                      <Typography variant="h6" fontWeight={700}>
-                        {store.name}
-                      </Typography>
+        <Box sx={{ position: "relative", zIndex: 2 }}>
+          <Typography variant="h3" fontWeight={800}>
+            오늘 뭐 먹지?
+          </Typography>
 
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        gutterBottom
-                      >
-                        {store.address}
-                      </Typography>
+          <Typography mt={2}>
+            지역과 취향에 맞는 맛집을 찾아보세요
+          </Typography>
 
-                      {/* 좋아요 버튼 */}
-                      <Box
-                        onClick={(e) => {
-                          e.stopPropagation(); // 카드 이동 방지
-                          toggleLike(store.id);
-                        }}
-                        sx={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          alignItems: "center",
-                          mt: 1,
-                          cursor: "pointer",
-                          color: store.liked ? "#ff6b00" : "#bbb",
-                          transition: "0.2s",
-                          "&:hover": {
-                            transform: "scale(1.1)",
-                          },
-                        }}
-                      >
-                        <FavoriteIcon sx={{ fontSize: 18 }} />
-                        <Typography sx={{ ml: 0.5 }}>
-                          {store.likeCount}
-                        </Typography>
-                      </Box>
-
-                      <Chip
-                        label={store.category}
-                        size="small"
-                        sx={{
-                          mt: 2,
-                          backgroundColor: "#fff3e6",
-                          color: "#ff6b00",
-                          fontWeight: 600,
-                        }}
-                      />
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
-              ))}
-        </Box>
-
-        {/* 페이지네이션 */}
-        {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
-            <Pagination
-              count={totalPages}
-              page={page + 1}
-              onChange={(_, value) => setPage(value - 1)}
+          {/* 검색창 */}
+          <Box sx={{ display: "flex", mt: 4 }}>
+            <TextField
+              placeholder="맛집명, 지역명을 검색해보세요"
+              value={keyword}
+              onChange={(e) => {
+                setKeyword(e.target.value);
+                setPage(0);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") fetchRestaurants();
+              }}
               sx={{
-                "& .Mui-selected": {
-                  backgroundColor: "#ff6b00 !important",
-                  color: "#fff",
-                },
+                width: 450,
+                backgroundColor: "#fff",
+                borderRadius: 3,
               }}
             />
-          </Box>
-        )}
 
-        {!loading && stores.length === 0 && (
-          <Typography textAlign="center" mt={8} color="text.secondary">
-            검색 결과가 없습니다.
-          </Typography>
-        )}
-      </Container>
-    </Box>
+            <Button
+              variant="contained"
+              startIcon={<SearchIcon />}
+              onClick={fetchRestaurants}
+              sx={{
+                ml: 2,
+                px: 3,
+                backgroundColor: "#ff6b00",
+                "&:hover": { backgroundColor: "#e65f00" },
+              }}
+            >
+              검색
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* 🔥 기존 컨텐츠 */}
+      <Box sx={{ backgroundColor: "#f5f6f8", minHeight: "100vh", py: 6 }}>
+        <Container maxWidth="lg">
+
+          {/* 카테고리 */}
+          <Box sx={{ textAlign: "center", mb: 5 }}>
+            {categories.map((cat) => (
+              <Chip
+                key={cat.value}
+                label={cat.label}
+                clickable
+                onClick={() => {
+                  setSelectedCategory(cat.value);
+                  setPage(0);
+                }}
+                sx={{
+                  m: 1,
+                  px: 2,
+                  fontWeight: 600,
+                  borderRadius: 3,
+                  backgroundColor:
+                    selectedCategory === cat.value ? "#ff6b00" : "#fff",
+                  color: selectedCategory === cat.value ? "#fff" : "#444",
+                  boxShadow: selectedCategory === cat.value ? 3 : 1,
+                }}
+              />
+            ))}
+          </Box>
+
+          {/* 카드 영역 */}
+          <Box
+            sx={{
+              display: "grid",
+              gap: 4,
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
+              },
+            }}
+          >
+            {loading
+              ? Array.from({ length: 6 }).map((_, index) => (
+                  <Skeleton
+                    key={index}
+                    variant="rectangular"
+                    height={250}
+                    sx={{ borderRadius: 4 }}
+                  />
+                ))
+              : stores.map((store) => (
+                  <Card
+                    key={store.id}
+                    sx={{
+                      borderRadius: 4,
+                      overflow: "hidden",
+                      transition: "0.3s",
+                      boxShadow: 2,
+                      "&:hover": {
+                        transform: "translateY(-8px)",
+                        boxShadow: 6,
+                      },
+                    }}
+                  >
+                    <CardActionArea
+                      onClick={() => navigate(`/restaurant/${store.id}`)}
+                    >
+                      <CardMedia
+                        component="img"
+                        height="200"
+                        image={store.imageUrl ?? "/images/world.jpg"}
+                      />
+
+                      <CardContent>
+                        <Typography variant="h6" fontWeight={700}>
+                          {store.name}
+                        </Typography>
+
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          gutterBottom
+                        >
+                          {store.address}
+                        </Typography>
+
+                        {/* 좋아요 */}
+                        <Box
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLike(store.id);
+                          }}
+                          sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            alignItems: "center",
+                            mt: 1,
+                            cursor: "pointer",
+                            color: store.liked ? "#ff6b00" : "#bbb",
+                            transition: "0.2s",
+                            "&:hover": {
+                              transform: "scale(1.1)",
+                            },
+                          }}
+                        >
+                          <FavoriteIcon sx={{ fontSize: 18 }} />
+                          <Typography sx={{ ml: 0.5 }}>
+                            {store.likeCount}
+                          </Typography>
+                        </Box>
+
+                        <Chip
+                          label={store.category}
+                          size="small"
+                          sx={{
+                            mt: 2,
+                            backgroundColor: "#fff3e6",
+                            color: "#ff6b00",
+                            fontWeight: 600,
+                          }}
+                        />
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                ))}
+          </Box>
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+              <Pagination
+                count={totalPages}
+                page={page + 1}
+                onChange={(_, value) => setPage(value - 1)}
+                sx={{
+                  "& .Mui-selected": {
+                    backgroundColor: "#ff6b00 !important",
+                    color: "#fff",
+                  },
+                }}
+              />
+            </Box>
+          )}
+
+          {!loading && stores.length === 0 && (
+            <Typography textAlign="center" mt={8} color="text.secondary">
+              검색 결과가 없습니다.
+            </Typography>
+          )}
+        </Container>
+      </Box>
+    </>
   );
 }

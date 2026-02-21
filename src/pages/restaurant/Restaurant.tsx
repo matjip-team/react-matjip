@@ -32,6 +32,7 @@ interface RestaurantDetail {
   id: number;
   name: string;
   address: string;
+  phone?: string;
   description: string;
   imageUrl?: string;
   categories: string[];
@@ -142,6 +143,12 @@ export default function Restaurant() {
           <Typography color="text.secondary" sx={{ mt: 2 }}>
             {store.address}
           </Typography>
+
+          {store.phone && (
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+               📞{store.phone}
+            </Typography>
+          )}
 
           <Typography sx={{ mt: 3 }}>
             {store.description}
