@@ -26,7 +26,7 @@ import { ADMIN_USER_API } from "./api/adminUserApi";
 import type { AdminUserListItem } from "./types/adminUser";
 import { API_BASE_URL } from "../../common/config/config";
 
-const MAIN_COLOR = "#4F9FFA";
+const ACCENT = "#ff6b00";
 
 const toAvatarUrl = (url?: string) => {
   if (!url) return undefined;
@@ -106,58 +106,132 @@ export default function AdminUserListPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: "auto", mt: 5, mb: 4 }}>
-      <Typography
-        sx={{ fontSize: 28, fontWeight: 700, color: MAIN_COLOR, mb: 3 }}
+    <Box
+      sx={{
+        maxWidth: 1100,
+        mx: "auto",
+        py: 5,
+        px: { xs: 2, sm: 3 },
+      }}
+    >
+      {/* 페이지 타이틀 */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: 2,
+          mb: 4,
+        }}
       >
-        회원 관리
-      </Typography>
+        <Box>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              mb: 0.5,
+            }}
+          >
+            회원 관리
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#64748b" }}>
+            회원을 검색하고 관리할 수 있습니다
+          </Typography>
+        </Box>
+      </Box>
 
-      <Box sx={{ display: "flex", gap: 1, mb: 4, alignItems: "center", flexWrap: "wrap" }}>
-        <Select
-          size="small"
-          value={searchType}
-          onChange={(e) => setSearchType(String(e.target.value))}
-          sx={{ width: 120 }}
-        >
-          <MenuItem value="EMAIL">이메일</MenuItem>
-          <MenuItem value="NAME">이름</MenuItem>
-          <MenuItem value="NICKNAME">닉네임</MenuItem>
-        </Select>
-        <Select
-          size="small"
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(String(e.target.value));
-            setPage(0);
-          }}
-          displayEmpty
-          sx={{ width: 100 }}
-        >
-          <MenuItem value="">전체 상태</MenuItem>
-          <MenuItem value="ACTIVE">활성</MenuItem>
-          <MenuItem value="BLOCKED">차단</MenuItem>
-          <MenuItem value="DELETED">탈퇴</MenuItem>
-        </Select>
-        <TextField
-          size="small"
-          placeholder="검색어 입력"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          sx={{ width: 280 }}
-        />
-        <IconButton
+      {/* 검색 영역 */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 4,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          bgcolor: "#fafafa",
+        }}
+      >
+        <Box
           sx={{
-            bgcolor: MAIN_COLOR,
-            color: "#fff",
-            "&:hover": { bgcolor: "#3d8ae6" },
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 1.5,
+            alignItems: "center",
           }}
-          onClick={handleSearch}
         >
-          <SearchIcon />
-        </IconButton>
-        <Box sx={{ ml: "auto" }}>
+          <Select
+            size="small"
+            value={searchType}
+            onChange={(e) => setSearchType(String(e.target.value))}
+            sx={{
+              width: 120,
+              bgcolor: "#fff",
+              borderRadius: 1,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.08)",
+              },
+            }}
+          >
+            <MenuItem value="EMAIL">이메일</MenuItem>
+            <MenuItem value="NAME">이름</MenuItem>
+            <MenuItem value="NICKNAME">닉네임</MenuItem>
+          </Select>
+
+          <Select
+            size="small"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(String(e.target.value));
+              setPage(0);
+            }}
+            displayEmpty
+            sx={{
+              width: 110,
+              bgcolor: "#fff",
+              borderRadius: 1,
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.08)",
+              },
+            }}
+          >
+            <MenuItem value="">전체 상태</MenuItem>
+            <MenuItem value="ACTIVE">활성</MenuItem>
+            <MenuItem value="BLOCKED">차단</MenuItem>
+            <MenuItem value="DELETED">탈퇴</MenuItem>
+          </Select>
+
+          <TextField
+            size="small"
+            placeholder="검색어 입력"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            sx={{
+              width: { xs: "100%", sm: 280 },
+              flex: "1 1 200px",
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#fff",
+                borderRadius: 1,
+              },
+            }}
+          />
+
+          <IconButton
+            sx={{
+              bgcolor: ACCENT,
+              color: "#fff",
+              "&:hover": { bgcolor: "#e55f00", transform: "scale(1.02)" },
+              transition: "all 0.2s",
+            }}
+            onClick={handleSearch}
+          >
+            <SearchIcon />
+          </IconButton>
+
           <Select
             size="small"
             value={size}
@@ -165,20 +239,35 @@ export default function AdminUserListPage() {
               setSize(Number(e.target.value));
               setPage(0);
             }}
-            sx={{ width: 90 }}
+            sx={{
+              width: 90,
+              ml: "auto",
+              bgcolor: "#fff",
+              borderRadius: 1,
+            }}
           >
+            <MenuItem value={8}>8개</MenuItem>
             <MenuItem value={10}>10개</MenuItem>
             <MenuItem value={30}>30개</MenuItem>
             <MenuItem value={50}>50개</MenuItem>
             <MenuItem value={100}>100개</MenuItem>
           </Select>
         </Box>
-      </Box>
+      </Paper>
 
-      <TableContainer component={Paper} variant="outlined">
+      <TableContainer
+        component={Paper}
+        variant="outlined"
+        sx={{
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "rgba(0,0,0,0.06)",
+          overflow: "hidden",
+        }}
+      >
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+            <TableRow sx={{ bgcolor: "#fafafa" }}>
               <TableCell align="center" sx={{ fontWeight: 600 }}>ID</TableCell>
               <TableCell align="center" sx={{ fontWeight: 600, width: 72 }}>사진</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>이메일</TableCell>
@@ -208,7 +297,7 @@ export default function AdminUserListPage() {
                 <TableCell
                   colSpan={9}
                   align="center"
-                  sx={{ py: 6, color: "#888" }}
+                  sx={{ py: 8, color: "#94a3b8", fontSize: 15 }}
                 >
                   조회된 회원이 없습니다.
                 </TableCell>
@@ -221,7 +310,10 @@ export default function AdminUserListPage() {
                   onClick={() => navigate(`/admin/user/${row.id}`)}
                   sx={{
                     cursor: "pointer",
-                    "&:hover": { bgcolor: "#fafafa" },
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      bgcolor: "rgba(255,107,0,0.04)",
+                    },
                   }}
                 >
                   <TableCell align="center">{row.id}</TableCell>
@@ -273,13 +365,26 @@ export default function AdminUserListPage() {
         </Table>
       </TableContainer>
 
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          mt: 4,
+          "& .MuiPaginationItem-root": { fontSize: 14 },
+          "& .Mui-selected": {
+            bgcolor: ACCENT,
+            color: "#fff",
+            "&:hover": { bgcolor: "#e55f00" },
+          },
+        }}
+      >
         <Pagination
           count={totalPages}
           page={page + 1}
           disabled={loading || items.length === 0}
           onChange={(_, v) => setPage(v - 1)}
-          color="primary"
+          color="standard"
+          shape="rounded"
         />
       </Box>
 
