@@ -1,0 +1,53 @@
+========================================
+맛집 등록 신청 10건 시드 실행 방법
+========================================
+
+[생성 파일]
+- scripts/seed-restaurant-requests-10-matjip.mjs
+
+[기능]
+1) 로그인
+2) 사업자등록증 임시 파일 업로드
+3) 대표사진 업로드
+4) 맛집 등록 신청 10건 생성
+
+설명 본문에는 아래 3개 섹션이 포함됩니다.
+- 맛집소개
+- 대표메뉴
+- 추천포인트
+
+----------------------------------------
+[사전 조건]
+1. 백엔드 서버 실행: http://localhost:8081
+2. 로그인 계정 존재
+   - 기본: test@naver.com / 12345678
+3. S3 presigned-url API 동작 가능해야 함
+
+----------------------------------------
+[실행]
+프로젝트 루트에서:
+
+node scripts/seed-restaurant-requests-10-matjip.mjs
+
+----------------------------------------
+[옵션 환경변수]
+API_BASE
+  - 기본값: http://localhost:8081
+LOGIN_EMAIL
+  - 기본값: test@naver.com
+LOGIN_PASSWORD
+  - 기본값: 12345678
+S3_PUBLIC_BASE_URL
+  - 기본값: https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com
+
+예시:
+set API_BASE=http://localhost:8081
+set LOGIN_EMAIL=test@naver.com
+set LOGIN_PASSWORD=12345678
+node scripts/seed-restaurant-requests-10-matjip.mjs
+
+----------------------------------------
+[정상 완료 시]
+콘솔에 [OK] 10건 로그가 출력되고,
+마지막에 성공/실패 건수가 요약 출력됩니다.
+

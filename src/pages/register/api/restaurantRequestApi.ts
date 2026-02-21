@@ -11,6 +11,8 @@ export interface RestaurantMyRequestItem {
   id: number;
   name: string;
   address: string;
+  imageUrl?: string | null;
+  representativeImageUrl?: string | null;
   approvalStatus: RestaurantApprovalStatus;
   createdAt: string;
 }
@@ -18,6 +20,8 @@ export interface RestaurantMyRequestItem {
 export interface RestaurantMyRequestDetail extends RestaurantMyRequestItem {
   phone?: string | null;
   description?: string | null;
+  imageUrl?: string | null;
+  representativeImageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   categoryNames?: string[] | null;
@@ -25,6 +29,18 @@ export interface RestaurantMyRequestDetail extends RestaurantMyRequestItem {
   businessLicenseFileKey?: string | null;
   reviewedAt?: string | null;
   rejectedReason?: string | null;
+}
+
+export interface RestaurantMyRequestUpdatePayload {
+  name: string;
+  address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  phone?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
+  businessLicenseFileKey?: string | null;
+  categoryNames?: string[] | null;
 }
 
 interface HttpErrorLike {
@@ -52,6 +68,13 @@ export const getMyRestaurantRequests = async (): Promise<
 
 export const cancelRestaurantRequest = async (id: number): Promise<void> => {
   await axios.patch<ApiResponse<null>>(`/api/restaurants/requests/${id}/cancel`);
+};
+
+export const updateMyRestaurantRequest = async (
+  id: number,
+  payload: RestaurantMyRequestUpdatePayload,
+): Promise<void> => {
+  await axios.patch<ApiResponse<null>>(`/api/restaurants/requests/${id}`, payload);
 };
 
 export const getMyRestaurantRequestLicenseViewUrl = async (id: number): Promise<string> => {

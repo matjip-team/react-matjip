@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Pagination,
   Snackbar,
   Stack,
   Typography,
@@ -23,11 +24,13 @@ const STATUS_META: Record<
   RestaurantApprovalStatus,
   { label: string; color: "warning" | "success" | "error" | "default" }
 > = {
-  PENDING: { label: "확인 대기", color: "warning" },
+  PENDING: { label: "승인 대기", color: "warning" },
   APPROVED: { label: "승인 완료", color: "success" },
   REJECTED: { label: "반려", color: "error" },
   CANCELLED: { label: "철회", color: "default" },
 };
+
+const PAGE_SIZE = 5;
 
 interface HttpErrorLike {
   response?: {
@@ -43,11 +46,13 @@ export default function MyRestaurantRequestListPage() {
   const [items, setItems] = useState<RestaurantMyRequestItem[]>([]);
   const [toast, setToast] = useState("");
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<
+    RestaurantApprovalStatus[]
+  >(["PENDING", "APPROVED"]);
+  const [page, setPage] = useState(1);
 
   const fetchMyRequests = useCallback(async () => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     try {
       setLoading(true);
@@ -58,9 +63,9 @@ export default function MyRestaurantRequestListPage() {
       if (status === 401 || status === 403) {
         setToast("로그인이 필요합니다.");
       } else if (status === 404) {
-        setToast("내 신청내역 API가 아직 연결되지 않았습니다.");
+        setToast("신청 내역 API가 연결되지 않았습니다.");
       } else {
-        setToast("신청내역 조회에 실패했습니다.");
+        setToast("신청 내역 조회에 실패했습니다.");
       }
     } finally {
       setLoading(false);
@@ -71,11 +76,37 @@ export default function MyRestaurantRequestListPage() {
     void fetchMyRequests();
   }, [fetchMyRequests]);
 
+  const filteredItems = useMemo(() => {
+    if (selectedStatuses.length === 0) return items;
+    return items.filter((item) => selectedStatuses.includes(item.approvalStatus));
+  }, [items, selectedStatuses]);
+
+  const pageCount = useMemo(
+    () => Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE)),
+    [filteredItems.length],
+  );
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredItems.slice(start, start + PAGE_SIZE);
+  }, [filteredItems, page]);
+
+  useEffect(() => {
+    if (page > pageCount) {
+      setPage(pageCount);
+    }
+  }, [page, pageCount]);
+
+  const toggleStatusFilter = (status: RestaurantApprovalStatus) => {
+    setPage(1);
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status],
+    );
+  };
+
   const handleCancel = async (requestId: number) => {
     const shouldCancel = window.confirm("해당 신청을 철회하시겠습니까?");
-    if (!shouldCancel) {
-      return;
-    }
+    if (!shouldCancel) return;
 
     try {
       setProcessingId(requestId);
@@ -100,7 +131,7 @@ export default function MyRestaurantRequestListPage() {
     return (
       <Box sx={{ maxWidth: 900, mx: "auto", mt: 5 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
-          로그인 후 내 신청내역을 확인할 수 있습니다.
+          로그인 후 신청내역을 확인할 수 있습니다.
         </Alert>
         <Stack direction="row" spacing={1}>
           <Button variant="contained" onClick={() => navigate("/auth/login")}>
@@ -128,18 +159,28 @@ export default function MyRestaurantRequestListPage() {
         </Typography>
       </Stack>
 
-      {loading && <Typography sx={{ color: "#666", mb: 2 }}>신청내역 불러오는 중...</Typography>}
+      {loading && (
+        <Typography sx={{ color: "#666", mb: 2 }}>신청내역 불러오는 중...</Typography>
+      )}
 
-      {!loading && items.length === 0 && <Alert severity="info">등록한 신청내역이 없습니다.</Alert>}
+      {!loading && filteredItems.length === 0 && (
+        <Alert severity="info">조건에 맞는 신청 내역이 없습니다.</Alert>
+      )}
 
       <Stack spacing={2}>
-        {items.map((item) => (
+        {pagedItems.map((item) => (
           <Card key={item.id} sx={{ border: "1px solid #eee" }}>
             <CardContent>
-              <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2}>
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                justifyContent="space-between"
+                spacing={2}
+              >
                 <Box>
                   <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.6 }}>
-                    <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{item.name}</Typography>
+                    <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
+                      {item.name}
+                    </Typography>
                     <Chip
                       size="small"
                       label={STATUS_META[item.approvalStatus].label}
@@ -155,7 +196,13 @@ export default function MyRestaurantRequestListPage() {
                 <Stack direction={{ xs: "row", md: "column" }} spacing={1}>
                   <Button
                     variant="outlined"
-                    onClick={() => navigate(`/register/requests/${item.id}`)}
+                    onClick={() =>
+                      navigate(`/register/requests/${item.id}`, {
+                        state: {
+                          imageUrl: item.imageUrl ?? item.representativeImageUrl ?? null,
+                        },
+                      })
+                    }
                   >
                     상세보기
                   </Button>
@@ -177,6 +224,15 @@ export default function MyRestaurantRequestListPage() {
         ))}
       </Stack>
 
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+        <Pagination
+          page={page}
+          count={filteredItems.length === 0 ? 1 : pageCount}
+          disabled={filteredItems.length === 0}
+          onChange={(_, value) => setPage(value)}
+        />
+      </Box>
+
       <Snackbar
         open={Boolean(toast)}
         autoHideDuration={1800}
@@ -187,3 +243,4 @@ export default function MyRestaurantRequestListPage() {
     </Box>
   );
 }
+

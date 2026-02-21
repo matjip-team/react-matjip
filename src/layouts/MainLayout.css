@@ -25,7 +25,7 @@ body,
 
 /* ===== 전체 레이아웃 ===== */
 .layout {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -260,6 +260,8 @@ body,
 .content {
   flex: 1;
   width: 100%;
+  padding-bottom: 28px;
+  box-sizing: border-box;
 }
 
 .page-container {
@@ -274,6 +276,8 @@ body,
   background: #0f172a;
   color: #94a3b8;
   margin-top: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .footer-inner {
@@ -487,7 +491,7 @@ body,
   align-items: center;
 }
 
-.nav-dropdown > span {
+.nav-dropdown>span {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -546,6 +550,9 @@ body,
 
 .nav-submenu span:last-child {
   border-bottom: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .nav-submenu span:hover {
@@ -642,4 +649,17 @@ body,
 
 .mypage-submenu-item.active .MuiSvgIcon-root {
   color: var(--accent);
+}
+
+.admin-request-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ff6b00;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
 }

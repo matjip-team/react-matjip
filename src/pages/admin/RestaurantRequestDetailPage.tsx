@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -13,10 +13,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import ReactQuill, { Quill } from "react-quill-new";
+import "react-quill-new/dist/quill.bubble.css";
+import "quill-table-better/dist/quill-table-better.css";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
+import { registerBlogQuillModules } from "../blog/quillSetup";
+
+registerBlogQuillModules(Quill);
 
 type RestaurantApprovalStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 
@@ -26,6 +32,8 @@ type RestaurantAdminDetail = {
   address: string;
   phone?: string | null;
   description?: string | null;
+  imageUrl?: string | null;
+  representativeImageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   categoryNames?: string[] | null;
@@ -53,6 +61,17 @@ const formatDateTime = (value?: string | null) => {
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("ko-KR");
 };
 
+const S3_PUBLIC_BASE_URL =
+  (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
+  "https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com";
+
+const toDisplayImageUrl = (value?: string | null): string | null => {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("/")) return raw;
+  return `${S3_PUBLIC_BASE_URL}/${raw.replace(/^\/+/, "")}`;
+};
+
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
@@ -66,6 +85,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export default function RestaurantRequestDetailPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
@@ -78,6 +98,10 @@ export default function RestaurantRequestDetailPage() {
 
   const requestId = useMemo(() => Number(id), [id]);
   const hasValidRequestId = Number.isInteger(requestId) && requestId > 0;
+  const imageUrlFromState = (location.state as { imageUrl?: string | null } | null)?.imageUrl ?? null;
+  const displayImageUrl = toDisplayImageUrl(
+    detail?.imageUrl ?? detail?.representativeImageUrl ?? imageUrlFromState ?? null,
+  );
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<kakao.maps.Map | null>(null);
@@ -324,30 +348,99 @@ export default function RestaurantRequestDetailPage() {
             <Divider sx={{ my: 2 }} />
 
             <Typography sx={{ fontWeight: 700, mb: 1 }}>신청 정보</Typography>
+            {(() => {
+              const raw = detail.description?.trim() ?? "";
+              const hasHtml = /<[^>]+>/.test(raw);
+              const escaped = raw
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+              const descriptionHtml = raw
+                ? hasHtml
+                  ? raw
+                  : `<p>${escaped.replace(/\n/g, "<br/>")}</p>`
+                : "<p>-</p>";
+              return (
             <Stack spacing={0.9}>
               <InfoRow label="주소" value={detail.address || "-"} />
-              <InfoRow label="전화번호" value={detail.phone || "-"} />
-              <InfoRow label="카테고리" value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"} />
+              <Box
+                ref={mapContainerRef}
+                sx={{
+                  mt: 0.5,
+                  width: "100%",
+                  height: 250,
+                  borderRadius: 1,
+                  border: "1px solid #e8e8e8",
+                  overflow: "hidden",
+                  backgroundColor: "#fafafa",
+                }}
+              />
               <Box sx={{ pl: { xs: 0, sm: 13.8 } }}>
                 <Button size="small" variant="outlined" endIcon={<OpenInNewIcon />} onClick={openMap}>
                   지도에서 크게 보기
                 </Button>
               </Box>
-              <InfoRow label="설명" value={detail.description?.trim() ? detail.description.trim() : "-"} />
+              <InfoRow label="전화번호" value={detail.phone || "-"} />
+              <InfoRow label="카테고리" value={detail.categoryNames?.length ? detail.categoryNames.join(", ") : "-"} />
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
+                <Typography sx={{ width: { xs: "100%", sm: 110 }, color: "#666", fontSize: 14 }}>
+                  대표사진
+                </Typography>
+                <Box sx={{ flex: 1 }}>
+                  {displayImageUrl ? (
+                    <Box
+                      component="img"
+                      src={displayImageUrl}
+                      alt="대표사진"
+                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                        const img = e.currentTarget;
+                        if (img.src.includes("/images/world.jpg")) return;
+                        img.src = "/images/world.jpg";
+                      }}
+                      sx={{
+                        width: 240,
+                        maxWidth: "100%",
+                        height: 150,
+                        objectFit: "cover",
+                        borderRadius: 1,
+                        border: "1px solid #e8e8e8",
+                      }}
+                    />
+                  ) : (
+                    <Typography sx={{ color: "#222", fontSize: 14 }}>없음</Typography>
+                  )}
+                </Box>
+              </Stack>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={0.7}>
+                <Typography sx={{ width: { xs: "100%", sm: 110 }, color: "#666", fontSize: 14 }}>
+                  설명
+                </Typography>
+                <Box
+                  sx={{
+                    flex: 1,
+                    "& .ql-editor": { padding: 0 },
+                    "& .ql-editor img": { maxWidth: "100%", height: "auto" },
+                    "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
+                    "& .ql-editor table": {
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      margin: "12px 0",
+                    },
+                    "& .ql-editor td, & .ql-editor th": {
+                      border: "1px solid #d9d9d9",
+                      padding: "8px 10px",
+                      verticalAlign: "top",
+                    },
+                  }}
+                >
+                  <ReactQuill theme="bubble" readOnly modules={{ toolbar: false }} value={descriptionHtml} />
+                </Box>
+              </Stack>
             </Stack>
-
-            <Box
-              ref={mapContainerRef}
-              sx={{
-                mt: 2,
-                width: "100%",
-                height: 250,
-                borderRadius: 1,
-                border: "1px solid #e8e8e8",
-                overflow: "hidden",
-                backgroundColor: "#fafafa",
-              }}
-            />
+              );
+            })()}
 
             {detail.approvalStatus === "PENDING" && (
               <Box sx={{ mt: 2 }}>

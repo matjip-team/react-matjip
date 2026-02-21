@@ -1,6 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "../common/axios";
+import ReactQuill, { Quill } from "react-quill-new";
+import "react-quill-new/dist/quill.bubble.css";
+import "quill-table-better/dist/quill-table-better.css";
+import { registerBlogQuillModules } from "../blog/quillSetup";
 
 import {
   Container,
@@ -20,6 +24,8 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
+registerBlogQuillModules(Quill);
 
 interface Review {
   id: number;
@@ -44,6 +50,17 @@ interface RestaurantDetail {
   liked: boolean;
 }
 
+const S3_PUBLIC_BASE_URL =
+  (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
+  "https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com";
+
+const toDisplayImageUrl = (value?: string | null): string | null => {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("/")) return raw;
+  return `${S3_PUBLIC_BASE_URL}/${raw.replace(/^\/+/, "")}`;
+};
+
 export default function Restaurant() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -64,6 +81,21 @@ export default function Restaurant() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editRating, setEditRating] = useState<number | null>(0);
   const [editText, setEditText] = useState("");
+
+  const descriptionHtml = useMemo(() => {
+    const raw = store?.description ?? "";
+    const hasHtml = /<[^>]+>/.test(raw);
+    if (hasHtml) {
+      return raw;
+    }
+    const escaped = raw
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+    return `<p>${escaped.replace(/\n/g, "<br/>")}</p>`;
+  }, [store?.description]);
 
   useEffect(() => {
     if (!id) return;
@@ -139,8 +171,13 @@ export default function Restaurant() {
       {/* 이미지 카드 */}
       <Card sx={{ borderRadius: 4, overflow: "hidden" }}>
         <img
-          src={store.imageUrl ?? "/images/world.jpg"}
+          src={toDisplayImageUrl(store.imageUrl) ?? "/images/world.jpg"}
           alt={store.name}
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (img.src.includes("/images/world.jpg")) return;
+            img.src = "/images/world.jpg";
+          }}
           style={{ width: "100%", height: 360, objectFit: "cover" }}
         />
       </Card>
@@ -168,9 +205,31 @@ export default function Restaurant() {
             </Typography>
           )}
 
-          <Typography sx={{ mt: 3 }}>
-            {store.description}
-          </Typography>
+          <Box
+            sx={{
+              mt: 3,
+              "& .ql-editor": { padding: 0 },
+              "& .ql-editor img": { maxWidth: "100%", height: "auto" },
+              "& .ql-editor iframe, & .ql-editor video": { maxWidth: "100%" },
+              "& .ql-editor table": {
+                width: "100%",
+                borderCollapse: "collapse",
+                margin: "12px 0",
+              },
+              "& .ql-editor td, & .ql-editor th": {
+                border: "1px solid #d9d9d9",
+                padding: "8px 10px",
+                verticalAlign: "top",
+              },
+            }}
+          >
+            <ReactQuill
+              theme="bubble"
+              readOnly
+              modules={{ toolbar: false }}
+              value={descriptionHtml}
+            />
+          </Box>
 
           <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 2 }}>
             <Rating value={store.averageRating} precision={0.5} readOnly />
