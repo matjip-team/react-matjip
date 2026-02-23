@@ -14,7 +14,7 @@ import ContentPasteSearchIcon from "@mui/icons-material/ContentPasteSearch";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LogoutIcon from "@mui/icons-material/Logout";
 import BlogFeaturedCarousel from "../components/BlogFeaturedCarousel/BlogFeaturedCarousel";
-import "./mainLayout.css";
+import "./MainLayout.css";
 import { useAuth } from "../pages/common/context/useAuth.ts";
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../pages/common/config/config";
@@ -44,7 +44,11 @@ export default function MainLayout() {
   }, []);
 
   const adminMenuItems = [
-    { label: "신청 접수", path: "/admin/restaurant-requests", icon: AssignmentIcon },
+    {
+      label: "신청 접수",
+      path: "/admin/restaurant-requests",
+      icon: AssignmentIcon,
+    },
     { label: "커뮤니티 관리", path: "/admin/board", icon: ForumIcon },
     { label: "블로그 관리", path: "/admin/blog", icon: ArticleIcon },
     { label: "회원관리", path: "/admin/user", icon: PeopleIcon },
@@ -54,7 +58,11 @@ export default function MainLayout() {
     { label: "찜한 식당", path: "/auth/mypage?tab=0", icon: FavoriteIcon },
     { label: "내가 쓴 리뷰", path: "/auth/mypage?tab=1", icon: PreviewIcon },
     { label: "맛집 등록", path: "/auth/mypage?tab=2", icon: RestaurantIcon },
-    { label: "내 신청 내역", path: "/auth/mypage?tab=3", icon: ContentPasteSearchIcon },
+    {
+      label: "내 신청 내역",
+      path: "/auth/mypage?tab=3",
+      icon: ContentPasteSearchIcon,
+    },
     { label: "내 정보", path: "/auth/mypage?tab=4", icon: PersonOutlineIcon },
   ];
 
@@ -136,24 +144,24 @@ export default function MainLayout() {
               </span>
             </Tooltip>
             {isAdmin && (
-              <div className="nav-dropdown admin-dropdown">                
-                  <span
-                    className={`admin-trigger ${
-                      location.pathname.startsWith("/admin") ? "active" : ""
-                    }`}
-                  >
-                    <AdminPanelSettingsIcon
-                      sx={{ fontSize: 18, mr: 0.5, opacity: 0.9 }}
-                    />
-                    관리자
-                    <ExpandMoreIcon
-                      sx={{
-                        fontSize: 18,
-                        transition: "transform 0.2s",
-                      }}
-                      className="admin-chevron"
-                    />
-                  </span>               
+              <div className="nav-dropdown admin-dropdown">
+                <span
+                  className={`admin-trigger ${
+                    location.pathname.startsWith("/admin") ? "active" : ""
+                  }`}
+                >
+                  <AdminPanelSettingsIcon
+                    sx={{ fontSize: 18, mr: 0.5, opacity: 0.9 }}
+                  />
+                  관리자
+                  <ExpandMoreIcon
+                    sx={{
+                      fontSize: 18,
+                      transition: "transform 0.2s",
+                    }}
+                    className="admin-chevron"
+                  />
+                </span>
                 <div className="nav-submenu admin-submenu">
                   <div className="admin-submenu-header">
                     <AdminPanelSettingsIcon sx={{ fontSize: 16 }} />
@@ -205,7 +213,8 @@ export default function MainLayout() {
                       const tabId = item.path.split("tab=")[1];
                       const isActive =
                         location.pathname === "/auth/mypage" &&
-                        (location.search === `?tab=${tabId}` || (!location.search && tabId === "0"));
+                        (location.search === `?tab=${tabId}` ||
+                          (!location.search && tabId === "0"));
                       const Icon = item.icon;
                       return (
                         <span
@@ -222,7 +231,9 @@ export default function MainLayout() {
                       className="mypage-submenu-item mypage-logout"
                       onClick={logout}
                     >
-                      <LogoutIcon sx={{ fontSize: 18, mr: 1.5, flexShrink: 0 }} />
+                      <LogoutIcon
+                        sx={{ fontSize: 18, mr: 1.5, flexShrink: 0 }}
+                      />
                       로그아웃
                     </span>
                   </div>
