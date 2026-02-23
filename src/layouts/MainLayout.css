@@ -1,0 +1,777 @@
+/* ===== 디자인 토큰 (일관된 톤) ===== */
+:root {
+  --header-bg: rgba(255, 255, 255, 0.92);
+  --header-border: rgba(0, 0, 0, 0.06);
+  --text-primary: #1a1a1a;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --accent: #ff6b00;
+  --accent-soft: #fff7ed;
+  --hover-bg: #f8fafc;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== 전역 레이아웃 기준 ===== */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== 전체 레이아웃 ===== */
+.layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 헤더 (글래스모피즘 + 세련된 라인) ===== */
+.header {
+  background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--header-border);
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 28px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-logo {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: opacity var(--transition);
+}
+
+.header-logo:hover {
+  opacity: 0.8;
+}
+
+.header-logo img {
+  height: 48px;
+  width: auto;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.nav span {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  position: relative;
+  padding: 10px 0;
+  transition: color var(--transition);
+}
+
+.nav span:hover {
+  color: var(--text-primary);
+}
+
+.nav span.active {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.nav span.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  opacity: 0.9;
+}
+
+/* 헤더 우측: 로그인/사용자 영역 */
+.header-auth {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mypage-logout {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  margin-top: 4px;
+  padding-top: 10px !important;
+  font-weight: 600 !important;
+  color: #dc2626 !important;
+}
+
+.mypage-logout:hover {
+  background: rgba(220, 38, 38, 0.08) !important;
+  color: #b91c1c !important;
+}
+
+.mypage-logout .MuiSvgIcon-root {
+  color: inherit;
+}
+
+.header-avatar {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  transition: transform var(--transition);
+}
+
+.header-avatar:hover {
+  transform: scale(1.06);
+}
+
+.header-login-btn {
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+  transition: background var(--transition), box-shadow var(--transition);
+}
+
+.header-login-btn:hover {
+  background: #e65f00;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
+}
+
+/* 헤더 반응형 */
+@media (max-width: 900px) {
+  .nav {
+    gap: 24px;
+  }
+
+  .nav span {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    padding: 0 20px;
+  }
+
+  .header-logo img {
+    height: 40px;
+  }
+
+  .nav {
+    gap: 20px;
+  }
+
+  .header-user-name {
+    display: none;
+  }
+}
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  height: 420px;
+  /* 레퍼런스 느낌 핵심 */
+  overflow: hidden;
+}
+
+/* 배경 이미지 */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/hero-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.6);
+  /* 텍스트 가독성 */
+}
+
+/* 이미지 위 콘텐츠 */
+.hero-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  color: #ffffff;
+  padding: 0 20px;
+}
+
+.hero-content h1 {
+  font-size: 38px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.hero-content p {
+  font-size: 16px;
+  margin-bottom: 32px;
+  opacity: 0.9;
+}
+
+/* 검색창 */
+.hero-search input {
+  width: 460px;
+  max-width: 90%;
+  padding: 16px 20px;
+  border-radius: 999px;
+  border: none;
+  font-size: 15px;
+  outline: none;
+}
+
+
+/* ===== 메인 콘텐츠 ===== */
+.content {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.page-container {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 48px 28px;
+}
+
+/* ===== 푸터 (다크 톤, 깔끔한 여백) ===== */
+.footer {
+  background: #0f172a;
+  color: #94a3b8;
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 48px 28px 36px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 56px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.footer-brand {
+  flex: 1;
+  min-width: 200px;
+}
+
+.footer-logo {
+  height: 44px;
+  width: auto;
+  /* filter: brightness(0) invert(1); */
+  opacity: 0.95;
+}
+
+.footer-tagline {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.footer-links {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.footer-column h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0 0 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.footer-column span {
+  font-size: 14px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.footer-column span:hover {
+  color: #f1f5f9;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  padding: 20px 28px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .footer-inner {
+    flex-direction: column;
+    gap: 40px;
+    padding: 40px 20px 28px;
+  }
+
+  .footer-links {
+    width: 100%;
+    gap: 36px;
+  }
+
+  .footer-bottom {
+    padding: 16px 20px;
+  }
+}
+
+/* ================================================= */
+/* ===== 홈 페이지 전용 UI (카테고리 / 리스트) ===== */
+/* ================================================= */
+
+/* ===== 카테고리 필터 ===== */
+.category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 24px 0 48px;
+}
+
+.category-filter button {
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border-radius: 999px;
+  border: none;
+  background: #f1f5f9;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.category-filter button:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.category-filter button.selected {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 맛집 리스트 그리드 ===== */
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+/* ===== 맛집 카드 ===== */
+.store-card {
+  background: #fff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.store-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.store-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.store-card p {
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+/* ===== 페이징 영역 ===== */
+.pagination {
+  margin: 56px 0 24px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* ===== 네비게이션 Link 스타일 (span → a 완전 대체) ===== */
+.nav a {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  /* 기본 밑줄 제거 */
+}
+
+/* 방문/호버/클릭 시 색 고정 */
+.nav a:visited,
+.nav a:hover,
+.nav a:active {
+  color: #111827;
+}
+
+/* 활성 메뉴 */
+.nav a.active {
+  font-weight: 700;
+}
+
+/* 식신 느낌 밑줄 */
+.nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -22px;
+  width: 100%;
+  height: 2px;
+  background: #ff6b00;
+}
+
+/* ===== 관리자 드롭다운 서브메뉴 (호버 시 펼침) ===== */
+.nav-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-dropdown>span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 0 14px;
+  margin: -10px 0 -14px;
+}
+
+/* 관리자 트리거: 배지 스타일 + 주황 강조 */
+.admin-trigger {
+  display: inline-flex !important;
+  align-items: center;
+  padding: 6px 12px !important;
+  margin: -6px 0 -6px 4px !important;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.12) 0%, rgba(255, 107, 0, 0.06) 100%);
+  color: #c2410c !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border: 1px solid rgba(255, 107, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.admin-trigger:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.18) 0%, rgba(255, 107, 0, 0.1) 100%) !important;
+  border-color: rgba(255, 107, 0, 0.4);
+  color: #9a3412 !important;
+}
+
+.admin-trigger.active {
+  background: linear-gradient(135deg, #ff6b00 0%, #e65f00 100%) !important;
+  color: #fff !important;
+  border-color: #ff6b00;
+}
+
+.admin-trigger.active:hover {
+  background: linear-gradient(135deg, #e65f00 0%, #cc5500 100%) !important;
+  border-color: #e65f00;
+}
+
+.admin-trigger.active::after {
+  display: none !important;
+}
+
+.admin-dropdown .nav-submenu {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.admin-dropdown:hover .nav-submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.admin-dropdown:hover .admin-chevron {
+  transform: rotate(180deg);
+}
+
+.nav-submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 156px;
+  padding: 8px 0;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 메뉴 항목 사이 구분선 */
+.nav-submenu span {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-submenu span:last-child {
+  border-bottom: none;
+}
+
+.nav-submenu span:hover {
+  background: var(--hover-bg);
+}
+
+.nav-submenu span.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.nav-submenu span.active::after {
+  display: none;
+}
+
+/* 관리자 서브메뉴 전용 */
+.admin-submenu {
+  min-width: 200px;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 12px 48px rgba(15, 23, 42, 0.12) !important;
+}
+
+.admin-submenu-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475569;
+  background: linear-gradient(180deg, rgba(255, 107, 0, 0.06) 0%, rgba(255, 107, 0, 0.02) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.admin-submenu-header span {
+  padding: 0;
+  border: none;
+  cursor: default;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.admin-submenu-header .MuiSvgIcon-root {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #475569;
+  opacity: 0.85;
+}
+
+.admin-submenu > span {
+  padding: 10px 16px;
+}
+
+/* ===== 마이페이지 드롭다운 (호버 시 펼침) ===== */
+.mypage-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mypage-dropdown-trigger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px 0 12px;
+  margin: -4px 0 -12px;
+  border-radius: 50%;
+  transition: transform var(--transition);
+}
+
+.mypage-dropdown-trigger:hover {
+  transform: scale(1.06);
+}
+
+.mypage-submenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 200px;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 48px rgba(15, 23, 42, 0.12);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.mypage-dropdown:hover .mypage-submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.mypage-submenu-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475569;
+  background: linear-gradient(180deg, rgba(255, 107, 0, 0.06) 0%, rgba(255, 107, 0, 0.02) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mypage-submenu-header span {
+  padding: 0;
+  border: none;
+  cursor: default;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.mypage-submenu-header .MuiSvgIcon-root {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #475569;
+  opacity: 0.85;
+}
+
+.mypage-submenu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mypage-submenu-item:last-child {
+  border-bottom: none;
+}
+
+.mypage-submenu-item:hover {
+  background: var(--hover-bg);
+}
+
+.mypage-submenu-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mypage-submenu-item .MuiSvgIcon-root {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.mypage-submenu-item.active .MuiSvgIcon-root {
+  color: var(--accent);
+}
+
+.admin-request-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ff6b00;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}

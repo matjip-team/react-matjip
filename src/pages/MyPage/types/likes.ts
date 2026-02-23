@@ -1,0 +1,25 @@
+import type { Category } from "./catetory";
+
+export interface Likes {
+  id: number;
+  restaurantId?: number;
+  restaurantName: string;
+  image: string; // 가게 이미지 URL
+  rating: number; // 0~5
+  menu: string; // 대표 메뉴
+  views: number; // 사용자가 본 횟수
+  likes: number; // 좋아요 횟수
+  favorites: number; // 즐겨찾기 횟수
+  reason?: string; // 추천 이유
+  avgRating: number; // 평균 평점
+  reviewCount: number; // 리뷰 개수
+  categories: Category[];
+  address?: string;
+  imageUrl?: string | null;
+}
+
+export interface LikesPage {
+  likes: Likes[];
+  nextCursor?: number;
+  prevCursor?: number;
+}

@@ -3,7 +3,7 @@ name: React CI/CD
 on:
   push:
     branches:
-      - main
+      - prod
 
 jobs:
   build-and-deploy:
@@ -22,15 +22,6 @@ jobs:
 
       - name: Check Node.js version
         run: node -v
-
-      - name: Clear npm modules
-        run: rm -rf node_modules package-lock.json
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build React app
-        run: npm run build
 
       # npm 캐시 활용
       - name: Cache node modules
@@ -64,15 +55,13 @@ jobs:
       - name: Push Docker image
         run: docker push xxx0209/react-frontend:latest
 
-      # # VM 배포 (SSH)
-      # - name: Deploy to VM
-      #   uses: appleboy/ssh-action@v0.1.7
-      #   with:
-      #     host: ${{ secrets.VM_HOST }}
-      #     username: ${{ secrets.VM_USER }}
-      #     key: ${{ secrets.VM_SSH_KEY }}
-      #     port: 22
-      #     script: |
-      #       docker rm -f react-frontend || true
-      #       docker pull xxx0209/react-frontend:latest
-      #       docker run -d --name react-frontend -p 80:80 xxx0209/react-frontend:latest
+      # VM1 배포스크립트 실행행 (SSH)
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_VM1_HOST }}
+          username: ${{ secrets.EC2_VM1_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          script: |
+            bash /home/ubuntu/deployment/scripts/deploy_env.sh
