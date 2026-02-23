@@ -142,7 +142,7 @@ export default function BoardEdit() {
   );
 
   useEffect(() => {
-    axios.get(`/api/boards/${id}`).then((res) => {
+    axios.get(`/api/spring/boards/${id}`).then((res) => {
       const data = (res.data?.data ?? {}) as BoardDetailData;
       setTitle(data.title ?? "");
       setBoardType(data.boardType === "NOTICE" ? "NOTICE" : "REVIEW");
@@ -177,7 +177,7 @@ export default function BoardEdit() {
     }
 
     try {
-      await axios.put(`/api/boards/${id}`, {
+      await axios.put(`/api/spring/boards/${id}`, {
         title,
         content: html,
         boardType,

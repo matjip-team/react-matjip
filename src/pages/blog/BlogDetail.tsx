@@ -119,10 +119,10 @@ export default function BlogDetail() {
 
     try {
       // 서버 토글
-      await axios.post(`/api/blogs/${id}/recommendations`);
+      await axios.post(`/api/spring/blogs/${id}/recommendations`);
 
       // ✅ 서버가 계산한 최신값으로 다시 덮어쓰기
-      const res = await axios.get(`/api/blogs/${id}`);
+      const res = await axios.get(`/api/spring/blogs/${id}`);
       const data = res.data.data;
 
       setPost(data);
@@ -155,7 +155,7 @@ export default function BlogDetail() {
   //   if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
   //   try {
-  //     await axios.delete(`/api/blogs/${id}`);
+  //     await axios.delete(`/api/spring/blogs/${id}`);
   //     alert("삭제되었습니다.");
   //     navigate("/blog");
   //   } catch {
@@ -169,7 +169,7 @@ export default function BlogDetail() {
   const fetchComments = async () => {
     try {
       setLoadingComments(true);
-      const res = await axios.get(`/api/blogs/${id}/comments`, {
+      const res = await axios.get(`/api/spring/blogs/${id}/comments`, {
         params: {
           sort: sortType,
         },
@@ -200,7 +200,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/blogs/${id}/comments`, {
+      await axios.post(`/api/spring/blogs/${id}/comments`, {
         content: newComment,
       });
 
@@ -231,7 +231,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/blogs/${id}/comments`, {
+      await axios.post(`/api/spring/blogs/${id}/comments`, {
         content: content,
         parentId: parentId,
       });
@@ -264,7 +264,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.put(`/api/blogs/${id}/comments/${commentId}`, {
+      await axios.put(`/api/spring/blogs/${id}/comments/${commentId}`, {
         content: editingText,
       });
 
@@ -293,7 +293,7 @@ export default function BlogDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.delete(`/api/blogs/${id}/comments/${commentId}`);
+      await axios.delete(`/api/spring/blogs/${id}/comments/${commentId}`);
       await fetchComments();
       await fetchPost();
       setToast("댓글이 삭제되었습니다.");
@@ -311,7 +311,7 @@ export default function BlogDetail() {
 
   // 게시글 상세 조회
   const fetchPost = async () => {
-    const res = await axios.get(`/api/blogs/${id}`);
+    const res = await axios.get(`/api/spring/blogs/${id}`);
     setPost(res.data.data);
     setRecommended(res.data.data.recommended);
   };

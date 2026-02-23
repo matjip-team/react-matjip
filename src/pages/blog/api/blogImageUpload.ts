@@ -1,4 +1,4 @@
-﻿import axios from "../../common/axios";
+import axios from "../../common/axios";
 import rawAxios from "axios";
 
 interface PresignedUploadPayload {
@@ -16,7 +16,7 @@ interface UploadMarkedError {
   uploadStep?: UploadStep;
 }
 
-const PRESIGNED_URL_ENDPOINT = "/api/blogs/images/presigned-url";
+const PRESIGNED_URL_ENDPOINT = "/api/spring/blogs/images/presigned-url";
 
 const unwrapResponse = (payload: unknown): PresignedUploadPayload => {
   const body = payload as PresignedUploadResponse;

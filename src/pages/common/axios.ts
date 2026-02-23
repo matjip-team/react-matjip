@@ -31,7 +31,7 @@ instance.interceptors.response.use(
       try {
         // refresh 요청은 기본 axios 사용 (무한루프 방지)
         await axios.post(
-          `${API_BASE_URL}/api/auth/refresh`,
+          `${API_BASE_URL}/api/spring/auth/refresh`,
           {},
           { withCredentials: true },
         );

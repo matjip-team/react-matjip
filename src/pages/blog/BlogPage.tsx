@@ -81,7 +81,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     const fetchBlogs = async () => {
-      const res = await axios.get("/api/blogs", {
+      const res = await axios.get("/api/spring/blogs", {
         params: {
           page,
           size,

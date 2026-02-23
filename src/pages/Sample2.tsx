@@ -70,7 +70,7 @@ export default function Sample2() {
     const fetchProfile = async () => {
       try {
         const res = await axios.get<ApiResponse<TestResponse>>(
-          "/api/mypage/profile",
+          "/api/spring/mypage/profile",
         );
 
         const rtn = unwrapData(res.data);
@@ -92,7 +92,7 @@ export default function Sample2() {
     // 로직 처리
     try {
       const response = await axios.put<ApiResponse<TestResponse>>(
-        "/api/mypage/profile",
+        "/api/spring/mypage/profile",
         form,
       );
 

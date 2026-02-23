@@ -84,7 +84,7 @@ const QuillTableBetterDemo = () => {
 
               try {
                 // 서버에 이미지 업로드 요청
-                const response = await fetch("/api/upload", {
+                const response = await fetch("/api/spring/upload", {
                   method: "POST", // 이미지 업로드용 POST 요청
                   body: formData,
                 });
@@ -149,7 +149,7 @@ const QuillTableBetterDemo = () => {
   // 불러오기
   const handleLoad = async () => {
     try {
-      const res = await fetch("/api/load");
+      const res = await fetch("/api/spring/load");
       const data: Delta = await res.json();
       setSavedDelta(data);
     } catch (err) {

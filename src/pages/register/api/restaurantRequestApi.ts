@@ -1,4 +1,4 @@
-﻿import axios from "../../common/axios";
+import axios from "../../common/axios";
 import type { ApiResponse } from "../../common/types/api";
 
 export type RestaurantApprovalStatus =
@@ -61,25 +61,25 @@ export const getMyRestaurantRequests = async (): Promise<
   RestaurantMyRequestItem[]
 > => {
   const response = await axios.get<ApiResponse<RestaurantMyRequestItem[]>>(
-    "/api/restaurants/requests/me",
+    "/api/spring/restaurants/requests/me",
   );
   return response.data?.data ?? [];
 };
 
 export const cancelRestaurantRequest = async (id: number): Promise<void> => {
-  await axios.patch<ApiResponse<null>>(`/api/restaurants/requests/${id}/cancel`);
+  await axios.patch<ApiResponse<null>>(`/api/spring/restaurants/requests/${id}/cancel`);
 };
 
 export const updateMyRestaurantRequest = async (
   id: number,
   payload: RestaurantMyRequestUpdatePayload,
 ): Promise<void> => {
-  await axios.patch<ApiResponse<null>>(`/api/restaurants/requests/${id}`, payload);
+  await axios.patch<ApiResponse<null>>(`/api/spring/restaurants/requests/${id}`, payload);
 };
 
 export const getMyRestaurantRequestLicenseViewUrl = async (id: number): Promise<string> => {
   const response = await axios.get<ApiResponse<string>>(
-    `/api/restaurants/requests/${id}/license-view-url`,
+    `/api/spring/restaurants/requests/${id}/license-view-url`,
   );
 
   const urlFromData = response.data?.data;
@@ -100,7 +100,7 @@ export const getMyRestaurantRequestDetail = async (
 ): Promise<RestaurantMyRequestDetail> => {
   try {
     const response = await axios.get<ApiResponse<RestaurantMyRequestDetail>>(
-      `/api/restaurants/requests/${id}`,
+      `/api/spring/restaurants/requests/${id}`,
     );
     if (response.data?.data) {
       return response.data.data;

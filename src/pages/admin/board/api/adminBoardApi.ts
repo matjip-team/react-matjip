@@ -1,4 +1,4 @@
-﻿import axios from "../../../common/axios";
+import axios from "../../../common/axios";
 
 export type BoardType = "NOTICE" | "REVIEW";
 export type BoardSearchType =
@@ -117,7 +117,7 @@ export class AdminEndpointUnsupportedError extends Error {
   }
 }
 
-export const ADMIN_BOARD_API = "/api/boards";
+export const ADMIN_BOARD_API = "/api/spring/boards";
 
 export const ADMIN_BOARD_ENDPOINTS = {
   list: ADMIN_BOARD_API,
@@ -131,13 +131,13 @@ export const ADMIN_BOARD_ENDPOINTS = {
   comment: (id: string | number, commentId: string | number) =>
     `${ADMIN_BOARD_API}/${id}/comments/${commentId}`,
   imagePresignedUrl: `${ADMIN_BOARD_API}/images/presigned-url`,
-  hide: (id: string | number) => `/api/admin/boards/${id}/hide`,
-  restore: (id: string | number) => `/api/admin/boards/${id}/restore`,
-  pin: (id: string | number) => `/api/admin/boards/${id}/pin`,
-  unpin: (id: string | number) => `/api/admin/boards/${id}/unpin`,
-  sanction: (userId: string | number) => `/api/admin/users/${userId}/sanctions`,
-  reports: "/api/admin/boards/reports",
-  report: (reportId: string | number) => `/api/admin/boards/reports/${reportId}`,
+  hide: (id: string | number) => `/api/spring/admin/boards/${id}/hide`,
+  restore: (id: string | number) => `/api/spring/admin/boards/${id}/restore`,
+  pin: (id: string | number) => `/api/spring/admin/boards/${id}/pin`,
+  unpin: (id: string | number) => `/api/spring/admin/boards/${id}/unpin`,
+  sanction: (userId: string | number) => `/api/spring/admin/users/${userId}/sanctions`,
+  reports: "/api/spring/admin/boards/reports",
+  report: (reportId: string | number) => `/api/spring/admin/boards/reports/${reportId}`,
 } as const;
 
 const normalizeBoard = (board: AdminBoardListItem): AdminBoardListItem => ({
@@ -307,24 +307,24 @@ export const deleteAdminComment = async (
 export const hideAdminBoard = async (id: string | number) => {
   return callFirstSuccessPatch([
     ADMIN_BOARD_ENDPOINTS.hide(id),
-    `/api/admin/board/${id}/hide`,
-    `/api/boards/${id}/hide`,
+    `/api/spring/admin/board/${id}/hide`,
+    `/api/spring/boards/${id}/hide`,
   ]);
 };
 
 export const restoreAdminBoard = async (id: string | number) => {
   return callFirstSuccessPatch([
     ADMIN_BOARD_ENDPOINTS.restore(id),
-    `/api/admin/board/${id}/restore`,
-    `/api/boards/${id}/restore`,
+    `/api/spring/admin/board/${id}/restore`,
+    `/api/spring/boards/${id}/restore`,
   ]);
 };
 
 export const pinAdminBoard = async (id: string | number) => {
   return callFirstSuccessPatch([
     ADMIN_BOARD_ENDPOINTS.pin(id),
-    `/api/admin/board/${id}/pin`,
-    `/api/boards/${id}/pin`,
+    `/api/spring/admin/board/${id}/pin`,
+    `/api/spring/boards/${id}/pin`,
   ]);
 };
 
