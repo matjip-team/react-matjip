@@ -16,7 +16,7 @@ interface UploadMarkedError {
   uploadStep?: UploadStep;
 }
 
-const PRESIGNED_URL_ENDPOINT = "/api/mypage/profile-images/presigned-url";
+const PRESIGNED_URL_ENDPOINT = "/api/spring/mypage/profile-images/presigned-url";
 
 const unwrapResponse = (payload: unknown): PresignedUploadPayload => {
   const body = payload as PresignedUploadResponse;

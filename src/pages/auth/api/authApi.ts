@@ -8,12 +8,12 @@ import type {
 } from "./types";
 
 export const signup = (data: SignupRequest) =>
-  axios.post<ApiResponse<SignupResponse>>("/api/users", data);
+  axios.post<ApiResponse<SignupResponse>>("/api/spring/users", data);
 
 export const login = (data: LoginRequest) =>
-  axios.post<ApiResponse<LoginResponse>>("/api/auth", data);
+  axios.post<ApiResponse<LoginResponse>>("/api/spring/auth", data);
 
 export const logout = () =>
-  axios.get<ApiResponse<LoginResponse>>("/api/auth/logout");
+  axios.get<ApiResponse<LoginResponse>>("/api/spring/auth/logout");
 
-export const me = () => axios.get<ApiResponse<LoginResponse>>("/api/users/me");
+export const me = () => axios.get<ApiResponse<LoginResponse>>("/api/spring/users/me");

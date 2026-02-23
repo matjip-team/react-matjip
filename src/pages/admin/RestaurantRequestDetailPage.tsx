@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
@@ -136,7 +136,7 @@ export default function RestaurantRequestDetailPage() {
 
     try {
       setLoading(true);
-      const res = await axios.get(`/api/admin/restaurants/${requestId}`);
+      const res = await axios.get(`/api/spring/admin/restaurants/${requestId}`);
       const nextDetail = (res.data?.data ?? null) as RestaurantAdminDetail | null;
       setDetail(nextDetail);
       setRejectReason(nextDetail?.rejectedReason ?? "");
@@ -198,7 +198,7 @@ export default function RestaurantRequestDetailPage() {
 
     try {
       setProcessing(true);
-      await axios.patch(`/api/admin/restaurants/${detail.id}/approval`, {
+      await axios.patch(`/api/spring/admin/restaurants/${detail.id}/approval`, {
         status,
         rejectedReason: status === "REJECTED" ? trimmedReason : null,
       });
@@ -225,7 +225,7 @@ export default function RestaurantRequestDetailPage() {
 
     try {
       setOpeningLicense(true);
-      const res = await axios.get(`/api/admin/restaurants/${detail.id}/license-view-url`);
+      const res = await axios.get(`/api/spring/admin/restaurants/${detail.id}/license-view-url`);
       const urlFromData = res.data?.data;
       const urlFromMessage = res.data?.message;
       const viewUrl = urlFromData

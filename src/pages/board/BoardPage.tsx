@@ -70,7 +70,7 @@ export default function BoardPage() {
 
   useEffect(() => {
     const fetchBoards = async () => {
-      const res = await axios.get("/api/boards", {
+      const res = await axios.get("/api/spring/boards", {
         params: {
           page,
           size,

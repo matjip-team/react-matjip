@@ -16,10 +16,10 @@ interface PresignedUploadResponse<T> {
   data?: T;
 }
 
-const PRESIGNED_URL_ENDPOINT = "/api/restaurants/licenses/presigned-url";
-const LICENSE_VIEW_URL_ENDPOINT = "/api/restaurants/licenses/view-url";
-const RESTAURANT_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/restaurants/images/presigned-url";
-const BOARD_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/boards/images/presigned-url";
+const PRESIGNED_URL_ENDPOINT = "/api/spring/restaurants/licenses/presigned-url";
+const LICENSE_VIEW_URL_ENDPOINT = "/api/spring/restaurants/licenses/view-url";
+const RESTAURANT_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/spring/restaurants/images/presigned-url";
+const BOARD_IMAGE_PRESIGNED_URL_ENDPOINT = "/api/spring/boards/images/presigned-url";
 
 const getHttpStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;

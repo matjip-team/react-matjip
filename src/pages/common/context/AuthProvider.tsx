@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await axios.post<ApiResponse<null>>("/api/auth/logout");
+      await axios.post<ApiResponse<null>>("/api/spring/auth/logout");
       setUser(null);
       window.dispatchEvent(new CustomEvent("show-toast", { detail: { message: "로그아웃 되었습니다." } }));
       navigate("/auth/login");
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res =
           await axios.get<ApiResponse<User & { roles?: string[] }>>(
-            "/api/users/me",
+            "/api/spring/users/me",
           );
         if (res.data.success && res.data.data) {
           setUser(toUser(res.data.data));

@@ -29,7 +29,7 @@ export default function BlogFeaturedCarousel() {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await axios.get("/api/blogs", {
+        const res = await axios.get("/api/spring/blogs", {
           params: { page: 0, size: 12, type: null },
         });
         const data = res.data.data;

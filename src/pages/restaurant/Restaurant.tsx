@@ -101,7 +101,7 @@ export default function Restaurant() {
     if (!id) return;
 
     const fetchDetail = async () => {
-      const res = await axios.get(`/api/restaurants/${id}`);
+      const res = await axios.get(`/api/spring/restaurants/${id}`);
       setStore(res.data.data);
     };
 
@@ -109,7 +109,7 @@ export default function Restaurant() {
   }, [id]);
 
   const refresh = async () => {
-    const res = await axios.get(`/api/restaurants/${id}`);
+    const res = await axios.get(`/api/spring/restaurants/${id}`);
     setStore(res.data.data);
   };
 
@@ -118,9 +118,9 @@ export default function Restaurant() {
     if (!store) return;
 
     if (store.liked) {
-      await axios.delete(`/api/restaurants/${id}/likes`);
+      await axios.delete(`/api/spring/restaurants/${id}/likes`);
     } else {
-      await axios.post(`/api/restaurants/${id}/likes`);
+      await axios.post(`/api/spring/restaurants/${id}/likes`);
     }
 
     refresh();
@@ -137,7 +137,7 @@ export default function Restaurant() {
     }
     if (!myRating) return alert("평점을 선택해주세요.");
 
-    await axios.post(`/api/restaurants/${id}/reviews`, {
+    await axios.post(`/api/spring/restaurants/${id}/reviews`, {
       rating: myRating,
       content: reviewText,
     });
@@ -149,13 +149,13 @@ export default function Restaurant() {
 
   /* 리뷰 삭제 */
   const deleteReview = async (reviewId: number) => {
-    await axios.delete(`/api/restaurants/${id}/reviews/${reviewId}`);
+    await axios.delete(`/api/spring/restaurants/${id}/reviews/${reviewId}`);
     refresh();
   };
 
   /* 리뷰 수정 */
   const saveEdit = async (reviewId: number) => {
-    await axios.put(`/api/restaurants/${id}/reviews/${reviewId}`, {
+    await axios.put(`/api/spring/restaurants/${id}/reviews/${reviewId}`, {
       rating: editRating,
       content: editText,
     });

@@ -585,7 +585,7 @@ export default function RegisterPage({ embedded = false }: Props) {
           state: { imageUrl: form.imageUrl.trim() || null },
         });
       } else {
-        await axios.post("/api/restaurants", {
+        await axios.post("/api/spring/restaurants", {
           name: form.name.trim(),
           address: form.address.trim(),
           latitude: Number(form.latitude),

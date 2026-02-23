@@ -165,7 +165,7 @@ export default function BoardWrite() {
 
     setSaving(true);
     try {
-      await axios.post("/api/boards", {
+      await axios.post("/api/spring/boards", {
         title: title.trim(),
         content,
         boardType,

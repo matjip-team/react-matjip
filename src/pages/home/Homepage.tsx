@@ -115,7 +115,7 @@ export default function HomePage() {
         params.keyword = trimmed;
       }
 
-      const res = await axios.get("/api/restaurants", { params });
+      const res = await axios.get("/api/spring/restaurants", { params });
       const data: PageResponse<Restaurant> = res.data.data;
 
       const approvedOnly = (data.content ?? []).filter(
@@ -164,9 +164,9 @@ export default function HomePage() {
 
     try {
       if (target.liked) {
-        await axios.delete(`/api/restaurants/${storeId}/likes`);
+        await axios.delete(`/api/spring/restaurants/${storeId}/likes`);
       } else {
-        await axios.post(`/api/restaurants/${storeId}/likes`);
+        await axios.post(`/api/spring/restaurants/${storeId}/likes`);
       }
     } catch (error) {
       console.error("좋아요 실패", error);

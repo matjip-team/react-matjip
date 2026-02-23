@@ -76,7 +76,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingPost(true);
-      const res = await axios.get(`/api/boards/${id}`);
+      const res = await axios.get(`/api/spring/boards/${id}`);
       const data = res.data?.data as BoardPostDetail;
       setPost(data);
       setRecommended(Boolean(data?.recommended));
@@ -92,7 +92,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingComments(true);
-      const res = await axios.get(`/api/boards/${id}/comments`, {
+      const res = await axios.get(`/api/spring/boards/${id}/comments`, {
         params: { sort: sortType },
       });
       setComments((res.data?.data as CommentNode[]) ?? []);
@@ -127,8 +127,8 @@ export default function BoardDetail() {
     if (!id) return;
 
     try {
-      await axios.post(`/api/boards/${id}/recommendations`);
-      const res = await axios.get(`/api/boards/${id}`);
+      await axios.post(`/api/spring/boards/${id}/recommendations`);
+      const res = await axios.get(`/api/spring/boards/${id}`);
       const data = res.data?.data as BoardPostDetail;
       setPost(data);
       setRecommended(Boolean(data?.recommended));
@@ -169,7 +169,7 @@ export default function BoardDetail() {
     if (!reason || !reason.trim()) return;
 
     try {
-      await axios.post(`/api/boards/${id}/reports`, { reason: reason.trim() });
+      await axios.post(`/api/spring/boards/${id}/reports`, { reason: reason.trim() });
       setReportSubmitted(true);
       setToast("신고가 접수되었습니다.");
     } catch (e: unknown) {
@@ -190,7 +190,7 @@ export default function BoardDetail() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
     try {
-      await axios.delete(`/api/boards/${id}`);
+      await axios.delete(`/api/spring/boards/${id}`);
       setToast("게시글을 삭제했습니다.");
       navigate("/board");
     } catch {
@@ -207,7 +207,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/boards/${id}/comments`, { content: newComment });
+      await axios.post(`/api/spring/boards/${id}/comments`, { content: newComment });
       setNewComment("");
       await fetchComments();
       await fetchPost();
@@ -233,7 +233,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.post(`/api/boards/${id}/comments`, { content, parentId });
+      await axios.post(`/api/spring/boards/${id}/comments`, { content, parentId });
       setReplyText("");
       setReplyTo(null);
       await fetchComments();
@@ -260,7 +260,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.put(`/api/boards/${id}/comments/${commentId}`, { content: editingText });
+      await axios.put(`/api/spring/boards/${id}/comments/${commentId}`, { content: editingText });
       setEditingId(null);
       setEditingText("");
       await fetchComments();
@@ -284,7 +284,7 @@ export default function BoardDetail() {
 
     try {
       setLoadingSubmit(true);
-      await axios.delete(`/api/boards/${id}/comments/${commentId}`);
+      await axios.delete(`/api/spring/boards/${id}/comments/${commentId}`);
       await fetchComments();
       await fetchPost();
       setToast("댓글을 삭제했습니다.");

@@ -247,7 +247,7 @@ export default function BlogWrite() {
     }
 
     try {
-      await axios.post("/api/blogs", {
+      await axios.post("/api/spring/blogs", {
         title,
         content: html,
         contentHtml: html,

@@ -69,7 +69,7 @@ export default function RestaurantRequestPage() {
 
       const responses = await Promise.all(
         statuses.map((status) =>
-          axios.get("/api/admin/restaurants", { params: { status } }),
+          axios.get("/api/spring/admin/restaurants", { params: { status } }),
         ),
       );
 

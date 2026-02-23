@@ -1,1 +1,1 @@
-export const ADMIN_BLOG_API = "/api/admin/blogs";
+export const ADMIN_BLOG_API = "/api/spring/admin/blogs";

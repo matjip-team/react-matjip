@@ -5,10 +5,10 @@ import type { LikesPage } from "../types/likes";
 import type { ReviewPage } from "../types/review";
 
 export const updateProfile = (data: FormData) =>
-  axios.put<ApiResponse<void>>("/api/mypage/profile", data);
+  axios.put<ApiResponse<void>>("/api/spring/mypage/profile", data);
 
 export const getProfile = () =>
-  axios.get<ApiResponse<ProfileResponse>>("/api/mypage/profile");
+  axios.get<ApiResponse<ProfileResponse>>("/api/spring/mypage/profile");
 
 export const getReview = (cursor: number, limit: number) => {
   const params = new URLSearchParams({
@@ -16,7 +16,7 @@ export const getReview = (cursor: number, limit: number) => {
     limit: limit.toString(),
   });
   return axios.get<ApiResponse<ReviewPage>>(
-    `/api/mypage/reviews?${params.toString()}`,
+    `/api/spring/mypage/reviews?${params.toString()}`,
   );
 };
 
@@ -26,13 +26,13 @@ export const getLikes = (cursor: number, limit: number) => {
     limit: limit.toString(),
   });
   return axios.get<ApiResponse<LikesPage>>(
-    `/api/mypage/likes?${params.toString()}`,
+    `/api/spring/mypage/likes?${params.toString()}`,
   );
 };
 
 export const deleteLike = (likeId: number) => {
-  return axios.delete(`/api/mypage/likes/${likeId}`);
+  return axios.delete(`/api/spring/mypage/likes/${likeId}`);
 };
 
 export const withdrawAccount = (password: string) =>
-  axios.post<ApiResponse<void>>("/api/mypage/withdraw", { password });
+  axios.post<ApiResponse<void>>("/api/spring/mypage/withdraw", { password });

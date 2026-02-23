@@ -186,7 +186,7 @@ export default function BlogEdit() {
   );
 
   useEffect(() => {
-    axios.get(`/api/blogs/${id}`).then((res) => {
+    axios.get(`/api/spring/blogs/${id}`).then((res) => {
       const data = res.data.data;
       const html = data.contentHtml ?? data.content ?? "";
       setTitle(data.title ?? "");
@@ -309,7 +309,7 @@ export default function BlogEdit() {
     }
 
     try {
-      await axios.put(`/api/blogs/${id}`, {
+      await axios.put(`/api/spring/blogs/${id}`, {
         title,
         content: html,
         contentHtml: html,
