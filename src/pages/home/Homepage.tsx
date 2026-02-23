@@ -63,6 +63,12 @@ const S3_PUBLIC_BASE_URL =
 
 const ACCENT = "#ff6b00";
 
+const HERO_IMAGES = [
+  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&q=80",
+  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80",
+  "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1920&q=80",
+];
+
 const toDisplayImageUrl = (value?: string | null): string | null => {
   const raw = value?.trim();
   if (!raw) return null;
@@ -85,6 +91,7 @@ export default function HomePage() {
   const [keyword, setKeyword] = useState(keywordParam);
   const [page, setPage] = useState(pageParam);
   const [totalPages, setTotalPages] = useState(0);
+  const [heroIndex, setHeroIndex] = useState(0);
 
   // URL 파라미터 변경 시 상태 동기화 (뒤로가기 등)
   useEffect(() => {
@@ -92,6 +99,12 @@ export default function HomePage() {
     setKeyword(keywordParam);
     setSelectedCategory(categoryParam);
   }, [pageParam, keywordParam, categoryParam]);
+
+  // 히어로 배경 3장 스무스 전환
+  useEffect(() => {
+    const id = setInterval(() => setHeroIndex((i) => (i + 1) % HERO_IMAGES.length), 5000);
+    return () => clearInterval(id);
+  }, []);
 
   /* ===================== 맛집 조회 ===================== */
   const fetchRestaurants = useCallback(
@@ -190,13 +203,10 @@ export default function HomePage() {
           px: { xs: 2, sm: 3 },
         }}
       >
-      {/* HERO 영역 */}
+      {/* HERO 영역 - 3장 배경 스무스 전환 */}
       <Box
         sx={{
           height: { xs: 320, sm: 360 },
-          backgroundImage: "url('/images/hero-bg.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
           position: "relative",
           borderRadius: 2,
           display: "flex",
@@ -209,6 +219,21 @@ export default function HomePage() {
           overflow: "hidden",
         }}
       >
+        {HERO_IMAGES.map((url, i) => (
+          <Box
+            key={url}
+            sx={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url('${url}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              borderRadius: 2,
+              opacity: heroIndex === i ? 1 : 0,
+              transition: "opacity 1.2s ease-in-out",
+            }}
+          />
+        ))}
         <Box
           sx={{
             position: "absolute",

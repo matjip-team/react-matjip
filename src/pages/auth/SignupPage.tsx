@@ -79,7 +79,9 @@ const SignupPage = () => {
 
       // 서버가 HTTP 200이면 success 체크
       if (response.data?.success) {
-        navigate("/auth/login");
+        navigate("/auth/login", {
+          state: { signupSuccess: "회원 가입처리 되었습니다. 로그인 하세요." },
+        });
         return;
       }
 
@@ -112,6 +114,7 @@ const SignupPage = () => {
         <Box
           component="form"
           onSubmit={handleSubmit}
+          autoComplete="off"
           sx={{ display: "flex", flexDirection: "column" }}
         >
           {/* 헤더 */}
@@ -158,6 +161,7 @@ const SignupPage = () => {
                 helperText={fieldErrors.email}
                 required
                 fullWidth
+                autoComplete="off"
                 sx={textFieldSx}
               />
               <TextField
@@ -168,6 +172,7 @@ const SignupPage = () => {
                 helperText={fieldErrors.name}
                 required
                 fullWidth
+                autoComplete="off"
                 sx={textFieldSx}
               />
               <TextField
@@ -178,6 +183,7 @@ const SignupPage = () => {
                 helperText={fieldErrors.nickname}
                 required
                 fullWidth
+                autoComplete="off"
                 sx={textFieldSx}
               />
               <TextField
@@ -189,6 +195,7 @@ const SignupPage = () => {
                 helperText={fieldErrors.password}
                 required
                 fullWidth
+                autoComplete="new-password"
                 sx={textFieldSx}
               />
               <TextField
@@ -200,6 +207,7 @@ const SignupPage = () => {
                 helperText={fieldErrors.passwordConfirm}
                 required
                 fullWidth
+                autoComplete="new-password"
                 sx={textFieldSx}
               />
             </Box>

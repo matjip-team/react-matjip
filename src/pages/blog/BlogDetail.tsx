@@ -476,17 +476,6 @@ export default function BlogDetail() {
 
         <Divider sx={{ my: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-        {/* 이미지 */}
-        {post?.imageUrl && (
-          <Box sx={{ my: 3, textAlign: "center" }}>
-            <img
-              src={post?.imageUrl}
-              alt="첨부"
-              style={{ maxWidth: "100%", maxHeight: 400 }}
-            />
-          </Box>
-        )}
-
         {/* 본문 */}
         <Box
           sx={{
@@ -572,57 +561,59 @@ export default function BlogDetail() {
 
           <Divider sx={{ mb: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-          {/* 댓글 작성 */}
-          <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={2}
-              maxRows={6}
-              size="small"
-              placeholder="댓글을 입력하세요"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  submitComment();
-                }
-              }}
-              disabled={loadingSubmit}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 1.5,
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: ACCENT,
-                    borderWidth: 2,
+          {/* 댓글 작성 - 로그인 시에만 표시 */}
+          {user && (
+            <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={6}
+                size="small"
+                placeholder="댓글을 입력하세요"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    submitComment();
+                  }
+                }}
+                disabled={loadingSubmit}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: ACCENT,
+                      borderWidth: 2,
+                    },
                   },
-                },
-                "& textarea": { fontSize: 14 },
-              }}
-            />
-            <Button
-              variant="contained"
-              sx={{
-                bgcolor: ACCENT,
-                whiteSpace: "nowrap",
-                height: 40,
-                fontSize: 14,
-                px: 2,
-                borderRadius: 1.5,
-                fontWeight: 600,
-                "&:hover": { bgcolor: "#e55f00" },
-              }}
-              onClick={submitComment}
-              disabled={loadingSubmit}
-            >
-              {loadingSubmit ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                "등록"
-              )}
-            </Button>
-          </Box>
+                  "& textarea": { fontSize: 14 },
+                }}
+              />
+              <Button
+                variant="contained"
+                sx={{
+                  bgcolor: ACCENT,
+                  whiteSpace: "nowrap",
+                  height: 40,
+                  fontSize: 14,
+                  px: 2,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  "&:hover": { bgcolor: "#e55f00" },
+                }}
+                onClick={submitComment}
+                disabled={loadingSubmit}
+              >
+                {loadingSubmit ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  "등록"
+                )}
+              </Button>
+            </Box>
+          )}
 
           {/* 댓글 목록 */}
           {loadingComments ? (
@@ -765,24 +756,25 @@ export default function BlogDetail() {
                   )}
                 </Box>
 
-                {/* 답글 달기 버튼 */}
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    color: ACCENT,
-                    cursor: "pointer",
-                    mt: 0.6,
-                    width: "fit-content",
-                    ml: 1,
-                  }}
-                  onClick={() => {
-                    if (!requireLogin()) return;
-                    setReplyTo(c.id);
-                    setReplyText("");
-                  }}
-                >
-                  답글 달기
-                </Typography>
+                {/* 답글 달기 버튼 - 로그인 시에만 표시 */}
+                {user && (
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      color: ACCENT,
+                      cursor: "pointer",
+                      mt: 0.6,
+                      width: "fit-content",
+                      ml: 1,
+                    }}
+                    onClick={() => {
+                      setReplyTo(c.id);
+                      setReplyText("");
+                    }}
+                  >
+                    답글 달기
+                  </Typography>
+                )}
 
                 {/* 대댓글 입력창 */}
                 {replyTo === c.id && (
