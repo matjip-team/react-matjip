@@ -1,0 +1,12 @@
+#십볼릭링크 걸기
+# Git에서 관리하는 실제 파일 경로
+NGINX_HOME="/home/vm1/deployment/nginx"
+
+# ① default.conf
+sudo ln -sf $NGINX_HOME/default.conf /etc/nginx/conf.d/default.conf
+
+# ② upstream.conf
+sudo ln -sf $NGINX_HOME/upstream.conf /etc/nginx/conf.d/upstream.conf
+
+# ③ env.conf (현재 선택된 환경)
+sudo ln -sf $NGINX_HOME/env.conf /etc/nginx/conf.d/env.confvm1@vm1:~/deployment/nginx$
