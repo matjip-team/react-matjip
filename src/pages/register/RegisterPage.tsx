@@ -102,7 +102,10 @@ const ACCEPTED_REPRESENTATIVE_IMAGE_TYPES = [
 ];
 const MAX_REPRESENTATIVE_IMAGE_SIZE = 10 * 1024 * 1024;
 const S3_PUBLIC_BASE_URL =
-  (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(/\/$/, "") ??
+  (import.meta.env.VITE_S3_PUBLIC_BASE_URL as string | undefined)?.replace(
+    /\/$/,
+    "",
+  ) ??
   "https://matjip-board-images-giduon-2026.s3.ap-northeast-2.amazonaws.com";
 
 const getHttpStatus = (error: unknown): number | undefined =>
@@ -136,10 +139,12 @@ export default function RegisterPage({ embedded = false }: Props) {
   const editRequestId =
     Number.isInteger(queryEditRequestId) && queryEditRequestId > 0
       ? queryEditRequestId
-      : (location.state as { mode?: string; requestId?: number } | null)?.mode === "edit"
+      : (location.state as { mode?: string; requestId?: number } | null)
+            ?.mode === "edit"
         ? Number((location.state as { requestId?: number } | null)?.requestId)
         : null;
-  const isEditMode = Number.isInteger(editRequestId) && Number(editRequestId) > 0;
+  const isEditMode =
+    Number.isInteger(editRequestId) && Number(editRequestId) > 0;
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [editLoading, setEditLoading] = useState(false);
@@ -186,7 +191,16 @@ export default function RegisterPage({ embedded = false }: Props) {
       table: false,
       "table-better": {
         language: "en_US",
-        menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+        menus: [
+          "column",
+          "row",
+          "merge",
+          "table",
+          "cell",
+          "wrap",
+          "copy",
+          "delete",
+        ],
         toolbarTable: true,
       },
       keyboard: {
@@ -224,14 +238,20 @@ export default function RegisterPage({ embedded = false }: Props) {
       try {
         setEditLoading(true);
         const data = await getMyRestaurantRequestDetail(editRequestId);
-        const normalizedImageUrl = toDisplayImageUrl(data.imageUrl ?? data.representativeImageUrl ?? "");
+        const normalizedImageUrl = toDisplayImageUrl(
+          data.imageUrl ?? data.representativeImageUrl ?? "",
+        );
         setForm({
           name: data.name ?? "",
           address: data.address ?? "",
           latitude:
-            data.latitude !== null && data.latitude !== undefined ? String(data.latitude) : "",
+            data.latitude !== null && data.latitude !== undefined
+              ? String(data.latitude)
+              : "",
           longitude:
-            data.longitude !== null && data.longitude !== undefined ? String(data.longitude) : "",
+            data.longitude !== null && data.longitude !== undefined
+              ? String(data.longitude)
+              : "",
           phone: data.phone ?? "",
           description: data.description ?? "",
           categories: data.categoryNames ?? [],
@@ -253,7 +273,12 @@ export default function RegisterPage({ embedded = false }: Props) {
   }, [editRequestId, isEditMode, user]);
 
   useEffect(() => {
-    if (!form.latitude || !form.longitude || !window.kakao?.maps || !mapRef.current) {
+    if (
+      !form.latitude ||
+      !form.longitude ||
+      !window.kakao?.maps ||
+      !mapRef.current
+    ) {
       return;
     }
     const lat = Number(form.latitude);
@@ -384,7 +409,9 @@ export default function RegisterPage({ embedded = false }: Props) {
     representativeImageInputRef.current?.click();
   };
 
-  const handleLicenseFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLicenseFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -409,14 +436,20 @@ export default function RegisterPage({ embedded = false }: Props) {
       setToast("사업자등록증 파일 업로드가 완료되었습니다.");
     } catch (error: unknown) {
       const status = getHttpStatus(error);
-      setToast(status === 401 || status === 403 ? "로그인이 필요합니다." : "사업자등록증 파일 업로드에 실패했습니다.");
+      setToast(
+        status === 401 || status === 403
+          ? "로그인이 필요합니다."
+          : "사업자등록증 파일 업로드에 실패했습니다.",
+      );
     } finally {
       setLicenseUploading(false);
       e.target.value = "";
     }
   };
 
-  const handleRepresentativeImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRepresentativeImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -446,7 +479,11 @@ export default function RegisterPage({ embedded = false }: Props) {
       setToast("대표사진 업로드가 완료되었습니다.");
     } catch (error: unknown) {
       const status = getHttpStatus(error);
-      setToast(status === 401 || status === 403 ? "로그인이 필요합니다." : "대표사진 업로드에 실패했습니다.");
+      setToast(
+        status === 401 || status === 403
+          ? "로그인이 필요합니다."
+          : "대표사진 업로드에 실패했습니다.",
+      );
     } finally {
       setRepresentativeUploading(false);
       e.target.value = "";
@@ -456,14 +493,18 @@ export default function RegisterPage({ embedded = false }: Props) {
   const validate = () => {
     if (!form.name.trim()) return "가게명을 입력해 주세요.";
     if (!form.address.trim()) return "주소를 선택해 주세요.";
-    if (!form.latitude || !form.longitude) return "주소 검색 후 위치를 선택해 주세요.";
-    if (form.categories.length === 0) return "카테고리를 1개 이상 선택해 주세요.";
+    if (!form.latitude || !form.longitude)
+      return "주소 검색 후 위치를 선택해 주세요.";
+    if (form.categories.length === 0)
+      return "카테고리를 1개 이상 선택해 주세요.";
     if (!form.imageUrl.trim()) return "대표사진을 업로드해 주세요.";
-    if (!isEditMode && !form.businessLicenseFileKey.trim()) return "사업자등록증 파일을 업로드해 주세요.";
+    if (!isEditMode && !form.businessLicenseFileKey.trim())
+      return "사업자등록증 파일을 업로드해 주세요.";
 
     const lat = Number(form.latitude);
     const lng = Number(form.longitude);
-    if (Number.isNaN(lat) || Number.isNaN(lng)) return "위도/경도 값이 올바르지 않습니다.";
+    if (Number.isNaN(lat) || Number.isNaN(lng))
+      return "위도/경도 값이 올바르지 않습니다.";
     if (lat < -90 || lat > 90) return "위도는 -90 ~ 90 범위여야 합니다.";
     if (lng < -180 || lng > 180) return "경도는 -180 ~ 180 범위여야 합니다.";
 
@@ -472,7 +513,10 @@ export default function RegisterPage({ embedded = false }: Props) {
 
   const handleOpenLicenseFile = async () => {
     const fileKey = form.businessLicenseFileKey.trim();
-    if (!fileKey && (!isEditMode || !editRequestId || !hasExistingLicenseFile)) {
+    if (
+      !fileKey &&
+      (!isEditMode || !editRequestId || !hasExistingLicenseFile)
+    ) {
       setToast("확인할 첨부파일이 없습니다.");
       return;
     }
@@ -591,7 +635,14 @@ export default function RegisterPage({ embedded = false }: Props) {
             ...(embedded ? { py: 0 } : { py: 5 }),
           }}
         >
-          <Alert severity="warning" sx={{ mb: 2, borderRadius: 2, border: "1px solid rgba(245,158,11,0.3)" }}>
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 2,
+              borderRadius: 2,
+              border: "1px solid rgba(245,158,11,0.3)",
+            }}
+          >
             맛집 등록은 로그인 후 이용할 수 있습니다.
           </Alert>
           <Stack direction="row" spacing={1.5}>
@@ -694,7 +745,14 @@ export default function RegisterPage({ embedded = false }: Props) {
 
           <Box component="form" onSubmit={handleSubmit}>
             {isEditMode && editLoading && (
-              <Alert severity="info" sx={{ mb: 2, borderRadius: 2, border: "1px solid rgba(33,150,243,0.3)" }}>
+              <Alert
+                severity="info"
+                sx={{
+                  mb: 2,
+                  borderRadius: 2,
+                  border: "1px solid rgba(33,150,243,0.3)",
+                }}
+              >
                 수정할 신청 정보를 불러오는 중입니다...
               </Alert>
             )}
@@ -793,12 +851,21 @@ export default function RegisterPage({ embedded = false }: Props) {
                         py: 1,
                         cursor: "pointer",
                         borderBottom: "1px solid rgba(0,0,0,0.06)",
-                        backgroundColor: selectedPlaceId === place.id ? "rgba(255,107,0,0.08)" : "#fff",
+                        backgroundColor:
+                          selectedPlaceId === place.id
+                            ? "rgba(255,107,0,0.08)"
+                            : "#fff",
                         "&:hover": { backgroundColor: "rgba(255,107,0,0.04)" },
                       }}
                     >
-                      <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#334155" }}>{place.name}</Typography>
-                      <Typography sx={{ fontSize: 12, color: "#64748b" }}>{place.address}</Typography>
+                      <Typography
+                        sx={{ fontSize: 14, fontWeight: 600, color: "#334155" }}
+                      >
+                        {place.name}
+                      </Typography>
+                      <Typography sx={{ fontSize: 12, color: "#64748b" }}>
+                        {place.address}
+                      </Typography>
                     </Box>
                   ))}
                 </Box>
@@ -818,8 +885,17 @@ export default function RegisterPage({ embedded = false }: Props) {
               />
 
               <Stack spacing={1}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#334155" }}>대표사진 (필수)</Typography>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 600, color: "#334155" }}
+                >
+                  대표사진 (필수)
+                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ sm: "center" }}
+                >
                   <Button
                     type="button"
                     variant="outlined"
@@ -837,15 +913,23 @@ export default function RegisterPage({ embedded = false }: Props) {
                       },
                     }}
                   >
-                    {representativeUploading ? "업로드 중..." : "대표사진 업로드"}
+                    {representativeUploading
+                      ? "업로드 중..."
+                      : "대표사진 업로드"}
                   </Button>
-                  <Typography sx={{ fontSize: 13, color: "#64748b" }}>{representativeImageName || "선택된 대표사진 없음"}</Typography>
+                  <Typography sx={{ fontSize: 13, color: "#64748b" }}>
+                    {representativeImageName || "선택된 대표사진 없음"}
+                  </Typography>
                 </Stack>
-                <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>허용: PNG, JPG, WEBP (최대 10MB)</Typography>
+                <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>
+                  허용: PNG, JPG, WEBP (최대 10MB)
+                </Typography>
                 {(representativePreviewUrl || form.imageUrl) && (
                   <Box
                     component="img"
-                    src={toDisplayImageUrl(representativePreviewUrl || form.imageUrl)}
+                    src={toDisplayImageUrl(
+                      representativePreviewUrl || form.imageUrl,
+                    )}
                     alt="대표사진 미리보기"
                     onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                       const img = e.currentTarget;
@@ -863,12 +947,27 @@ export default function RegisterPage({ embedded = false }: Props) {
                     }}
                   />
                 )}
-                <input ref={representativeImageInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" style={{ display: "none" }} onChange={handleRepresentativeImageChange} />
+                <input
+                  ref={representativeImageInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  style={{ display: "none" }}
+                  onChange={handleRepresentativeImageChange}
+                />
               </Stack>
 
               <Stack spacing={1}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#334155" }}>사업자등록증 첨부 (임시 보관)</Typography>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 600, color: "#334155" }}
+                >
+                  사업자등록증 첨부 (임시 보관)
+                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ sm: "center" }}
+                >
                   <Button
                     type="button"
                     variant="outlined"
@@ -888,8 +987,11 @@ export default function RegisterPage({ embedded = false }: Props) {
                   >
                     {licenseUploading ? "업로드 중..." : "파일 선택/업로드"}
                   </Button>
-                  <Typography sx={{ fontSize: 13, color: "#64748b" }}>{licenseFileName || "선택된 파일 없음"}</Typography>
-                  {(hasExistingLicenseFile || Boolean(form.businessLicenseFileKey.trim())) && (
+                  <Typography sx={{ fontSize: 13, color: "#64748b" }}>
+                    {licenseFileName || "선택된 파일 없음"}
+                  </Typography>
+                  {(hasExistingLicenseFile ||
+                    Boolean(form.businessLicenseFileKey.trim())) && (
                     <Button
                       type="button"
                       size="small"
@@ -910,8 +1012,16 @@ export default function RegisterPage({ embedded = false }: Props) {
                     </Button>
                   )}
                 </Stack>
-                <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>허용: PDF, PNG, JPG, WEBP (최대 10MB, 14일 후 자동 삭제)</Typography>
-                <input ref={licenseFileInputRef} type="file" accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp" style={{ display: "none" }} onChange={handleLicenseFileChange} />
+                <Typography sx={{ fontSize: 12, color: "#94a3b8" }}>
+                  허용: PDF, PNG, JPG, WEBP (최대 10MB, 14일 후 자동 삭제)
+                </Typography>
+                <input
+                  ref={licenseFileInputRef}
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
+                  style={{ display: "none" }}
+                  onChange={handleLicenseFileChange}
+                />
               </Stack>
 
               <TextField
@@ -920,7 +1030,11 @@ export default function RegisterPage({ embedded = false }: Props) {
                 onChange={handlePhoneChange}
                 fullWidth
                 placeholder="숫자와 - 입력 (예: 02-123-4567)"
-                inputProps={{ inputMode: "tel", pattern: "[0-9-]*", maxLength: 13 }}
+                inputProps={{
+                  inputMode: "tel",
+                  pattern: "[0-9-]*",
+                  maxLength: 13,
+                }}
                 helperText="숫자와 하이픈(-)만 입력 가능합니다."
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -935,7 +1049,11 @@ export default function RegisterPage({ embedded = false }: Props) {
               />
 
               <Stack spacing={1}>
-                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#334155" }}>카테고리</Typography>
+                <Typography
+                  sx={{ fontWeight: 600, fontSize: 14, color: "#334155" }}
+                >
+                  카테고리
+                </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                   {CATEGORY_OPTIONS.map((category) => {
                     const selected = form.categories.includes(category);
@@ -953,7 +1071,9 @@ export default function RegisterPage({ embedded = false }: Props) {
                           border: `1px solid ${selected ? ACCENT : "rgba(0,0,0,0.2)"}`,
                           "&:hover": {
                             bgcolor: selected ? "#e55f00" : "rgba(0,0,0,0.04)",
-                            borderColor: selected ? "#e55f00" : "rgba(0,0,0,0.3)",
+                            borderColor: selected
+                              ? "#e55f00"
+                              : "rgba(0,0,0,0.3)",
                           },
                         }}
                       />
@@ -963,7 +1083,11 @@ export default function RegisterPage({ embedded = false }: Props) {
               </Stack>
 
               <Stack spacing={1}>
-                <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#334155" }}>식당 정보글을 작성해주세요</Typography>
+                <Typography
+                  sx={{ fontWeight: 600, fontSize: 14, color: "#334155" }}
+                >
+                  식당 정보글을 작성해주세요
+                </Typography>
                 <Box
                   sx={{
                     "& .ql-toolbar.ql-snow": {
@@ -975,13 +1099,19 @@ export default function RegisterPage({ embedded = false }: Props) {
                       borderRadius: "0 0 8px 8px",
                       borderColor: "rgba(0,0,0,0.12)",
                     },
-                    "& .ql-editor": { minHeight: 180, fontSize: 15, lineHeight: 1.7 },
+                    "& .ql-editor": {
+                      minHeight: 180,
+                      fontSize: 15,
+                      lineHeight: 1.7,
+                    },
                   }}
                 >
                   <ReactQuill
                     theme="snow"
                     value={form.description}
-                    onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
+                    onChange={(value) =>
+                      setForm((prev) => ({ ...prev, description: value }))
+                    }
                     modules={descriptionQuillModules}
                     placeholder="식당 소개, 대표 메뉴, 추천 포인트를 작성해 주세요."
                   />
@@ -996,7 +1126,13 @@ export default function RegisterPage({ embedded = false }: Props) {
               >
                 <Button
                   variant="outlined"
-                  onClick={() => navigate(isEditMode && editRequestId ? `/register/requests/${editRequestId}` : "/")}
+                  onClick={() =>
+                    navigate(
+                      isEditMode && editRequestId
+                        ? `/register/requests/${editRequestId}`
+                        : "/",
+                    )
+                  }
                   sx={{
                     height: 40,
                     fontSize: 14,
@@ -1017,7 +1153,12 @@ export default function RegisterPage({ embedded = false }: Props) {
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={editLoading || submitting || licenseUploading || representativeUploading}
+                  disabled={
+                    editLoading ||
+                    submitting ||
+                    licenseUploading ||
+                    representativeUploading
+                  }
                   sx={{
                     height: 40,
                     fontSize: 14,
@@ -1029,21 +1170,27 @@ export default function RegisterPage({ embedded = false }: Props) {
                     "&:hover": { bgcolor: "#e55f00" },
                   }}
                 >
-                  {submitting ? <CircularProgress size={20} color="inherit" /> : isEditMode ? "수정 저장" : "등록"}
+                  {submitting ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : isEditMode ? (
+                    "수정 저장"
+                  ) : (
+                    "등록"
+                  )}
                 </Button>
               </Stack>
             </Stack>
           </Box>
         </Paper>
 
-      <Snackbar
-        open={Boolean(toast)}
-        autoHideDuration={2000}
-        message={toast}
-        onClose={() => setToast("")}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      />
-    </Box>
+        <Snackbar
+          open={Boolean(toast)}
+          autoHideDuration={2000}
+          message={toast}
+          onClose={() => setToast("")}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        />
+      </Box>
     </ThemeProvider>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
@@ -428,7 +428,7 @@ export default function RestaurantRequestDetailPage() {
           >
             <Box>
               <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#334155", fontSize: 15 }}>
-                신청 요약
+                신청 요약1
               </Typography>
               <Stack spacing={0}>
                 <InfoRow label="신청자" value={detail.registeredByNickname || "-"} />
