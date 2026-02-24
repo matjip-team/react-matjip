@@ -21,7 +21,7 @@ const textFieldSx = {
   },
   "& .MuiInputLabel-root.Mui-focused": { color: MAIN_COLOR },
 };
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { login } from "./api/authApi";
 import type { LoginRequest } from "./api/types";
 import type { FieldErrors } from "../common/types/api";
@@ -39,7 +39,10 @@ function toUser(data: { id: number; email: string; name: string; nickname: strin
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser } = useAuth();
+  const signupSuccessMessage =
+    (location.state as { signupSuccess?: string } | null)?.signupSuccess;
 
   // 로그인된 상태면 메인으로 이동
   useEffect(() => {
@@ -121,6 +124,7 @@ const LoginPage = () => {
         <Box
           component="form"
           onSubmit={handleSubmit}
+          autoComplete="off"
           sx={{ display: "flex", flexDirection: "column" }}
         >
           {/* 헤더 */}
@@ -151,6 +155,11 @@ const LoginPage = () => {
 
           {/* 폼 */}
           <Box sx={{ px: 4, py: 4 }}>
+            {signupSuccessMessage && (
+              <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
+                {signupSuccessMessage}
+              </Alert>
+            )}
             {globalError && (
               <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
                 {globalError}
@@ -167,6 +176,7 @@ const LoginPage = () => {
                 helperText={fieldErrors.email}
                 required
                 fullWidth
+                autoComplete="off"
                 sx={textFieldSx}
               />
               <TextField
@@ -178,6 +188,7 @@ const LoginPage = () => {
                 helperText={fieldErrors.password}
                 required
                 fullWidth
+                autoComplete="off"
                 sx={textFieldSx}
               />
             </Box>

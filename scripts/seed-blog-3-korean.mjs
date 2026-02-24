@@ -46,7 +46,7 @@ const getContent = (p) => `
 `;
 
 async function main() {
-  const res = await fetch(`${API}/api/auth`, {
+  const res = await fetch(`${API}/api/spring/auth`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: "test@naver.com", password: "12345678" }),
@@ -69,7 +69,7 @@ async function main() {
       blogType: "REVIEW",
       imageUrl: p.img,
     };
-    const r = await fetch(`${API}/api/blogs`, {
+    const r = await fetch(`${API}/api/spring/blogs`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json; charset=utf-8",

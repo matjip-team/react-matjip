@@ -442,11 +442,14 @@ export default function BlogEdit() {
                     borderRadius: "4px 4px 0 0",
                   },
                   "& .ql-container.ql-snow": {
-                    minHeight: 360,
+                    height: 500,
+                    maxHeight: "70vh",
                     borderRadius: "0 0 4px 4px",
+                    overflowY: "auto",
+                    display: "block",
                   },
                   "& .ql-editor": {
-                    minHeight: 320,
+                    minHeight: 460,
                     fontSize: 15,
                     lineHeight: 1.6,
                   },

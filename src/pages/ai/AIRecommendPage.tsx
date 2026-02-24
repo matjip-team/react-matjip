@@ -6,6 +6,7 @@ import {
   CircularProgress,
   IconButton,
   Paper,
+  Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
@@ -14,14 +15,10 @@ import { useState } from "react";
 import { INPUT_HEIGHT } from "../common/utils/helperUtil";
 import axios from "../common/axios";
 import { useAuth } from "../common/context/useAuth";
+import { AI_RECOMMEND_BASE_URL } from "../common/config/config";
+import RecommendedPlaceDetail, { type Place } from "./RecommendedPlaceDetail";
 
-type Place = {
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-  category: string;
-};
+// import { API_BASE_URL } from "../common/config/config"; // logUserChoice용
 
 type RecommendResponse = {
   recommended_places?: Place[];
@@ -36,6 +33,8 @@ export default function AIRecommendPage() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState("");
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
 
   const getRecommendation = async () => {
     if (!question.trim()) return;
@@ -46,7 +45,7 @@ export default function AIRecommendPage() {
 
     try {
       const res = await axios.post<RecommendResponse>(
-        "http://localhost:8000/recommend/",
+        `${AI_RECOMMEND_BASE_URL}/api/fastapi/recommend/`,
         {
           question,
           user_id: user?.id,
@@ -63,18 +62,27 @@ export default function AIRecommendPage() {
     }
   };
 
-  const logUserChoice = async (place: Place) => {
-    if (!user) return;
+  // 맛집 카드 클릭 시 하단 상세 컴포넌트로 보여주기 위해 주석 처리
+  // const logUserChoice = async (place: Place) => {
+  //   if (!user) {
+  //     setToast("로그인하면 맛집을 기록할 수 있어요");
+  //     return;
+  //   }
+  //   try {
+  //     await axios.post(`${API_BASE_URL}/user-history`, {
+  //       userId: user.id,
+  //       placeName: place.name,
+  //       category: place.category,
+  //     });
+  //     setToast(`"${place.name}" 맛집을 기록했어요 👍`);
+  //   } catch (err) {
+  //     console.error("사용자 선택 기록 실패", err);
+  //     setToast("기록에 실패했어요. 다시 시도해 주세요.");
+  //   }
+  // };
 
-    try {
-      await axios.post("http://localhost:8080/user-history", {
-        userId: user.id,
-        placeName: place.name,
-        category: place.category,
-      });
-    } catch (err) {
-      console.error("사용자 선택 기록 실패", err);
-    }
+  const handleSelectPlace = (place: Place) => {
+    setSelectedPlace(place);
   };
 
   return (
@@ -219,18 +227,19 @@ export default function AIRecommendPage() {
             <Card
               key={i}
               variant="outlined"
-              onClick={() => logUserChoice(p)}
+              onClick={() => handleSelectPlace(p)}
               sx={{
                 border: "1px solid",
-                borderColor: "rgba(0,0,0,0.06)",
+                borderColor: selectedPlace?.name === p.name ? ACCENT : "rgba(0,0,0,0.06)",
                 borderRadius: 2,
-                cursor: user ? "pointer" : "default",
+                cursor: "pointer",
                 overflow: "hidden",
                 transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)",
+                boxShadow: selectedPlace?.name === p.name ? "0 8px 24px rgba(255,107,0,0.15)" : "none",
                 "&:hover": {
                   borderColor: ACCENT,
                   boxShadow: "0 8px 24px rgba(255,107,0,0.12)",
-                  transform: user ? "translateY(-2px)" : "none",
+                  transform: "translateY(-2px)",
                 },
               }}
             >
@@ -279,6 +288,29 @@ export default function AIRecommendPage() {
           ))}
         </Box>
       )}
+
+      {/* 선택한 맛집 상세 (하단 표시) */}
+      {selectedPlace && (
+        <RecommendedPlaceDetail
+          place={selectedPlace}
+          onClose={() => setSelectedPlace(null)}
+        />
+      )}
+
+      <Snackbar
+        open={Boolean(toast)}
+        autoHideDuration={2500}
+        message={toast}
+        onClose={() => setToast("")}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{
+          "& .MuiSnackbar-content": {
+            borderRadius: 2,
+            bgcolor: "#1a1a1a",
+            color: "#fff",
+          },
+        }}
+      />
     </Box>
   );
 }

@@ -491,56 +491,58 @@ export default function BoardDetail() {
 
           <Divider sx={{ mb: 2, borderColor: "rgba(0,0,0,0.06)" }} />
 
-          <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={2}
-              maxRows={6}
-              size="small"
-              placeholder="댓글을 입력하세요"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void submitComment();
-                }
-              }}
-              disabled={loadingSubmit}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 1.5,
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: ACCENT,
-                    borderWidth: 2,
+          {user && (
+            <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={6}
+                size="small"
+                placeholder="댓글을 입력하세요"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void submitComment();
+                  }
+                }}
+                disabled={loadingSubmit}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: ACCENT,
+                      borderWidth: 2,
+                    },
                   },
-                },
-                "& textarea": { fontSize: 14 },
-              }}
-            />
-            <Button
-              variant="contained"
-              sx={{
-                bgcolor: ACCENT,
-                whiteSpace: "nowrap",
-                height: 40,
-                fontSize: 14,
-                px: 2,
-                borderRadius: 1.5,
-                fontWeight: 600,
-                "&:hover": { bgcolor: "#e55f00" },
-              }}
-              onClick={() => void submitComment()}
-              disabled={loadingSubmit}
-            >
-              {loadingSubmit ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                "등록"
-              )}
-            </Button>
-          </Box>
+                  "& textarea": { fontSize: 14 },
+                }}
+              />
+              <Button
+                variant="contained"
+                sx={{
+                  bgcolor: ACCENT,
+                  whiteSpace: "nowrap",
+                  height: 40,
+                  fontSize: 14,
+                  px: 2,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  "&:hover": { bgcolor: "#e55f00" },
+                }}
+                onClick={() => void submitComment()}
+                disabled={loadingSubmit}
+              >
+                {loadingSubmit ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  "등록"
+                )}
+              </Button>
+            </Box>
+          )}
 
           {loadingComments ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
@@ -656,22 +658,24 @@ export default function BoardDetail() {
                   )}
                 </Box>
 
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    color: ACCENT,
-                    cursor: "pointer",
-                    mt: 0.6,
-                    width: "fit-content",
-                    ml: 1,
-                  }}
-                  onClick={() => {
-                    setReplyTo(c.id);
-                    setReplyText("");
-                  }}
-                >
-                  답글 달기
-                </Typography>
+                {user && (
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      color: ACCENT,
+                      cursor: "pointer",
+                      mt: 0.6,
+                      width: "fit-content",
+                      ml: 1,
+                    }}
+                    onClick={() => {
+                      setReplyTo(c.id);
+                      setReplyText("");
+                    }}
+                  >
+                    답글 달기
+                  </Typography>
+                )}
 
                 {replyTo === c.id && (
                   <Box sx={{ display: "flex", gap: 1, mt: 1, ml: 4 }}>

@@ -531,12 +531,15 @@ export default function AdminBlogEdit() {
                     borderColor: "rgba(0,0,0,0.12)",
                   },
                   "& .ql-container.ql-snow": {
-                    minHeight: 360,
+                    height: 500,
+                    maxHeight: "70vh",
                     borderRadius: "0 0 8px 8px",
                     borderColor: "rgba(0,0,0,0.12)",
+                    overflowY: "auto",
+                    display: "block",
                   },
                   "& .ql-editor": {
-                    minHeight: 320,
+                    minHeight: 460,
                     fontSize: 15,
                     lineHeight: 1.7,
                   },

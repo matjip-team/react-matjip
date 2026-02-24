@@ -25,6 +25,7 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import SmartDisplayOutlinedIcon from "@mui/icons-material/SmartDisplayOutlined";
 import axios from "../common/axios";
+import { useAuth } from "../common/context/useAuth";
 import { inputHeightSx, INPUT_HEIGHT } from "../common/utils/helperUtil";
 import { ThemeProvider } from "@mui/material/styles";
 import { boardTheme } from "./theme/boardTheme";
@@ -51,6 +52,7 @@ const ACCENT = "#ff6b00";
 
 export default function BoardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [posts, setPosts] = useState<Board[]>([]);
   const [category, setCategory] = useState<CategoryType>("ALL");
@@ -203,20 +205,22 @@ export default function BoardPage() {
               자유롭게 소통하는 게시판입니다
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            sx={{
-              bgcolor: ACCENT,
-              "&:hover": { bgcolor: "#e55f00" },
-              textTransform: "none",
-              fontWeight: 600,
-              px: 2.5,
-              borderRadius: 1.5,
-            }}
-            onClick={() => navigate("/board/write")}
-          >
-            새글쓰기
-          </Button>
+          {user && (
+            <Button
+              variant="contained"
+              sx={{
+                bgcolor: ACCENT,
+                "&:hover": { bgcolor: "#e55f00" },
+                textTransform: "none",
+                fontWeight: 600,
+                px: 2.5,
+                borderRadius: 1.5,
+              }}
+              onClick={() => navigate("/board/write")}
+            >
+              새글쓰기
+            </Button>
+          )}
         </Box>
 
         {/* 검색 + 카테고리 */}

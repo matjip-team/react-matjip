@@ -237,7 +237,7 @@ function buildDescriptionHtml(item) {
 }
 
 async function login() {
-  const response = await fetch(`${API_BASE}/api/auth`, {
+  const response = await fetch(`${API_BASE}/api/spring/auth`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -250,7 +250,7 @@ async function login() {
   const setCookie = response.headers.get("set-cookie");
   if (!setCookie) {
     throw new Error(
-      `로그인 실패: ${API_BASE}/api/auth 응답에서 쿠키를 받지 못했습니다. 계정(${LOGIN_EMAIL})과 서버 상태를 확인하세요.`,
+      `로그인 실패: ${API_BASE}/api/spring/auth 응답에서 쿠키를 받지 못했습니다. 계정(${LOGIN_EMAIL})과 서버 상태를 확인하세요.`,
     );
   }
   return setCookie.split(";")[0];
@@ -291,7 +291,7 @@ async function createLicenseFileKey(cookie, index) {
   const fileName = `seed-license-${String(index + 1).padStart(2, "0")}.pdf`;
   const contentType = "application/pdf";
   const presignedRes = await apiPost(
-    "/api/restaurants/licenses/presigned-url",
+    "/api/spring/restaurants/licenses/presigned-url",
     { fileName, contentType },
     cookie,
   );
@@ -331,14 +331,14 @@ async function createRepresentativeImageUrl(cookie, imageSourceUrl, index) {
     contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
 
   let presignedRes = await apiPost(
-    "/api/restaurants/images/presigned-url",
+    "/api/spring/restaurants/images/presigned-url",
     { fileName: `seed-restaurant-${index + 1}.${extension}`, contentType },
     cookie,
   );
 
   if (!presignedRes.ok) {
     presignedRes = await apiPost(
-      "/api/boards/images/presigned-url",
+      "/api/spring/blogs/images/presigned-url",
       { fileName: `seed-restaurant-${index + 1}.${extension}`, contentType },
       cookie,
     );
@@ -381,7 +381,7 @@ async function createRestaurantRequest(cookie, item, index) {
     categoryNames: item.categories.filter((c) => CATEGORY_OPTIONS.includes(c)),
   };
 
-  const response = await fetch(`${API_BASE}/api/restaurants`, {
+  const response = await fetch(`${API_BASE}/api/spring/restaurants`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
