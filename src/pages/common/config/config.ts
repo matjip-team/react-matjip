@@ -2,10 +2,10 @@
 // 로컬: npm run dev 시 localhost:8081, 운영 빌드 시 43.202.121.6
 
 /** 로컬 개발 환경 여부 (Vite: dev = true, build = false) */
-export const IS_LOCAL = false;
+export const IS_LOCAL = true;
 
 /** 운영(프로덕션) 환경 여부 */
-export const IS_PRODUCTION = true;
+export const IS_PRODUCTION = false;
 
 const LOCAL_API = "http://localhost:8081";
 const AI_API = "http://localhost:8000"; // Python AI 추천 서버 (로컬)
